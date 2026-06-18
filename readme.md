@@ -116,3 +116,19 @@ A pattern is a function that accepts a point in space and returns a color.
 
 To create better Render
 - Update resolution usually (800, 400) is high resolution, (200, 100) is low resolution for the camera 
+
+
+Pattern Design choice using Shared_Ptr vs Raw Pointers
+- using std::shared_ptr instead of raw pointers for the pattern system fundementally shifts responsibility of memory management 
+from the developers to the compiler. 
+
+Patterns are unique because they are structural data, they don't live in one single palce, and their layouts are often shared or deeply nested. 
+
+A ray tracer shoots millions of ray, and calls LocalPatternAt() on every hit. If a ray hits an object with a deleted pattern, it will access garbage memory, resulting in a immediate seg fault. 
+
+Shared_ptr uses reference counting; 
+
+- When we create a pattern the ref count is 1, 
+- When we pass it to a shape the count becomes 2
+- When the scene function eneds the local variable dies, dropping the count back to 1. 
+- Because the count is not zero, the pattern stays alive in memory for the shape to safely use during rendering. 

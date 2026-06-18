@@ -3,7 +3,9 @@
 #include "scene/Material.h"
 #include "scene/Pattern.h"
 
- Color Lighting::ProcessLighting(const Shape* shape, Material mat, LightShadeVector& lsv, const std::vector<double>& point, bool in_shadow) {
+// NEW: big improvement here, we changes Material mat, to const Material& mat as passing by value was essentially duplicating the object 
+// Numerous times. And with patterns being shared_ptrs that was just causing complete chaos on memory
+ Color Lighting::ProcessLighting(const Shape* shape, const Material& mat, LightShadeVector& lsv, const std::vector<double>& point, bool in_shadow) {
     
 
     Color black(0, 0, 0);

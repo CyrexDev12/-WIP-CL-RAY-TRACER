@@ -1026,124 +1026,119 @@ void PlaneRenderTest() {
 }
 */
 
-void PatternRenderTest() {
-    Matrix m;
+#include <iostream>
 
+void PatternRenderTest() {
+    std::cout << "[DEBUG] Starting PatternRenderTest..." << std::endl;
+    Matrix m; 
+
+    std::cout << "[DEBUG] Initializing World and Lighting..." << std::endl;
     PointLight light({-10.0, 10.0, -10.0, 1.0}, Color{1, 1, 1});
     Lighting lighting(light);
     World* world = new World(lighting);
 
     // 1. FLOOR WITH CHECKERS
+    std::cout << "[DEBUG] Setting up 1. Floor with Checkers..." << std::endl;
     Shape* floor = new Plane();
-
-    std::shared_ptr<Pattern> floorCheckers = std::make_shared<CheckersPattern>(
+    auto floorCheckers = std::make_shared<CheckersPattern>(
         Color{0.1, 0.1, 0.1},
         Color{0.9, 0.9, 0.9}
     );
-
     floorCheckers->transform = m.scale(2.0, 2.0, 2.0);
-
-    floor->setMaterialPattern(*floorCheckers);
+    floor->setMaterialPattern(floorCheckers);
     floor->setAmbient(0.1);
     floor->setDiffuse(0.7);
     floor->setSpecular(0.1);
-
     world->AddShape(floor);
 
-    // 2. BACK WALL WITH STRIPES
+    // 2. BACK WALL WITH PERTURBED STRIPES
+    std::cout << "[DEBUG] Setting up 2. Back Wall with Perturbed Stripes..." << std::endl;
     Shape* backWall = new Plane();
-
     Matrix wallTrans = m.translation(0, 0, 5);
     Matrix wallRotX = m.rotateX(M_PI / 2);
     backWall->setTransform(wallTrans.multiplyMatrix(wallRotX));
 
-    std::shared_ptr<Pattern> wallStripes = std::make_shared<StripePattern>(
+    auto wallStripesBase = std::make_shared<StripePattern>(
         Color{0.8, 0.1, 0.1},
         Color{0.9, 0.8, 0.1}
     );
+    wallStripesBase->transform = m.scale(0.5, 1.0, 1.0);
 
-    wallStripes->transform = m.scale(0.5, 1.0, 1.0);
-
-    backWall->setMaterialPattern(*wallStripes);
+    auto perturbedWall = std::make_shared<PertubedPattern>(
+        wallStripesBase, 
+        0.35, 
+        1.5   
+    );
+    backWall->setMaterialPattern(perturbedWall);
     backWall->setAmbient(0.1);
     backWall->setDiffuse(0.8);
     backWall->setSpecular(0.0);
-
     world->AddShape(backWall);
 
     // 3. LEFT SPHERE WITH GRADIENT
+    std::cout << "[DEBUG] Setting up 3. Left Sphere with Gradient..." << std::endl;
     Shape* leftSphere = new Sphere();
-
     Matrix leftSphereTrans = m.translation(-1.7, 1.0, 0.5);
     Matrix leftSphereScale = m.scale(1.0, 1.0, 1.0);
     leftSphere->setTransform(leftSphereTrans.multiplyMatrix(leftSphereScale));
 
-    std::shared_ptr<Pattern> sphereGradient = std::make_shared<GradientPattern>(
+    auto sphereGradient = std::make_shared<GradientPattern>(
         Color{1.0, 0.0, 0.0},
         Color{0.0, 0.0, 1.0}
     );
-
-    // Smaller than 1 = gradient repeats faster.
-    // Larger than 1 = gradient stretches wider.
     sphereGradient->transform = m.scale(1.0, 1.0, 1.0);
-
-    leftSphere->setMaterialPattern(*sphereGradient);
+    leftSphere->setMaterialPattern(sphereGradient);
     leftSphere->setAmbient(0.1);
     leftSphere->setDiffuse(0.8);
     leftSphere->setSpecular(0.2);
     leftSphere->setShininess(100);
-
     world->AddShape(leftSphere);
 
-    // 4. MIDDLE SPHERE WITH RINGS
+    // 4. MIDDLE SPHERE WITH PERTURBED RINGS
+    std::cout << "[DEBUG] Setting up 4. Middle Sphere with Perturbed Rings..." << std::endl;
     Shape* middleSphere = new Sphere();
-
     middleSphere->setTransform(m.translation(0, 1.5, 1));
 
-    std::shared_ptr<Pattern> sphereRings = std::make_shared<RingPattern>(
+    auto sphereRingsBase = std::make_shared<RingPattern>(
         Color{0.1, 0.8, 0.2},
         Color{0.1, 0.2, 0.8}
     );
+    sphereRingsBase->transform = m.scale(0.35, 0.35, 0.35);
 
-    // Smaller than 1 = more rings.
-    // Larger than 1 = fewer/wider rings.
-    sphereRings->transform = m.scale(0.35, 0.35, 0.35);
-
-    middleSphere->setMaterialPattern(*sphereRings);
+    auto perturbedRings = std::make_shared<PertubedPattern>(
+        sphereRingsBase,
+        0.25, 
+        3.0   
+    );
+    middleSphere->setMaterialPattern(perturbedRings);
     middleSphere->setAmbient(0.1);
     middleSphere->setDiffuse(0.8);
     middleSphere->setSpecular(0.2);
     middleSphere->setShininess(100);
-
     world->AddShape(middleSphere);
 
     // 5. RIGHT SPHERE WITH STRIPES
+    std::cout << "[DEBUG] Setting up 5. Right Sphere with Stripes..." << std::endl;
     Shape* rightSphere = new Sphere();
-
     Matrix rightSphereTrans = m.translation(1.7, 1.0, 0.5);
     Matrix rightSphereScale = m.scale(1.0, 1.0, 1.0);
     rightSphere->setTransform(rightSphereTrans.multiplyMatrix(rightSphereScale));
 
-    std::shared_ptr<Pattern> sphereStripes = std::make_shared<StripePattern>(
+    auto sphereStripes = std::make_shared<StripePattern>(
         Color{0.9, 0.9, 0.9},
         Color{0.05, 0.05, 0.05}
     );
-
-    // Smaller than 1 = more stripes.
-    // Larger than 1 = fewer/wider stripes.
     sphereStripes->transform = m.scale(0.35, 1.0, 1.0);
-
-    rightSphere->setMaterialPattern(*sphereStripes);
+    rightSphere->setMaterialPattern(sphereStripes);
     rightSphere->setAmbient(0.1);
     rightSphere->setDiffuse(0.8);
     rightSphere->setSpecular(0.2);
     rightSphere->setShininess(100);
-
     world->AddShape(rightSphere);
 
-    // 6. CAMERA
+    // 6. CAMERA & RENDERING EXECUTION
+    std::cout << "[DEBUG] Configuring Camera view transformation..." << std::endl;
     Camera cam(800, 400, M_PI / 3);
-
     std::vector<double> from = {0.0, 2.5, -5.0, 1.0};
     std::vector<double> to   = {0.0, 1.0,  0.0, 1.0};
     std::vector<double> up   = {0.0, 1.0,  0.0, 0.0};
@@ -1151,9 +1146,14 @@ void PatternRenderTest() {
     Matrix viewTrans = m.viewTransformation(from, to, up);
     cam.setTransformM(viewTrans);
 
+    std::cout << "[DEBUG] ENTERING RENDER LOOP (Shooting rays)..." << std::endl; // This is where the problem occurs 
     Canvas canvas = render(cam, *world);
+    std::cout << "[DEBUG] EXITING RENDER LOOP (Render finished successfully!)." << std::endl;
+
+    std::cout << "[DEBUG] Outputting Canvas image payload..." << std::endl;
     canvas.canvasOut();
 
-    delete world;
+    std::cout << "[DEBUG] Deallocating World memory..." << std::endl;
+    delete world; 
+    std::cout << "[DEBUG] PatternRenderTest completed cleanly with no crashes!" << std::endl;
 }
-

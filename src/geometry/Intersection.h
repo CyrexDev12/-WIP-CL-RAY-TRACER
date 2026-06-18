@@ -18,6 +18,7 @@ public:
 
     double getT() const { return t; }
     void setT(double tVal) {t = tVal; }
+    // Pass pointer variable holding the memory address for shape 
     const Shape* getObject() const { return object; }
     void setObj(Shape* obj) {object = obj; }
 

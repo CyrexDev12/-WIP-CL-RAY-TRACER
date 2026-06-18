@@ -8,6 +8,7 @@
 #include "scene/Material.h" 
 #include "math/Matrix.h" 
 #include "geometry/Intersection.h"
+#include <memory>
 
 // 1. FORWARD DECLARATION 
 class Pattern; 
@@ -31,7 +32,8 @@ public:
     std::vector<double> getPosition() const { return position; }
     void setPosition(const std::vector<double>& pos) { this->position = pos; }
 
-    Material getMaterial() const { return material; }
+    // NEW: Add const Material& to return value, so we are not returning a new copy every time
+    const Material& getMaterial() const { return material; }
     Color getMaterialColor() const { return material.color; }
     void setMaterialColor(const Color& color) { material.color = color; }
 
@@ -56,8 +58,8 @@ public:
     }
 
     // Pass pattern by reference, stores its address cleanly
-    void setMaterialPattern(Pattern& pat) {
-        material.pattern = &pat; 
+    void setMaterialPattern(shared_ptr<Pattern> pattern) {
+        material.pattern = pattern; 
     }
 };
 

@@ -28,7 +28,7 @@ public:
 
     // Pass the LightShadeVector dynamically by reference
     Color ProcessLighting(const Shape* shape,
-                                Material mat, 
+                                const Material& mat, 
                            LightShadeVector& lsv, 
                            const std::vector<double>& point, bool in_shadow);
 

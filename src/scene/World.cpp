@@ -84,6 +84,25 @@ Color World::Color_at(const Ray& ray) {
         return Color{0, 0, 0};
     }
 
+    /*
+    // --- CRITICAL SURGICAL DEBUG PRINT ---
+    // If intersection->object is an invalid pointer, this print will trigger the crash,
+    // telling you exactly where your tracking pipeline broke.
+    if (intersection->getObject() == nullptr) {
+        std::cout << "[DEBUG CRASH] Critical Error: Intersection exists but object pointer is null!" << std::endl;
+    } else {
+        std::cout << "[DEBUG HIT] Hit detected on shape address: " << intersection->getObject() << std::endl;
+        
+        // Let's verify the material and pattern address inside the shape safely
+        const Material& mat = intersection-> getObject() ->getMaterial();
+        std::cout << "[DEBUG MAT] Material read successfully. Pattern address: " << mat.pattern.get() << std::endl;
+        
+        if (mat.pattern != nullptr) {
+            std::cout << "[DEBUG PATTERN] Executing pattern pipeline..." << std::endl;
+        }
+    }
+        */ 
+
     // Dereference the pointer safely now that we verified it exists
     Computations comp = prepareComputations(*intersection, ray);
 

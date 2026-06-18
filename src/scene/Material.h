@@ -1,7 +1,7 @@
 #ifndef MATERIAL_H
 #define MATERIAL_H
 #include "math/Operations.h"
-
+#include <memory>
 
 // MATERIAL STRUCT 
 // INCLUDE AMBIENT, DIFFUSE, SPECULAR, SHININESS
@@ -15,7 +15,7 @@ struct Material {
     double specular; 
     double shininess; 
     Color color;
-    Pattern *pattern{nullptr}; 
+   shared_ptr<Pattern> pattern{nullptr}; // Upgrade from raw pointer to shared 
 
      Material() : ambient(0.1), diffuse(0.9), specular(0.9), shininess(200.0), color(1.0, 1.0, 1.0) {}
 
