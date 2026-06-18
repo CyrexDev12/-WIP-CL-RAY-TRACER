@@ -6,7 +6,8 @@
 #include "math/Operations.h"
 #include <cmath>
 
-// Current Patterns: Stripe, Checkers 
+// Current Patterns: Stripe, Checkers, Gradient, RingPattern 
+// TODO:: Nested patterns, Blended Patterns, Pertubed Patterns, Wave pattern
 // NOTE: Checkers cause issues, render distortion 
 
 class Shape; // FORWARD DECLERATION 
@@ -30,12 +31,9 @@ private:
 public:
     StripePattern(Color a, Color b) : colorA(a), colorB(b) {}
 
-    Color LocalPatternAt(const std::vector<double>& pattern_point) override {
-        if (static_cast<int>(std::floor(pattern_point[0])) % 2 == 0) {
-            return colorA;
-        }
-        return colorB;
-    }
+    Color LocalPatternAt(const std::vector<double>& pattern_point) override;
+
+
 };
 
 class CheckersPattern : public Pattern {
@@ -46,16 +44,43 @@ private:
 public:
     CheckersPattern(Color a, Color b) : colorA(a), colorB(b) {}
 
-    Color LocalPatternAt(const std::vector<double>& pattern_point) override {
-        double sum = std::floor(pattern_point[0]) + 
-                     std::floor(pattern_point[1]) + 
-                     std::floor(pattern_point[2]);
-                     
-        if (static_cast<int>(sum) % 2 == 0) {
-            return colorA;
-        }
-        return colorB;
-    }
+    Color LocalPatternAt(const std::vector<double>& pattern_point) override;
+
+
+};
+
+// Linear Gradient Pattern 
+// Blending function, takes two values and interpolates the values between them. 
+class GradientPattern : public Pattern {
+private:
+
+    Color colorA; 
+    Color colorB; 
+
+    public: 
+
+    GradientPattern(Color a, Color b) : colorA(a), colorB(b) {}
+
+    Color LocalPatternAt(const std::vector<double>& pattern_point) override;
+
+
+};
+
+
+// Ring Pattern
+// Should extend in both x and y
+class RingPattern : public Pattern {
+    private: 
+    Color colorA; 
+    Color colorB; 
+
+    public: 
+
+    RingPattern(Color a, Color b) : colorA(a), colorB(b) {}
+
+     Color LocalPatternAt(const std::vector<double>& pattern_point) override;
+
+
 };
 
 #endif

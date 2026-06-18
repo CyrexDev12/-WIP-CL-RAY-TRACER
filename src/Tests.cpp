@@ -1071,22 +1071,45 @@ void PatternRenderTest() {
 
     world->AddShape(backWall);
 
-    // 3. SPHERE WITH STRIPES
+    // 3. LEFT SPHERE WITH GRADIENT
+    Shape* leftSphere = new Sphere();
+
+    Matrix leftSphereTrans = m.translation(-1.7, 1.0, 0.5);
+    Matrix leftSphereScale = m.scale(1.0, 1.0, 1.0);
+    leftSphere->setTransform(leftSphereTrans.multiplyMatrix(leftSphereScale));
+
+    std::shared_ptr<Pattern> sphereGradient = std::make_shared<GradientPattern>(
+        Color{1.0, 0.0, 0.0},
+        Color{0.0, 0.0, 1.0}
+    );
+
+    // Smaller than 1 = gradient repeats faster.
+    // Larger than 1 = gradient stretches wider.
+    sphereGradient->transform = m.scale(1.0, 1.0, 1.0);
+
+    leftSphere->setMaterialPattern(*sphereGradient);
+    leftSphere->setAmbient(0.1);
+    leftSphere->setDiffuse(0.8);
+    leftSphere->setSpecular(0.2);
+    leftSphere->setShininess(100);
+
+    world->AddShape(leftSphere);
+
+    // 4. MIDDLE SPHERE WITH RINGS
     Shape* middleSphere = new Sphere();
 
     middleSphere->setTransform(m.translation(0, 1.5, 1));
 
-    std::shared_ptr<Pattern> sphereStripes = std::make_shared<StripePattern>(
+    std::shared_ptr<Pattern> sphereRings = std::make_shared<RingPattern>(
         Color{0.1, 0.8, 0.2},
         Color{0.1, 0.2, 0.8}
     );
 
-    // Start with identity scale for debugging.
-    // Smaller than 1 = more stripes.
-    // Larger than 1 = fewer/wider stripes.
-    sphereStripes->transform = m.scale(1.0, 1.0, 1.0);
+    // Smaller than 1 = more rings.
+    // Larger than 1 = fewer/wider rings.
+    sphereRings->transform = m.scale(0.35, 0.35, 0.35);
 
-    middleSphere->setMaterialPattern(*sphereStripes);
+    middleSphere->setMaterialPattern(*sphereRings);
     middleSphere->setAmbient(0.1);
     middleSphere->setDiffuse(0.8);
     middleSphere->setSpecular(0.2);
@@ -1094,7 +1117,31 @@ void PatternRenderTest() {
 
     world->AddShape(middleSphere);
 
-    // 4. CAMERA
+    // 5. RIGHT SPHERE WITH STRIPES
+    Shape* rightSphere = new Sphere();
+
+    Matrix rightSphereTrans = m.translation(1.7, 1.0, 0.5);
+    Matrix rightSphereScale = m.scale(1.0, 1.0, 1.0);
+    rightSphere->setTransform(rightSphereTrans.multiplyMatrix(rightSphereScale));
+
+    std::shared_ptr<Pattern> sphereStripes = std::make_shared<StripePattern>(
+        Color{0.9, 0.9, 0.9},
+        Color{0.05, 0.05, 0.05}
+    );
+
+    // Smaller than 1 = more stripes.
+    // Larger than 1 = fewer/wider stripes.
+    sphereStripes->transform = m.scale(0.35, 1.0, 1.0);
+
+    rightSphere->setMaterialPattern(*sphereStripes);
+    rightSphere->setAmbient(0.1);
+    rightSphere->setDiffuse(0.8);
+    rightSphere->setSpecular(0.2);
+    rightSphere->setShininess(100);
+
+    world->AddShape(rightSphere);
+
+    // 6. CAMERA
     Camera cam(800, 400, M_PI / 3);
 
     std::vector<double> from = {0.0, 2.5, -5.0, 1.0};

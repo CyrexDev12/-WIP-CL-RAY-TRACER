@@ -55,8 +55,25 @@ Color addColors(const Color& c1, const Color& c2);
 Color subtractColors(const Color& c1, const Color& c2);
 Color multiplyColors(const Color& c1, const Color& c2);
 Color multiplyByScalar(const Color& c1, double scalar);
-Color hadamard_product(const Color& c1, const Color& c2);
+// Color hadamard_product(const Color& c1, const Color& c2); Dont need, same as multiply colors
 void PrintColor(const std::string& label, const Color& c);
+
+// Operators for conveinance 
+inline Color operator+(const Color&c1, const Color& c2) {
+    return addColors(c1, c2);
+}
+
+inline Color operator-(const Color&c1, const Color& c2) {
+    return subtractColors(c1, c2); 
+}
+
+inline Color operator*(const Color&c1, const Color& c2) {
+    return multiplyColors(c1, c2); 
+}
+
+inline Color operator*(const Color&c1, double scalar) {
+    return multiplyByScalar(c1, scalar); 
+}
 
 
 #endif
