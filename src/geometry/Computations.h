@@ -19,6 +19,7 @@ struct Computations {
     vector<double> overPt; // Adjusted pt, slightly in the direction of the normal (Prevents self shadowing)
     vector<double> eyev; 
     vector<double> normalv; 
+    vector<double> reflectv; // Reflection vector
 
 
     bool inside; 

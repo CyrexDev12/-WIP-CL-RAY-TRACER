@@ -247,3 +247,10 @@ bool isVector(const vector<double> &point) {
     return isTuple(point) && nearlyEqual(point[3], 0.0);
 }
 
+// Params normal v -> surface normal
+// invec -> incoming vector 
+vector<double> reflect(const vector<double>& normalv, const vector<double>& invec) {
+    double dotProd = CalculateDotProd(normalv, invec); 
+    return invec - 2 * (dotProd) * normalv; 
+}
+

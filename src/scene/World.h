@@ -46,7 +46,8 @@ public:
 
     bool is_shadowed(const vector<double>& pt); 
 
-    // hehe 
+    Color reflected_color(const Computations& comps);
+
     Color shade_hit(const Computations& comps);
 
     Color Color_at(const Ray& ray);

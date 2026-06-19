@@ -50,6 +50,21 @@ bool World::is_shadowed(const vector<double>& pt) {
    return false; 
 }
 
+
+// Create a new ray originating at the hits location and pointing in the diretion of reflectv. Find the color of the new ray via color_at(). 
+// Then multiply the result by the reflective value. If reflective is set to something between 0-1, it will give you partial reflection. 
+Color World::reflected_color(const Computations& comps) {
+
+    if (comps.object->getMaterial().reflective == 0) {
+        return Color{0, 0, 0}; 
+    }
+
+    Ray reflect_ray(comps.overPt, comps.reflectv); 
+    Color color = Color_at(reflect_ray); 
+
+    return color * comps.object->getMaterial().reflective; 
+}
+
 // NEW: Implementing shading... We check if pt is a shadow or not, then pass it to process lighting
 Color World::shade_hit(const Computations& comps) {
     if (lighting == nullptr) {
@@ -61,13 +76,18 @@ Color World::shade_hit(const Computations& comps) {
     lsv.N = comps.normalv;
 
 
-    return lighting->ProcessLighting(
+    Color surface = lighting->ProcessLighting(
         comps.object,
         comps.object->getMaterial(),
         lsv,
         comps.point, 
         is_shadowed(comps.overPt)
     );
+
+    Color reflected = reflected_color(comps); 
+
+    return surface + reflected; 
+
 }
 
 
