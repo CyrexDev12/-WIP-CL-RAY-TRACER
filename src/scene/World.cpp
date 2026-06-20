@@ -53,20 +53,23 @@ bool World::is_shadowed(const vector<double>& pt) {
 
 // Create a new ray originating at the hits location and pointing in the diretion of reflectv. Find the color of the new ray via color_at(). 
 // Then multiply the result by the reflective value. If reflective is set to something between 0-1, it will give you partial reflection. 
-Color World::reflected_color(const Computations& comps) {
+Color World::reflected_color(const Computations& comps, int remaining) {
+    if (remaining <= 0) {
+        return Color{0, 0, 0}; // Return black 
+    }
 
     if (comps.object->getMaterial().reflective == 0) {
         return Color{0, 0, 0}; 
     }
 
     Ray reflect_ray(comps.overPt, comps.reflectv); 
-    Color color = Color_at(reflect_ray); 
+    Color color = Color_at(reflect_ray, remaining); 
 
     return color * comps.object->getMaterial().reflective; 
 }
 
 // NEW: Implementing shading... We check if pt is a shadow or not, then pass it to process lighting
-Color World::shade_hit(const Computations& comps) {
+Color World::shade_hit(const Computations& comps, int remaining) {
     if (lighting == nullptr) {
         throw std::runtime_error("World has no lighting configured."); // Commented out, as lighting starts of null to get configured 
      }
@@ -84,7 +87,7 @@ Color World::shade_hit(const Computations& comps) {
         is_shadowed(comps.overPt)
     );
 
-    Color reflected = reflected_color(comps); 
+    Color reflected = reflected_color(comps, remaining); 
 
     return surface + reflected; 
 
@@ -93,7 +96,7 @@ Color World::shade_hit(const Computations& comps) {
 
 
 // Find color_at the hit()
-Color World::Color_at(const Ray& ray) {
+Color World::Color_at(const Ray& ray, int remaining) {
     Intersections intersections = intersect_world(ray);
 
     // Get a pointer to the closest hit
@@ -126,5 +129,5 @@ Color World::Color_at(const Ray& ray) {
     // Dereference the pointer safely now that we verified it exists
     Computations comp = prepareComputations(*intersection, ray);
 
-    return shade_hit(comp);
+    return shade_hit(comp, 0);
 }

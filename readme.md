@@ -147,3 +147,6 @@ To do this we will create a plane and position a ray above it, slanting downward
 ReflectedColor()
 Create a new ray originating at the hits location and pointing in the diretion of reflectv. Find the color of the new ray via color_at(). 
 Then multiply the result by the reflective value. If reflective is set to something between 0-1, it will give you partial reflection. 
+
+Implement int remaining to color_at() reflectedColor() and shadeHit() to limit recursion calls 
+
