@@ -25,6 +25,24 @@ vector<double> AddTuples(const vector<double>& a, const vector<double>& b);
 vector<double> SubtractTuples(const vector<double>& x2, const vector<double>& x1);
 vector<double> NegateTuple(const vector<double>& x); 
 vector<double> ScaleTuple(const vector<double>& x, double scalar); 
+vector<double> reflect(const vector<double>& normalv, const vector<double>& invec); 
+
+inline vector<double> operator-(const vector<double>& x2, const vector<double>& x1) {
+    return SubtractTuples(x2, x1);
+}
+
+inline vector<double> operator+(const vector<double>& x2, const vector<double>& x1) {
+    return AddTuples(x2, x1); 
+}
+
+inline vector<double> operator*(const vector<double>& x, double scalar) {
+   return ScaleTuple(x, scalar); 
+}
+
+inline std::vector<double> operator*(double scalar, const std::vector<double>& x) {
+    return x * scalar; // Reuses your existing operator*
+}
+
 double GetMagnitude(const vector<double>& x); 
 void PrintTuple(const vector<double>& x); 
 vector<double> NormalizeTuple(const vector<double>& x);

@@ -38,6 +38,9 @@ Computations prepareComputations(const Intersection& intersection, Ray ray) {
     vector<double> normEps = ScaleTuple(comps.normalv, EPSILON); 
     comps.overPt = AddTuples(comps.point, normEps); 
 
+    // Reflection Vector 
+    // Compute reflectv by reflecting the ray's direction vector around the objects normal vector 
+    comps.reflectv = reflect(comps.normalv, ray.direction); 
 
     return comps;
 }
@@ -66,6 +69,11 @@ void Computations::print() const {
         cout << value << " ";
     }
     cout << "\n";
+
+    cout << "reflectionv: ";
+    for (double value : reflectv) {
+        cout << value << " ";
+    }
 
     cout << "inside: " << (inside ? "true" : "false") << "\n";
 }

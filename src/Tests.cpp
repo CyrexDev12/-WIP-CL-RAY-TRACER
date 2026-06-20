@@ -1024,9 +1024,9 @@ void PlaneRenderTest() {
     // Clean up memory
     delete world;
 }
-*/
 
-#include <iostream>
+
+
 
 void PatternRenderTest() {
     std::cout << "[DEBUG] Starting PatternRenderTest..." << std::endl;
@@ -1157,3 +1157,22 @@ void PatternRenderTest() {
     delete world; 
     std::cout << "[DEBUG] PatternRenderTest completed cleanly with no crashes!" << std::endl;
 }
+
+
+
+
+// Pre computing reflection vector to test 
+// Reflection vector should printout and be (0, sqrt(2)/2, sqrt(2)/2, 1)
+void reflectionVectorPreComputeTest() {
+    Shape* plane = new Plane(); 
+
+    Ray ray({0, 1, -1, 0}, {0, -sqrt(2)/2, sqrt(2)/2, 1});
+
+    Intersection intersect(sqrt(2), plane); 
+
+    Computations comps = prepareComputations(intersect, ray); 
+
+    comps.print(); 
+}
+
+*/

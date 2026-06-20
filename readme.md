@@ -132,3 +132,21 @@ Shared_ptr uses reference counting;
 - When we pass it to a shape the count becomes 2
 - When the scene function eneds the local variable dies, dropping the count back to 1. 
 - Because the count is not zero, the pattern stays alive in memory for the shape to safely use during rendering. 
+
+
+relection 
+
+We add a reflection attribute to material. 
+
+When the reflective is 0, the surface is completely NONREFLECTIVE, whereas setting it to 1 produces a perfect mirror. Numbers in between will represent partial reflections. 
+
+The prepare_computations function will pre-compute the reflectV vector. 
+
+To do this we will create a plane and position a ray above it, slanting downward at a 45 degree angle. Position the intersection on the plane, and have prepare_computations() compute the reflection vector. 
+
+ReflectedColor()
+Create a new ray originating at the hits location and pointing in the diretion of reflectv. Find the color of the new ray via color_at(). 
+Then multiply the result by the reflective value. If reflective is set to something between 0-1, it will give you partial reflection. 
+
+Implement int remaining to color_at() reflectedColor() and shadeHit() to limit recursion calls 
+
