@@ -15,6 +15,7 @@ int main() {
 
    
 reflectionVectorPreComputeTest();
+transparencyMaterialTest();
   
 
    return 0; 

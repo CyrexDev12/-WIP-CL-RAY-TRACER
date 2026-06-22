@@ -33,10 +33,12 @@ Computations prepareComputations(const Intersection& intersection, Ray ray) {
         comps.inside = false;
     }
 
+    // Offset points prevent reflection and refraction rays from intersecting the surface they originate from, which can cause artifacts in the rendered image.
     // Over Point = point + (normal * epsilon)
     const double EPSILON = 1e-5;
     vector<double> normEps = ScaleTuple(comps.normalv, EPSILON); 
     comps.overPt = AddTuples(comps.point, normEps); 
+    comps.underPt = SubtractTuples(comps.point, normEps);
 
     // Reflection Vector 
     // Compute reflectv by reflecting the ray's direction vector around the objects normal vector 
@@ -74,6 +76,13 @@ void Computations::print() const {
     for (double value : reflectv) {
         cout << value << " ";
     }
-
+    
+    cout << "underPt: ";
+    for (double value : underPt) {
+        cout << value << " ";
+    }
+    cout << "\n";
+    
     cout << "inside: " << (inside ? "true" : "false") << "\n";
+
 }

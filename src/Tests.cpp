@@ -1188,3 +1188,28 @@ void reflectionVectorPreComputeTest() {
     comps.print();
 }
 
+void transparencyMaterialTest() {
+    Material material;
+
+    bool defaultsPass =
+        almostEqual(material.transparency, 0.0) &&
+        almostEqual(material.refractiveIndex, 1.0);
+
+    Sphere glassSphere;
+    glassSphere.setTransparency(1.0);
+    glassSphere.setRefractiveIndex(1.5);
+
+    const Material& glassMaterial = glassSphere.getMaterial();
+
+    bool glassPass =
+        almostEqual(glassMaterial.transparency, 1.0) &&
+        almostEqual(glassMaterial.refractiveIndex, 1.5);
+
+    cout << "Default transparency material test: "
+         << (defaultsPass ? "PASS" : "FAIL")
+         << endl;
+
+    cout << "Glass material test: "
+         << (glassPass ? "PASS" : "FAIL")
+         << endl;
+}

@@ -57,6 +57,30 @@ public:
         material.shininess = num; 
     }
 
+    void setReflective(double num) {
+    if (num < 0.0 || num > 1.0) {
+        throw std::invalid_argument("Reflective must be between 0 and 1!");
+    }
+
+    material.reflective = num;
+}
+
+void setTransparency(double num) {
+    if (num < 0.0 || num > 1.0) {
+        throw std::invalid_argument("Transparency must be between 0 and 1!");
+    }
+
+    material.transparency = num;
+}
+
+void setRefractiveIndex(double num) {
+    if (num <= 0.0) {
+        throw std::invalid_argument("Refractive index must be greater than 0!");
+    }
+
+    material.refractiveIndex = num;
+}
+
     // Pass pattern by reference, stores its address cleanly
     void setMaterialPattern(shared_ptr<Pattern> pattern) {
         material.pattern = pattern; 
