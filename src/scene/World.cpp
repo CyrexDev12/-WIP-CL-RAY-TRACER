@@ -63,7 +63,7 @@ Color World::reflected_color(const Computations& comps, int remaining) {
     }
 
     Ray reflect_ray(comps.overPt, comps.reflectv); 
-    Color color = Color_at(reflect_ray, remaining); 
+    Color color = Color_at(reflect_ray, remaining - 1); 
 
     return color * comps.object->getMaterial().reflective; 
 }
@@ -129,5 +129,5 @@ Color World::Color_at(const Ray& ray, int remaining) {
     // Dereference the pointer safely now that we verified it exists
     Computations comp = prepareComputations(*intersection, ray);
 
-    return shade_hit(comp, 0);
+    return shade_hit(comp, remaining);
 }

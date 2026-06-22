@@ -50,7 +50,7 @@ public:
 
     Color shade_hit(const Computations& comps, int remaining);
 
-    Color Color_at(const Ray& ray, int remaining);
+    Color Color_at(const Ray& ray, int remaining = 5);
 };
 
 #endif

@@ -1159,20 +1159,32 @@ void PatternRenderTest() {
 }
 
 
-
+*/
 
 // Pre computing reflection vector to test 
 // Reflection vector should printout and be (0, sqrt(2)/2, sqrt(2)/2, 1)
 void reflectionVectorPreComputeTest() {
-    Shape* plane = new Plane(); 
+    Plane plane;
 
-    Ray ray({0, 1, -1, 0}, {0, -sqrt(2)/2, sqrt(2)/2, 1});
+    Ray ray(
+        {0, 1, -1, 1},
+        {0, -sqrt(2) / 2, sqrt(2) / 2, 0}
+    );
 
-    Intersection intersect(sqrt(2), plane); 
+    Intersection intersect(sqrt(2), &plane);
+    Computations comps = prepareComputations(intersect, ray);
 
-    Computations comps = prepareComputations(intersect, ray); 
+    vector<double> expected = {
+        0,
+        sqrt(2) / 2,
+        sqrt(2) / 2,
+        0
+    };
 
-    comps.print(); 
+    cout << "Reflection vector test: "
+         << (tupleEqual(comps.reflectv, expected) ? "PASS" : "FAIL")
+         << endl;
+
+    comps.print();
 }
 
-*/
