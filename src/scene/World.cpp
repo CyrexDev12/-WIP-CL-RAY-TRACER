@@ -113,7 +113,8 @@ Color World::refracted_color(const Computations& comps,int remaining) {
     return color * material.transparency;
 }
 
-// NEW: Implementing shading... We check if pt is a shadow or not, then pass it to process lighting
+//Implementing shading... We check if pt is a shadow or not, then pass it to process lighting
+// NEW CODE REVIEW: we are adding the refracted color contribution
 Color World::shade_hit(const Computations& comps, int remaining) {
     if (lighting == nullptr) {
         throw std::runtime_error("World has no lighting configured."); // Commented out, as lighting starts of null to get configured 
@@ -133,9 +134,10 @@ Color World::shade_hit(const Computations& comps, int remaining) {
     );
 
     Color reflected = reflected_color(comps, remaining); 
+    Color refracted = refracted_color(comps, remaining);
 
-    return surface + reflected; 
-
+    // added the refracted 
+    return surface + reflected + refracted; 
 }
 
 
@@ -171,8 +173,10 @@ Color World::Color_at(const Ray& ray, int remaining) {
     }
         */ 
 
-    // Dereference the pointer safely now that we verified it exists
-    Computations comp = prepareComputations(*intersection, ray);
+    
+    
+    // the complete intersection list is what allows your nested-object code to calculate the correct n1 and n2
+    Computations comp = prepareComputations(*intersection, ray, intersections);
 
     return shade_hit(comp, remaining);
 }
