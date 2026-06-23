@@ -1,6 +1,7 @@
 #include "World.h"
 #include "scene/LightShadeVector.h"
 #include <stdexcept>
+#include <cmath>
 
 // Default World constructor 
 
@@ -66,6 +67,50 @@ Color World::reflected_color(const Computations& comps, int remaining) {
     Color color = Color_at(reflect_ray, remaining - 1); 
 
     return color * comps.object->getMaterial().reflective; 
+}
+
+/*CODE REVIEW; refracted_color() calculates the color contribution from light passing through a transparent object */
+
+// NEW: calculate the color contributed by a ray passing through a transparent object
+Color World::refracted_color(const Computations& comps,int remaining) {
+    const Material& material = comps.object->getMaterial();
+
+    // stop recursion or skip completely opaque materials
+    if (remaining <= 0 || material.transparency <= 0.0) {
+        return Color{0, 0, 0};
+    }
+
+    // Snell's law.. ratio of the two refractive indices
+    const double nRatio = comps.n1 / comps.n2;
+
+    // Angle between the eye vector and surface normal
+    const double cosI =
+        CalculateDotProd(comps.eyev, comps.normalv);
+
+    // Calculate the squared sine of the transmitted angle
+    const double sin2T =
+        nRatio * nRatio * (1.0 - cosI * cosI);
+
+    // Total internal reflection means no refracted ray exists
+    if (sin2T > 1.0) {
+        return Color{0, 0, 0};
+    }
+
+    const double cosT = std::sqrt(1.0 - sin2T);
+
+    // implemented to calculate the direction of the refracted ray
+    const vector<double> direction =
+        comps.normalv * (nRatio * cosI - cosT)
+        - comps.eyev * nRatio;
+
+    // underPt begins slightly beneath the surface so the ray
+    // does not immediately intersect the same object again
+    Ray refractRay(comps.underPt, direction);
+
+    const Color color =
+        Color_at(refractRay, remaining - 1);
+
+    return color * material.transparency;
 }
 
 // NEW: Implementing shading... We check if pt is a shadow or not, then pass it to process lighting
