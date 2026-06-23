@@ -3,6 +3,7 @@
 #include <cmath>
 #include <fstream>
 #include <memory>
+#include <utility>
 #include "geometry/Intersection.h"
 #include "geometry/Ray.h"
 #include "geometry/Sphere.h"
@@ -1212,4 +1213,108 @@ void transparencyMaterialTest() {
     cout << "Glass material test: "
          << (glassPass ? "PASS" : "FAIL")
          << endl;
+}
+
+void refractiveIndicesTest() {
+    Matrix matrix;
+
+    // Sphere A: large outer glass sphere
+    Sphere sphereA;
+    sphereA.setTransform(matrix.scale(2, 2, 2));
+    sphereA.setTransparency(1.0);
+    sphereA.setRefractiveIndex(1.5);
+
+    // Sphere B: shifted slightly backward
+    Sphere sphereB;
+    sphereB.setTransform(matrix.translation(0, 0, -0.25));
+    sphereB.setTransparency(1.0);
+    sphereB.setRefractiveIndex(2.0);
+
+    // Sphere C: shifted slightly forward
+    Sphere sphereC;
+    sphereC.setTransform(matrix.translation(0, 0, 0.25));
+    sphereC.setTransparency(1.0);
+    sphereC.setRefractiveIndex(2.5);
+
+    // Ray travels forward through all three spheres
+    Ray ray(
+        {0, 0, -4, 1},
+        {0, 0, 1, 0}
+    );
+
+    Intersections intersections;
+
+    intersections.addIntersection(
+        Intersection(2.0, &sphereA)
+    );
+
+    intersections.addIntersection(
+        Intersection(2.75, &sphereB)
+    );
+
+    intersections.addIntersection(
+        Intersection(3.25, &sphereC)
+    );
+
+    intersections.addIntersection(
+        Intersection(4.75, &sphereB)
+    );
+
+    intersections.addIntersection(
+        Intersection(5.25, &sphereC)
+    );
+
+    intersections.addIntersection(
+        Intersection(6.0, &sphereA)
+    );
+
+    intersections.Sort();
+
+    // Expected n1 and n2 for each intersection
+    const vector<pair<double, double>> expected = {
+        {1.0, 1.5},
+        {1.5, 2.0},
+        {2.0, 2.5},
+        {2.5, 2.5},
+        {2.5, 1.5},
+        {1.5, 1.0}
+    };
+
+    const vector<Intersection>& allIntersections =
+        intersections.getIntersections();
+
+    bool passed = true;
+
+    for (size_t i = 0; i < allIntersections.size(); i++) {
+        Computations comps = prepareComputations(
+            allIntersections[i],
+            ray,
+            intersections
+        );
+
+        bool n1Correct =
+            almostEqual(comps.n1, expected[i].first);
+
+        bool n2Correct =
+            almostEqual(comps.n2, expected[i].second);
+
+        if (!n1Correct || !n2Correct) {
+            passed = false;
+
+            cout << "Intersection " << i
+                 << " FAILED: expected n1="
+                 << expected[i].first
+                 << ", n2="
+                 << expected[i].second
+                 << " but received n1="
+                 << comps.n1
+                 << ", n2="
+                 << comps.n2
+                 << "\n";
+        }
+    }
+
+    cout << "Nested refractive indices test: "
+         << (passed ? "PASS" : "FAIL")
+         << "\n";
 }

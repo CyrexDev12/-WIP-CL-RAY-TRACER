@@ -49,5 +49,6 @@ void PatternRenderTest(); // Passed
 */
 void reflectionVectorPreComputeTest(); // Passed 
 void transparencyMaterialTest();
+void refractiveIndicesTest();
 
 #endif

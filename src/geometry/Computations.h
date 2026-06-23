@@ -21,7 +21,8 @@ struct Computations {
     vector<double> eyev; 
     vector<double> normalv; 
     vector<double> reflectv; // Reflection vector
-
+    double n1{1.0};
+    double n2{1.0};
 
     bool inside; 
 
@@ -29,7 +30,8 @@ struct Computations {
 };
 
 
-Computations prepareComputations(const Intersection& Intersection, Ray ray);
+Computations prepareComputations(const Intersection& Intersection, const Ray& ray);
+Computations prepareComputations(const Intersection& intersection, const Ray& ray, const Intersections& intersections);
 
 
 

@@ -1,9 +1,25 @@
 #include "geometry/Computations.h"
 #include "geometry/Shape.h"
 #include "scene/LightShadeVector.h"
+#include <algorithm>
+#include <cmath>
 
 
-Computations prepareComputations(const Intersection& intersection, Ray ray) {
+
+
+namespace {
+bool sameIntersection(
+    const Intersection& first,
+    const Intersection& second
+) {
+    const double EPSILON = 1e-5;
+
+    return first.getObject() == second.getObject() &&
+           std::fabs(first.getT() - second.getT()) < EPSILON;
+}
+}
+
+Computations prepareComputations(const Intersection& intersection, const Ray& ray, const Intersections& intersections) {
     Computations comps;
 
     comps.t = intersection.getT();
@@ -44,7 +60,62 @@ Computations prepareComputations(const Intersection& intersection, Ray ray) {
     // Compute reflectv by reflecting the ray's direction vector around the objects normal vector 
     comps.reflectv = reflect(comps.normalv, ray.direction); 
 
+// Track which transparent objects the ray is currently inside.
+vector<const Shape*> containers;
+
+for (const Intersection& current :
+     intersections.getIntersections()) {
+
+    bool isCurrentIntersection =
+        sameIntersection(current, intersection);
+
+    // n1 is the refractive index of the material being exited.
+    if (isCurrentIntersection) {
+        comps.n1 = containers.empty()
+            ? 1.0
+            : containers.back()
+                  ->getMaterial()
+                  .refractiveIndex;
+    }
+
+    const Shape* currentObject = current.getObject();
+
+    auto found = std::find(
+        containers.begin(),
+        containers.end(),
+        currentObject
+    );
+
+    if (found != containers.end()) {
+        containers.erase(found);
+    } else {
+        containers.push_back(currentObject);
+    }
+
+    // n2 is the refractive index of the material being entered.
+    if (isCurrentIntersection) {
+        comps.n2 = containers.empty()
+            ? 1.0
+            : containers.back()
+                  ->getMaterial()
+                  .refractiveIndex;
+
+        break;
+    }
+}
+
     return comps;
+}
+
+Computations prepareComputations(const Intersection& intersection,const Ray& ray) {
+    Intersections intersections;
+    intersections.addIntersection(intersection);
+
+    return prepareComputations(
+        intersection,
+        ray,
+        intersections
+    );
 }
 
 
@@ -76,12 +147,16 @@ void Computations::print() const {
     for (double value : reflectv) {
         cout << value << " ";
     }
+    cout << "\n";
     
     cout << "underPt: ";
     for (double value : underPt) {
         cout << value << " ";
     }
     cout << "\n";
+
+    cout << "n1: " << n1 << "\n";
+    cout << "n2: " << n2 << "\n";
     
     cout << "inside: " << (inside ? "true" : "false") << "\n";
 

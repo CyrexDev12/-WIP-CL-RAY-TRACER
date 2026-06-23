@@ -25,7 +25,7 @@ struct Ray {
     Ray(vector<double> org, vector<double> dir) : origin(org), direction(dir) {}
 
     // Compute the point at the given distance t along the ray
-    vector<double> position(double t);
+    vector<double> position(double t) const;
     Ray transform(Matrix m);
 
     // Debug function
