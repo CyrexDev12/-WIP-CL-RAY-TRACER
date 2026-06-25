@@ -1,5 +1,4 @@
 #include <iostream>
-using namespace std; 
 #include <vector>
 #include <string> 
 #include <sstream>
@@ -11,13 +10,15 @@ using namespace std;
 #include "geometry/Intersection.h"
 
 
-int main() {
+using namespace std; 
 
+
+int main() {
    
 reflectionVectorPreComputeTest();
 transparencyMaterialTest();
 refractiveIndicesTest();
-  
+refractedColorTests();
 
    return 0; 
 };

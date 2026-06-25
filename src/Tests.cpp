@@ -20,7 +20,7 @@
 using namespace std; 
 
 
-
+// helper function to compare two floating-point numbers for approximate equality
 bool almostEqual(double a, double b) {
     return fabs(a - b) < 0.00001;
 }
@@ -34,6 +34,15 @@ bool tupleEqual(const vector<double>& a, const vector<double>& b) {
     }
 
     return true;
+}
+
+bool colorEqual(
+    const Color& first,
+    const Color& second
+) {
+    return almostEqual(first.r, second.r) &&
+           almostEqual(first.g, second.g) &&
+           almostEqual(first.b, second.b);
 }
 
 /*
@@ -1317,4 +1326,186 @@ void refractiveIndicesTest() {
     cout << "Nested refractive indices test: "
          << (passed ? "PASS" : "FAIL")
          << "\n";
+}
+
+
+void refractedColorTests() {
+    const Color black{0, 0, 0};
+
+    PointLight light(
+        {-10, 10, -10, 1},
+        Color{1, 1, 1}
+    );
+
+    Lighting lighting(light);
+
+    // ---------------------------------------------------------
+    // Test 1: An opaque material should not refract any color
+    // ---------------------------------------------------------
+    {
+        World world(lighting);
+
+        Sphere sphere;
+
+        Ray ray(
+            {0, 0, -5, 1},
+            {0, 0, 1, 0}
+        );
+
+        Intersection intersection(4.0, &sphere);
+
+        Computations comps =
+            prepareComputations(intersection, ray);
+
+        Color result =
+            world.refracted_color(comps, 5);
+
+        cout << "Opaque material refracted color test: "
+             << (colorEqual(result, black) ? "PASS" : "FAIL")
+             << "\n";
+    }
+
+    // ---------------------------------------------------------
+    // Test 2: Refraction should stop when recursion reaches zero
+    // ---------------------------------------------------------
+    {
+        World world(lighting);
+
+        Sphere glassSphere;
+        glassSphere.setTransparency(1.0);
+        glassSphere.setRefractiveIndex(1.5);
+
+        Ray ray(
+            {0, 0, -5, 1},
+            {0, 0, 1, 0}
+        );
+
+        Intersection intersection(4.0, &glassSphere);
+
+        Computations comps =
+            prepareComputations(intersection, ray);
+
+        Color result =
+            world.refracted_color(comps, 0);
+
+        cout << "Refraction recursion limit test: "
+             << (colorEqual(result, black) ? "PASS" : "FAIL")
+             << "\n";
+    }
+
+    // ---------------------------------------------------------
+    // Test 3: Total internal reflection should return black
+    // ---------------------------------------------------------
+    {
+        World world(lighting);
+
+        Sphere glassSphere;
+        glassSphere.setTransparency(1.0);
+        glassSphere.setRefractiveIndex(1.5);
+
+        Ray ray(
+            {0, 0, sqrt(2) / 2, 1},
+            {0, 1, 0, 0}
+        );
+
+        Intersections intersections;
+
+        intersections.addIntersection(
+            Intersection(-sqrt(2) / 2, &glassSphere)
+        );
+
+        intersections.addIntersection(
+            Intersection(sqrt(2) / 2, &glassSphere)
+        );
+
+        intersections.Sort();
+
+        const vector<Intersection>& all =
+            intersections.getIntersections();
+
+        Computations comps =
+            prepareComputations(
+                all[1],
+                ray,
+                intersections
+            );
+
+        Color result =
+            world.refracted_color(comps, 5);
+
+        cout << "Total internal reflection test: "
+             << (colorEqual(result, black) ? "PASS" : "FAIL")
+             << "\n";
+    }
+
+    // ---------------------------------------------------------
+    // Test 4: A transparent plane should reveal the color behind it
+    // ---------------------------------------------------------
+    {
+        World world(lighting);
+        Matrix matrix;
+
+        Plane* glassPlane = new Plane();
+        glassPlane->setTransparency(0.5);
+        glassPlane->setRefractiveIndex(1.5);
+
+        world.AddShape(glassPlane);
+
+        Sphere* coloredSphere = new Sphere();
+
+        coloredSphere->setTransform(
+            matrix.translation(0, -2, 0)
+        );
+
+        coloredSphere->setMaterialColor(
+            Color{0.2, 0.4, 0.6}
+        );
+
+        // Make the sphere's resulting color predictable
+        coloredSphere->setAmbient(1.0);
+        coloredSphere->setDiffuse(0.0);
+        coloredSphere->setSpecular(0.0);
+
+        world.AddShape(coloredSphere);
+
+        Ray ray(
+            {0, 1, 0, 1},
+            {0, -1, 0, 0}
+        );
+
+        Intersection intersection(1.0, glassPlane);
+
+        Intersections intersections;
+        intersections.addIntersection(intersection);
+
+        Computations comps =
+            prepareComputations(
+                intersection,
+                ray,
+                intersections
+            );
+
+        Color result =
+            world.refracted_color(comps, 5);
+
+        // Sphere color multiplied by plane transparency:
+        // {0.2, 0.4, 0.6} * 0.5
+        Color expected{0.1, 0.2, 0.3};
+
+        cout << "Refracted color through surface test: "
+             << (colorEqual(result, expected) ? "PASS" : "FAIL")
+             << "\n";
+
+        if (!colorEqual(result, expected)) {
+            cout << "Expected: "
+                 << expected.r << " "
+                 << expected.g << " "
+                 << expected.b << "\n";
+
+            cout << "Received: "
+                 << result.r << " "
+                 << result.g << " "
+                 << result.b << "\n";
+        }
+    }
 }
