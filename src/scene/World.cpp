@@ -1,6 +1,7 @@
 #include "World.h"
 #include "scene/LightShadeVector.h"
 #include <stdexcept>
+#include <cmath>
 
 // Default World constructor 
 
@@ -63,12 +64,57 @@ Color World::reflected_color(const Computations& comps, int remaining) {
     }
 
     Ray reflect_ray(comps.overPt, comps.reflectv); 
-    Color color = Color_at(reflect_ray, remaining); 
+    Color color = Color_at(reflect_ray, remaining - 1); 
 
     return color * comps.object->getMaterial().reflective; 
 }
 
-// NEW: Implementing shading... We check if pt is a shadow or not, then pass it to process lighting
+/*CODE REVIEW; refracted_color() calculates the color contribution from light passing through a transparent object */
+
+// NEW: calculate the color contributed by a ray passing through a transparent object
+Color World::refracted_color(const Computations& comps,int remaining) {
+    const Material& material = comps.object->getMaterial();
+
+    // stop recursion or skip completely opaque materials
+    if (remaining <= 0 || material.transparency <= 0.0) {
+        return Color{0, 0, 0};
+    }
+
+    // Snell's law.. ratio of the two refractive indices
+    const double nRatio = comps.n1 / comps.n2;
+
+    // Angle between the eye vector and surface normal
+    const double cosI =
+        CalculateDotProd(comps.eyev, comps.normalv);
+
+    // Calculate the squared sine of the transmitted angle
+    const double sin2T =
+        nRatio * nRatio * (1.0 - cosI * cosI);
+
+    // Total internal reflection means no refracted ray exists
+    if (sin2T > 1.0) {
+        return Color{0, 0, 0};
+    }
+
+    const double cosT = std::sqrt(1.0 - sin2T);
+
+    // implemented to calculate the direction of the refracted ray
+    const vector<double> direction =
+        comps.normalv * (nRatio * cosI - cosT)
+        - comps.eyev * nRatio;
+
+    // underPt begins slightly beneath the surface so the ray
+    // does not immediately intersect the same object again
+    Ray refractRay(comps.underPt, direction);
+
+    const Color color =
+        Color_at(refractRay, remaining - 1);
+
+    return color * material.transparency;
+}
+
+//Implementing shading... We check if pt is a shadow or not, then pass it to process lighting
+// NEW CODE REVIEW: we are adding the refracted color contribution
 Color World::shade_hit(const Computations& comps, int remaining) {
     if (lighting == nullptr) {
         throw std::runtime_error("World has no lighting configured."); // Commented out, as lighting starts of null to get configured 
@@ -88,9 +134,10 @@ Color World::shade_hit(const Computations& comps, int remaining) {
     );
 
     Color reflected = reflected_color(comps, remaining); 
+    Color refracted = refracted_color(comps, remaining);
 
-    return surface + reflected; 
-
+    // added the refracted 
+    return surface + reflected + refracted; 
 }
 
 
@@ -126,8 +173,10 @@ Color World::Color_at(const Ray& ray, int remaining) {
     }
         */ 
 
-    // Dereference the pointer safely now that we verified it exists
-    Computations comp = prepareComputations(*intersection, ray);
+    
+    
+    // the complete intersection list is what allows your nested-object code to calculate the correct n1 and n2
+    Computations comp = prepareComputations(*intersection, ray, intersections);
 
-    return shade_hit(comp, 0);
+    return shade_hit(comp, remaining);
 }

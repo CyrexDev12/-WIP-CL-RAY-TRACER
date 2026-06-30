@@ -48,6 +48,8 @@ void PlaneRenderTest(); // Passed
 void PatternRenderTest(); // Passed
 */
 void reflectionVectorPreComputeTest(); // Passed 
-
+void transparencyMaterialTest();
+void refractiveIndicesTest();
+void refractedColorTests();
 
 #endif

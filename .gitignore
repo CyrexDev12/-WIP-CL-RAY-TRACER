@@ -1,0 +1,7 @@
+# Compiled build artifacts
+build/
+raytracer.exe
+
+# C/C++ generated files
+*.o
+*.d
