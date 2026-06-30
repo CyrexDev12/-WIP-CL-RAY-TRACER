@@ -7,10 +7,22 @@ Clean Command:
 mingw32-make clean 
 
 
+-------------------------------------------------------------------------------------------------------------
 
 Project TODOS: 
 
 This project is currently all entirely based off on the CPU. We plan to use CUDA using NVIDA technology. 
+
+
+1. Finish CPU ray tracer.
+- Cubes, Cylinders, Groups, Triangle, CSG
+2. Add CPU multithreading.
+    - Compare Times for more complex renders (with multi threading vs without)
+3. Build CUDA mini-renderer with spheres and planes.
+4. Compare render times.
+5. Add reflection/refraction/Schlick to the GPU version.
+
+-------------------------------------------------------------------------------------------------------------
 
 - Tuple: A point like (-4, 4, 3)
 (x,y,z,w)
