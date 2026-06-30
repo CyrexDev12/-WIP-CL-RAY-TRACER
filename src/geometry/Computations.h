@@ -30,6 +30,8 @@ struct Computations {
 };
 
 
+// Returns a value from 0 to 1, this number returned is called the reflectance and represents what fraction of the light is reflected
+double schlick(const Computations& comps);
 Computations prepareComputations(const Intersection& Intersection, const Ray& ray);
 Computations prepareComputations(const Intersection& intersection, const Ray& ray, const Intersections& intersections);
 

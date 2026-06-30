@@ -7,6 +7,11 @@ Clean Command:
 mingw32-make clean 
 
 
+
+Project TODOS: 
+
+This project is currently all entirely based off on the CPU. We plan to use CUDA using NVIDA technology. 
+
 - Tuple: A point like (-4, 4, 3)
 (x,y,z,w)
 For a point in 3D space, you typically use w = 1 → (x, y, z, 1)

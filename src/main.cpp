@@ -15,10 +15,8 @@ using namespace std;
 
 int main() {
    
-reflectionVectorPreComputeTest();
-transparencyMaterialTest();
-refractiveIndicesTest();
-refractedColorTests();
+   ReflectionRefractionSceneTest(); 
+
 
    return 0; 
 };

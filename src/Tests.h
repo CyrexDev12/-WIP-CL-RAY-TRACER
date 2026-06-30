@@ -46,10 +46,12 @@ void NormalOnTransformedSphereTest();  // Passed
 void MultiSpherereRender();  // Passed
 void PlaneRenderTest(); // Passed 
 void PatternRenderTest(); // Passed
-*/
 void reflectionVectorPreComputeTest(); // Passed 
-void transparencyMaterialTest();
-void refractiveIndicesTest();
-void refractedColorTests();
+void transparencyMaterialTest(); // Passed 
+void refractiveIndicesTest(); // Passed 
+void refractedColorTests(); // Passed 
+void SchlickApproximationTest(); // Passed
+*/
+void ReflectionRefractionSceneTest();
 
 #endif

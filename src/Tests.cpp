@@ -1169,7 +1169,6 @@ void PatternRenderTest() {
 }
 
 
-*/
 
 // Pre computing reflection vector to test 
 // Reflection vector should printout and be (0, sqrt(2)/2, sqrt(2)/2, 1)
@@ -1508,4 +1507,195 @@ void refractedColorTests() {
                  << result.b << "\n";
         }
     }
+}
+
+
+
+
+
+void SchlickApproximationTest() {
+    Shape* glassSphere = new Sphere;
+
+    glassSphere->setTransparency(1.0);
+    glassSphere->setRefractiveIndex(1.5);
+
+    Ray ray(
+        {0, 0, sqrt(2) / 2, 1},
+        {0, 1, 0, 0}
+    );
+
+    Intersection intA(-sqrt(2) / 2, glassSphere);
+    Intersection intB(sqrt(2) / 2, glassSphere);
+
+    Intersections ints;
+    ints.addIntersection(intA);
+    ints.addIntersection(intB);
+
+    Computations comps = prepareComputations(intB, ray, ints);
+
+    double reflectanceResult = schlick(comps);
+
+    cout << "Result: " << reflectanceResult << endl;
+
+    delete glassSphere;
+}
+
+*/
+
+
+void ReflectionRefractionSceneTest() {
+    std::cout << "[DEBUG] Starting ReflectionRefractionSceneTest..." << std::endl;
+
+    Matrix m;
+
+    PointLight light(
+        {-10.0, 10.0, -10.0, 1.0},
+        Color{1.0, 1.0, 1.0}
+    );
+
+    Lighting lighting(light);
+    World* world = new World(lighting);
+
+    // ---------------------------------------------------------
+    // 1. Reflective + transparent floor
+    // ---------------------------------------------------------
+    Shape* floor = new Plane();
+
+    floor->setMaterialColor(Color{1.0, 1.0, 1.0});
+    floor->setAmbient(0.05);
+    floor->setDiffuse(0.4);
+    floor->setSpecular(0.2);
+    floor->setShininess(100);
+
+    floor->setReflective(0.5);
+    floor->setTransparency(0.5);
+    floor->setRefractiveIndex(1.5);
+
+    world->AddShape(floor);
+
+    // ---------------------------------------------------------
+    // 2. Red sphere below the floor
+    // This should be visible through the transparent floor.
+    // ---------------------------------------------------------
+    Shape* belowSphere = new Sphere();
+
+    Matrix belowSphereTrans = m.translation(0.0, -1.5, 0.0);
+    Matrix belowSphereScale = m.scale(0.6, 0.6, 0.6);
+    Matrix belowSphereTransform = belowSphereTrans.multiplyMatrix(belowSphereScale);
+
+    belowSphere->setTransform(belowSphereTransform);
+
+    belowSphere->setMaterialColor(Color{1.0, 0.0, 0.0});
+    belowSphere->setAmbient(0.5);
+    belowSphere->setDiffuse(0.4);
+    belowSphere->setSpecular(0.0);
+
+    world->AddShape(belowSphere);
+
+    // ---------------------------------------------------------
+    // 3. Blue glass sphere above the floor
+    // This tests curved-surface refraction.
+    // ---------------------------------------------------------
+    Shape* glassSphere = new Sphere();
+
+    Matrix glassSphereTrans = m.translation(-0.9, 1.0, 0.5);
+    Matrix glassSphereScale = m.scale(1.0, 1.0, 1.0);
+    Matrix glassSphereTransform = glassSphereTrans.multiplyMatrix(glassSphereScale);
+
+    glassSphere->setTransform(glassSphereTransform);
+
+    glassSphere->setMaterialColor(Color{0.7, 0.9, 1.0});
+    glassSphere->setAmbient(0.0);
+    glassSphere->setDiffuse(0.2);
+    glassSphere->setSpecular(0.9);
+    glassSphere->setShininess(200);
+    glassSphere->setReflective(0.1);
+    glassSphere->setTransparency(0.9);
+    glassSphere->setRefractiveIndex(1.5);
+
+    world->AddShape(glassSphere);
+
+    // ---------------------------------------------------------
+    // 4. Mirror-like sphere above the floor
+    // This should strongly reflect the scene.
+    // ---------------------------------------------------------
+    Shape* mirrorSphere = new Sphere();
+
+    Matrix mirrorSphereTrans = m.translation(1.1, 0.7, -0.6);
+    Matrix mirrorSphereScale = m.scale(0.7, 0.7, 0.7);
+    Matrix mirrorSphereTransform = mirrorSphereTrans.multiplyMatrix(mirrorSphereScale);
+
+    mirrorSphere->setTransform(mirrorSphereTransform);
+
+    mirrorSphere->setMaterialColor(Color{0.8, 0.8, 0.8});
+    mirrorSphere->setAmbient(0.0);
+    mirrorSphere->setDiffuse(0.1);
+    mirrorSphere->setSpecular(1.0);
+    mirrorSphere->setShininess(200);
+    mirrorSphere->setReflective(0.9);
+
+    world->AddShape(mirrorSphere);
+
+    // ---------------------------------------------------------
+    // 5. Back wall
+    // This gives reflections/refractions something visible.
+    // ---------------------------------------------------------
+    Shape* backWall = new Plane();
+
+    Matrix wallTrans = m.translation(0.0, 0.0, 5.0);
+    Matrix wallRotX = m.rotateX(M_PI / 2);
+    Matrix wallTransform = wallTrans.multiplyMatrix(wallRotX);
+
+    backWall->setTransform(wallTransform);
+
+    backWall->setMaterialColor(Color{0.8, 0.8, 0.9});
+    backWall->setAmbient(0.1);
+    backWall->setDiffuse(0.7);
+    backWall->setSpecular(0.0);
+
+    world->AddShape(backWall);
+
+    // ---------------------------------------------------------
+    // 6. Small green sphere in the background
+    // This makes mirror reflection easier to verify.
+    // ---------------------------------------------------------
+    Shape* greenSphere = new Sphere();
+
+    Matrix greenSphereTrans = m.translation(0.0, 0.5, 3.0);
+    Matrix greenSphereScale = m.scale(0.5, 0.5, 0.5);
+    Matrix greenSphereTransform = greenSphereTrans.multiplyMatrix(greenSphereScale);
+
+    greenSphere->setTransform(greenSphereTransform);
+
+    greenSphere->setMaterialColor(Color{0.0, 1.0, 0.2});
+    greenSphere->setAmbient(0.1);
+    greenSphere->setDiffuse(0.7);
+    greenSphere->setSpecular(0.3);
+    greenSphere->setShininess(100);
+
+    world->AddShape(greenSphere);
+
+    // ---------------------------------------------------------
+    // 7. Camera
+    // ---------------------------------------------------------
+    Camera cam(800, 400, M_PI / 3);
+
+    std::vector<double> from = {0.0, 2.0, -6.0, 1.0};
+    std::vector<double> to   = {0.0, 0.5,  0.0, 1.0};
+    std::vector<double> up   = {0.0, 1.0,  0.0, 0.0};
+
+    Matrix viewTrans = m.viewTransformation(from, to, up);
+    cam.setTransformM(viewTrans);
+
+    std::cout << "[DEBUG] Rendering reflection/refraction scene..." << std::endl;
+
+    Canvas canvas = render(cam, *world);
+
+    std::cout << "[DEBUG] Render finished. Outputting canvas..." << std::endl;
+
+    canvas.canvasOut();
+
+    delete world;
+
+    std::cout << "[DEBUG] ReflectionRefractionSceneTest completed." << std::endl;
 }

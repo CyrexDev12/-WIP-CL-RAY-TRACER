@@ -19,6 +19,33 @@ bool sameIntersection(
 }
 }
 
+
+ double schlick(const Computations& comps) {
+    // Find the cosine of the angle between the eye and normal vectors
+    double cos = CalculateDotProd(comps.eyev, comps.normalv);
+
+    // Total internal reflection can only occur if n1 > n2
+    if (comps.n1 > comps.n2) {
+        double n = comps.n1 / comps.n2;
+        double sin2_t = n * n * (1.0 - cos * cos);
+
+        // Total internal reflection
+        if (sin2_t > 1.0) {
+            return 1.0;
+        }
+
+        // Compute cosine of theta_t using trig identity
+        double cos_t = sqrt(1.0 - sin2_t);
+
+        // Use cos(theta_t) instead
+        cos = cos_t;
+    }
+
+    double r0 = pow((comps.n1 - comps.n2) / (comps.n1 + comps.n2), 2);
+
+    return r0 + (1.0 - r0) * pow(1.0 - cos, 5);
+}
+
 Computations prepareComputations(const Intersection& intersection, const Ray& ray, const Intersections& intersections) {
     Computations comps;
 
