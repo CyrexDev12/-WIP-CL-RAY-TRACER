@@ -51,7 +51,9 @@ void transparencyMaterialTest(); // Passed
 void refractiveIndicesTest(); // Passed 
 void refractedColorTests(); // Passed 
 void SchlickApproximationTest(); // Passed
-*/
 void ReflectionRefractionSceneTest();
+*/
+void CubeCylinderSceneTest(); 
+
 
 #endif

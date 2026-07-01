@@ -16,6 +16,8 @@
 #include "scene/Camera.h"
 #include "geometry/Plane.h"
 #include "scene/Pattern.h"
+#include "geometry/Cube.h"
+#include "geometry/Cylinder.h"
 
 using namespace std; 
 
@@ -1540,7 +1542,7 @@ void SchlickApproximationTest() {
     delete glassSphere;
 }
 
-*/
+
 
 
 void ReflectionRefractionSceneTest() {
@@ -1698,4 +1700,136 @@ void ReflectionRefractionSceneTest() {
     delete world;
 
     std::cout << "[DEBUG] ReflectionRefractionSceneTest completed." << std::endl;
+}
+
+*/
+
+
+
+void CubeCylinderSceneTest() {
+    std::cout << "[DEBUG] Starting CubeCylinderSceneTest..." << std::endl;
+
+    Matrix m;
+
+    PointLight light(
+        {-10.0, 10.0, -10.0, 1.0},
+        Color{1.0, 1.0, 1.0}
+    );
+
+    Lighting lighting(light);
+    World* world = new World(lighting);
+
+    // ---------------------------------------------------------
+    // 1. Reflective floor
+    // ---------------------------------------------------------
+    Shape* floor = new Plane();
+
+    floor->setMaterialColor(Color{1.0, 1.0, 1.0});
+    floor->setAmbient(0.05);
+    floor->setDiffuse(0.6);
+    floor->setSpecular(0.2);
+    floor->setShininess(100);
+    floor->setReflective(0.4);
+
+    world->AddShape(floor);
+
+    // ---------------------------------------------------------
+    // 2. Glass Cylinder (tests refraction + caps)
+    // ---------------------------------------------------------
+    Cylinder* cylinder = new Cylinder();
+
+    cylinder->setMin(0.0);
+    cylinder->setMax(1.5);
+    cylinder->setClosed(true);
+
+    Matrix cylTrans = m.translation(-1.0, 0.0, 1.0);
+    Matrix cylScale = m.scale(0.5, 1.0, 0.5);
+    cylinder->setTransform(cylTrans.multiplyMatrix(cylScale));
+
+    cylinder->setMaterialColor(Color{0.6, 0.8, 1.0});
+    cylinder->setAmbient(0.0);
+    cylinder->setDiffuse(0.2);
+    cylinder->setSpecular(0.9);
+    cylinder->setShininess(200);
+
+    cylinder->setReflective(0.2);
+    cylinder->setTransparency(0.8);
+    cylinder->setRefractiveIndex(1.5);
+
+    world->AddShape(cylinder);
+
+    // ---------------------------------------------------------
+    // 3. Reflective Cube (tests hard edges + normals)
+    // ---------------------------------------------------------
+    Shape* cube = new Cube();
+
+    Matrix cubeTrans = m.translation(1.2, 0.5, -0.5);
+    Matrix cubeScale = m.scale(0.7, 0.7, 0.7);
+    cube->setTransform(cubeTrans.multiplyMatrix(cubeScale));
+
+    cube->setMaterialColor(Color{0.9, 0.3, 0.3});
+    cube->setAmbient(0.1);
+    cube->setDiffuse(0.5);
+    cube->setSpecular(0.8);
+    cube->setShininess(150);
+    cube->setReflective(0.6);
+
+    world->AddShape(cube);
+
+    // ---------------------------------------------------------
+    // 4. Back Wall
+    // ---------------------------------------------------------
+    Shape* backWall = new Plane();
+
+    Matrix wallTrans = m.translation(0.0, 0.0, 5.0);
+    Matrix wallRotX = m.rotateX(M_PI / 2);
+    backWall->setTransform(wallTrans.multiplyMatrix(wallRotX));
+
+    backWall->setMaterialColor(Color{0.8, 0.8, 0.9});
+    backWall->setAmbient(0.1);
+    backWall->setDiffuse(0.7);
+    backWall->setSpecular(0.0);
+
+    world->AddShape(backWall);
+
+    // ---------------------------------------------------------
+    // 5. Small helper sphere (helps reflections)
+    // ---------------------------------------------------------
+    Shape* sphere = new Sphere();
+
+    Matrix sphereTrans = m.translation(0.0, 0.5, 2.5);
+    Matrix sphereScale = m.scale(0.5, 0.5, 0.5);
+    sphere->setTransform(sphereTrans.multiplyMatrix(sphereScale));
+
+    sphere->setMaterialColor(Color{0.2, 1.0, 0.3});
+    sphere->setAmbient(0.1);
+    sphere->setDiffuse(0.7);
+    sphere->setSpecular(0.3);
+    sphere->setShininess(100);
+
+    world->AddShape(sphere);
+
+    // ---------------------------------------------------------
+    // 6. Camera
+    // ---------------------------------------------------------
+    Camera cam(800, 400, M_PI / 3);
+
+    std::vector<double> from = {0.0, 2.0, -6.0, 1.0};
+    std::vector<double> to   = {0.0, 0.7,  0.5, 1.0};
+    std::vector<double> up   = {0.0, 1.0,  0.0, 0.0};
+
+    Matrix viewTrans = m.viewTransformation(from, to, up);
+    cam.setTransformM(viewTrans);
+
+    std::cout << "[DEBUG] Rendering cube + cylinder scene..." << std::endl;
+
+    Canvas canvas = render(cam, *world);
+
+    std::cout << "[DEBUG] Render finished. Outputting canvas..." << std::endl;
+
+    canvas.canvasOut();
+
+    delete world;
+
+    std::cout << "[DEBUG] CubeCylinderSceneTest completed." << std::endl;
 }

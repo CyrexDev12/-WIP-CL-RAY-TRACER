@@ -15,7 +15,7 @@ using namespace std;
 
 int main() {
    
-   ReflectionRefractionSceneTest(); 
+   CubeCylinderSceneTest(); 
 
 
    return 0; 
