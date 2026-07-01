@@ -15,7 +15,7 @@ using namespace std;
 
 int main() {
    
-   CubeCylinderSceneTest(); 
+   RenderHexagonTest(); 
 
 
    return 0; 

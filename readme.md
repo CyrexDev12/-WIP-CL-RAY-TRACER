@@ -10,12 +10,18 @@ mingw32-make clean
 -------------------------------------------------------------------------------------------------------------
 
 Project TODOS: 
+Current Status: 
+
+implementing Hexagon, can properly render, however we need to add it so you can add materials and patterns with no issues. 
+
 
 This project is currently all entirely based off on the CPU. We plan to use CUDA using NVIDA technology. 
 
 
 1. Finish CPU ray tracer.
-- Cubes, Cylinders, Groups, Triangle, CSG
+Triangle, CSG
+
+
 2. Add CPU multithreading.
     - Compare Times for more complex renders (with multi threading vs without)
 3. Build CUDA mini-renderer with spheres and planes.
@@ -167,3 +173,4 @@ Then multiply the result by the reflective value. If reflective is set to someth
 
 Implement int remaining to color_at() reflectedColor() and shadeHit() to limit recursion calls 
 
+Groups are abstract shapes with no surface of their own. Taking their form instead from the shapes they contain. 

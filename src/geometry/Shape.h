@@ -9,6 +9,7 @@
 #include "math/Matrix.h" 
 #include "geometry/Intersection.h"
 #include <memory>
+#include "Bound.h" // Include the bound header for bounding box functionality
 
 // 1. FORWARD DECLARATION 
 class Pattern; 
@@ -18,6 +19,7 @@ protected:
     std::vector<double> position;
     Matrix transformMatrix; 
     Material material; 
+    Shape* parent{nullptr}; // Pointer to parent shape, default to nullptr
 
 public:
     virtual ~Shape() = default;
@@ -85,6 +87,16 @@ void setRefractiveIndex(double num) {
     void setMaterialPattern(shared_ptr<Pattern> pattern) {
         material.pattern = pattern; 
     }
+
+    Shape* getParent() const { return parent; }
+    void setParent(Shape* p) { parent = p; }
+
+    std::vector<double> world_to_object(const std::vector<double>& point) const;
+    std::vector<double> normal_to_world(const std::vector<double>& normal) const;
+
+
+
+
 };
 
 #endif

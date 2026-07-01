@@ -54,6 +54,6 @@ void SchlickApproximationTest(); // Passed
 void ReflectionRefractionSceneTest();
 */
 void CubeCylinderSceneTest(); 
-
+void RenderHexagonTest(); 
 
 #endif

@@ -18,6 +18,9 @@
 #include "scene/Pattern.h"
 #include "geometry/Cube.h"
 #include "geometry/Cylinder.h"
+#include "geometry/Hexagon.h"
+#include "geometry/Group.h"
+
 
 using namespace std; 
 
@@ -1702,9 +1705,6 @@ void ReflectionRefractionSceneTest() {
     std::cout << "[DEBUG] ReflectionRefractionSceneTest completed." << std::endl;
 }
 
-*/
-
-
 
 void CubeCylinderSceneTest() {
     std::cout << "[DEBUG] Starting CubeCylinderSceneTest..." << std::endl;
@@ -1832,4 +1832,97 @@ void CubeCylinderSceneTest() {
     delete world;
 
     std::cout << "[DEBUG] CubeCylinderSceneTest completed." << std::endl;
+}
+
+*/
+
+
+void RenderHexagonTest() {
+    std::cout << "[DEBUG] Starting RenderHexagonTest..." << std::endl;
+
+    Matrix m;
+
+    // ---------------------------------------------------------
+    // 1. Light
+    // ---------------------------------------------------------
+    PointLight light(
+        {-10.0, 10.0, -10.0, 1.0},
+        Color{1.0, 1.0, 1.0}
+    );
+
+    Lighting lighting(light);
+    World* world = new World(lighting);
+
+    // ---------------------------------------------------------
+    // 2. Floor
+    // ---------------------------------------------------------
+    Shape* floor = new Plane();
+
+    floor->setMaterialColor(Color{1.0, 1.0, 1.0});
+    floor->setAmbient(0.1);
+    floor->setDiffuse(0.7);
+    floor->setSpecular(0.0);
+
+    world->AddShape(floor);
+
+    // ---------------------------------------------------------
+    // 3. Hexagon (GROUP!)
+    // ---------------------------------------------------------
+    std::shared_ptr<Group> hex = create_hexagon();
+
+    // Position it nicely
+    Matrix hexTrans = m.translation(0.0, 1.0, 0.0);
+    Matrix hexScale = m.scale(1.5, 1.5, 1.5);
+    hex->setTransform(hexTrans.multiplyMatrix(hexScale));
+
+    // OPTIONAL: give all children materials (important for visibility)
+    for (auto& child : hex->get_children()) {
+        child->setMaterialColor(Color{0.2, 0.6, 1.0});
+        child->setAmbient(0.1);
+        child->setDiffuse(0.7);
+        child->setSpecular(0.3);
+        child->setShininess(100);
+    }
+
+    world->AddShape(hex.get()); // assuming your world stores raw pointers
+
+    // ---------------------------------------------------------
+    // 4. Back wall (for depth)
+    // ---------------------------------------------------------
+    Shape* backWall = new Plane();
+
+    Matrix wallTrans = m.translation(0.0, 0.0, 6.0);
+    Matrix wallRot = m.rotateX(M_PI / 2);
+    backWall->setTransform(wallTrans.multiplyMatrix(wallRot));
+
+    backWall->setMaterialColor(Color{0.8, 0.8, 0.9});
+    backWall->setAmbient(0.1);
+    backWall->setDiffuse(0.6);
+    backWall->setSpecular(0.0);
+
+    world->AddShape(backWall);
+
+    // ---------------------------------------------------------
+    // 5. Camera
+    // ---------------------------------------------------------
+    Camera cam(800, 400, M_PI / 3);
+
+    std::vector<double> from = {0.0, 2.0, -6.0, 1.0};
+    std::vector<double> to   = {0.0, 1.0,  0.0, 1.0};
+    std::vector<double> up   = {0.0, 1.0,  0.0, 0.0};
+
+    Matrix viewTrans = m.viewTransformation(from, to, up);
+    cam.setTransformM(viewTrans);
+
+    std::cout << "[DEBUG] Rendering hexagon scene..." << std::endl;
+
+    Canvas canvas = render(cam, *world);
+
+    std::cout << "[DEBUG] Render finished. Outputting canvas..." << std::endl;
+
+    canvas.canvasOut();
+
+    delete world;
+
+    std::cout << "[DEBUG] RenderHexagonTest completed." << std::endl;
 }
