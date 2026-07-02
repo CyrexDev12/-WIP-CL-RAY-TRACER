@@ -1,5 +1,7 @@
 #include "geometry/Plane.h"
 #include <cmath>
+#include <limits>
+
 
 // - Local Intersect: If the ray is parallel to the plane (ray.direction.y is close to 0), it misses completeley. Otherwise, t = -rayorigin.y  ray.direction.y 
 void Plane::intersect(Ray ray, Intersections& intersectionsList) {
@@ -21,4 +23,15 @@ void Plane::intersect(Ray ray, Intersections& intersectionsList) {
     intersectionsList.addIntersection(Intersection(t, this)); 
 
     return; 
+}
+
+
+
+bound Plane::local_bounds() const {
+    double inf = std::numeric_limits<double>::infinity();
+
+    return bound(
+        -inf, 0.0, -inf,
+         inf, 0.0,  inf
+    );
 }

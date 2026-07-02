@@ -56,49 +56,15 @@ bound Group::world_bounds() const {
 // Calculates the group's bounding box by combining the world bounds of all children
 bound Group::local_bounds() const {
     if (bounds_dirty) {
-        cached_bounds = bound(); // Resets to an empty, inverted box
-        
+        cached_bounds = bound();
+
         for (const auto& child : children) {
-            // 1. Check if the child is another Group object
-            auto childGroup = std::dynamic_pointer_cast<Group>(child);
-            
-            if (childGroup != nullptr) {
-                // If it's a group, it knows how to calculate its world bounds
-                cached_bounds.add_box(childGroup->world_bounds());
-            } 
-            else {
-                // 2. If it's a regular shape, handle its bounds manually.
-                // For a standard ray tracer where basic primitives are centered at (0,0,0) 
-                // with a radius/size of 1 unit in local space:
-                bound primitiveLocalBounds(-1.0, -1.0, -1.0, 1.0, 1.0, 1.0);
-                
-                // Transform those local primitive bounds into the Group's space
-                bound primitiveInGroupSpace;
-                auto transformMatrix = child->getTransform(); // Forward transform of the primitive
-
-                double corners[8][3] = {
-                    {primitiveLocalBounds.min_x, primitiveLocalBounds.min_y, primitiveLocalBounds.min_z},
-                    {primitiveLocalBounds.min_x, primitiveLocalBounds.min_y, primitiveLocalBounds.max_z},
-                    {primitiveLocalBounds.min_x, primitiveLocalBounds.max_y, primitiveLocalBounds.min_z},
-                    {primitiveLocalBounds.min_x, primitiveLocalBounds.max_y, primitiveLocalBounds.max_z},
-                    {primitiveLocalBounds.max_x, primitiveLocalBounds.min_y, primitiveLocalBounds.min_z},
-                    {primitiveLocalBounds.max_x, primitiveLocalBounds.min_y, primitiveLocalBounds.max_z},
-                    {primitiveLocalBounds.max_x, primitiveLocalBounds.max_y, primitiveLocalBounds.min_z},
-                    {primitiveLocalBounds.max_x, primitiveLocalBounds.max_y, primitiveLocalBounds.max_z}
-                };
-
-                for (int i = 0; i < 8; ++i) {
-                    std::vector<double> local_point = {corners[i][0], corners[i][1], corners[i][2], 1.0};
-                    std::vector<double> transformed_point = transformMatrix.multiplyTuple(local_point); 
-                    primitiveInGroupSpace.add_point(transformed_point[0], transformed_point[1], transformed_point[2]);
-                }
-
-                // Add the transformed primitive box to the group's local box
-                cached_bounds.add_box(primitiveInGroupSpace);
-            }
+            cached_bounds.add_box(child->parent_space_bounds());
         }
+
         bounds_dirty = false;
     }
+
     return cached_bounds;
 }
 

@@ -86,3 +86,11 @@ std::vector<double> Cube::normal_at(const std::vector<double>& worldPoint) const
 
     return worldNormal;
 }
+
+
+bound Cube::local_bounds() const {
+    return bound(
+        -1.0, -1.0, -1.0,
+         1.0,  1.0,  1.0
+    );
+}

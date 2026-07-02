@@ -24,8 +24,11 @@ protected:
 public:
     virtual ~Shape() = default;
 
+
+    // Virtual functions
     virtual void intersect(Ray ray, Intersections& intersectionsList) = 0;
     virtual std::vector<double> normal_at(const std::vector<double>& worldPoint) const = 0; // Fixed missing std::
+    virtual bound local_bounds() const = 0;
 
     // --- Common Getters & Setters ---
     Matrix getTransform() const { return transformMatrix; }
@@ -93,6 +96,8 @@ void setRefractiveIndex(double num) {
 
     std::vector<double> world_to_object(const std::vector<double>& point) const;
     std::vector<double> normal_to_world(const std::vector<double>& normal) const;
+
+    bound parent_space_bounds() const;
 
 
 

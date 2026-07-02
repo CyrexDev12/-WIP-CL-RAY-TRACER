@@ -23,3 +23,47 @@ std::vector<double> Shape::normal_to_world(const std::vector<double>& normal) co
     worldNormal = NormalizeTuple(worldNormal);
     return worldNormal;
 }
+
+
+bound Shape::parent_space_bounds() const {
+    bound local = this->local_bounds();
+
+    // Empty bounds check
+    if (local.min_x > local.max_x) {
+        return local;
+    }
+
+    bound result;
+
+    double corners[8][3] = {
+        {local.min_x, local.min_y, local.min_z},
+        {local.min_x, local.min_y, local.max_z},
+        {local.min_x, local.max_y, local.min_z},
+        {local.min_x, local.max_y, local.max_z},
+        {local.max_x, local.min_y, local.min_z},
+        {local.max_x, local.min_y, local.max_z},
+        {local.max_x, local.max_y, local.min_z},
+        {local.max_x, local.max_y, local.max_z}
+    };
+
+    Matrix transformMatrix = this->getTransform();
+
+    for (int i = 0; i < 8; ++i) {
+        std::vector<double> p = {
+            corners[i][0],
+            corners[i][1],
+            corners[i][2],
+            1.0
+        };
+
+        std::vector<double> transformed = transformMatrix.multiplyTuple(p);
+
+        result.add_point(
+            transformed[0],
+            transformed[1],
+            transformed[2]
+        );
+    }
+
+    return result;
+}

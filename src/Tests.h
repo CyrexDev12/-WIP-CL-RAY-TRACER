@@ -52,8 +52,9 @@ void refractiveIndicesTest(); // Passed
 void refractedColorTests(); // Passed 
 void SchlickApproximationTest(); // Passed
 void ReflectionRefractionSceneTest();
-*/
 void CubeCylinderSceneTest(); 
+*/
 void RenderHexagonTest(); 
+
 
 #endif

@@ -115,3 +115,8 @@ std::vector<double> Cylinder::normal_at(const std::vector<double>& worldPoint) c
 
     return worldNormal;
 }
+
+bound Cylinder::local_bounds() const {
+    return bound(-1.0, min, -1.0,
+                  1.0, max,  1.0);
+}

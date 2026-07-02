@@ -1836,6 +1836,22 @@ void CubeCylinderSceneTest() {
 
 */
 
+void ApplyMaterialRecursive(std::shared_ptr<Shape> shape) {
+    shape->setMaterialColor(Color{0.2, 0.6, 1.0});
+    shape->setAmbient(0.1);
+    shape->setDiffuse(0.7);
+    shape->setSpecular(0.3);
+    shape->setShininess(100);
+
+    Group* group = dynamic_cast<Group*>(shape.get());
+
+    if (group != nullptr) {
+        for (auto& child : group->get_children()) {
+            ApplyMaterialRecursive(child);
+        }
+    }
+}
+
 
 void RenderHexagonTest() {
     std::cout << "[DEBUG] Starting RenderHexagonTest..." << std::endl;
@@ -1846,7 +1862,7 @@ void RenderHexagonTest() {
     // 1. Light
     // ---------------------------------------------------------
     PointLight light(
-        {-10.0, 10.0, -10.0, 1.0},
+        {0.0, 10.0, -5.0, 1.0},
         Color{1.0, 1.0, 1.0}
     );
 
@@ -1854,67 +1870,32 @@ void RenderHexagonTest() {
     World* world = new World(lighting);
 
     // ---------------------------------------------------------
-    // 2. Floor
-    // ---------------------------------------------------------
-    Shape* floor = new Plane();
-
-    floor->setMaterialColor(Color{1.0, 1.0, 1.0});
-    floor->setAmbient(0.1);
-    floor->setDiffuse(0.7);
-    floor->setSpecular(0.0);
-
-    world->AddShape(floor);
-
-    // ---------------------------------------------------------
-    // 3. Hexagon (GROUP!)
+    // 2. Hexagon
     // ---------------------------------------------------------
     std::shared_ptr<Group> hex = create_hexagon();
 
-    // Position it nicely
-    Matrix hexTrans = m.translation(0.0, 1.0, 0.0);
+    // Keep it centered and flat on the XZ plane.
+    // The original hexagon construction already creates it around the Y axis.
     Matrix hexScale = m.scale(1.5, 1.5, 1.5);
-    hex->setTransform(hexTrans.multiplyMatrix(hexScale));
+    hex->setTransform(hexScale);
 
-    // OPTIONAL: give all children materials (important for visibility)
-    for (auto& child : hex->get_children()) {
-        child->setMaterialColor(Color{0.2, 0.6, 1.0});
-        child->setAmbient(0.1);
-        child->setDiffuse(0.7);
-        child->setSpecular(0.3);
-        child->setShininess(100);
-    }
+    ApplyMaterialRecursive(hex);
 
-    world->AddShape(hex.get()); // assuming your world stores raw pointers
+    world->AddShape(hex.get());
 
     // ---------------------------------------------------------
-    // 4. Back wall (for depth)
+    // 3. Camera - Top-down view
     // ---------------------------------------------------------
-    Shape* backWall = new Plane();
+    Camera cam(800, 800, M_PI / 3.0);
 
-    Matrix wallTrans = m.translation(0.0, 0.0, 6.0);
-    Matrix wallRot = m.rotateX(M_PI / 2);
-    backWall->setTransform(wallTrans.multiplyMatrix(wallRot));
-
-    backWall->setMaterialColor(Color{0.8, 0.8, 0.9});
-    backWall->setAmbient(0.1);
-    backWall->setDiffuse(0.6);
-    backWall->setSpecular(0.0);
-
-    world->AddShape(backWall);
-
-    // ---------------------------------------------------------
-    // 5. Camera
-    // ---------------------------------------------------------
-    Camera cam(800, 400, M_PI / 3);
-
-    std::vector<double> from = {0.0, 2.0, -6.0, 1.0};
-    std::vector<double> to   = {0.0, 1.0,  0.0, 1.0};
-    std::vector<double> up   = {0.0, 1.0,  0.0, 0.0};
+    std::vector<double> from = {0.0, 6.0, 0.0, 1.0};
+    std::vector<double> to   = {0.0, 0.0, 0.0, 1.0};
+    std::vector<double> up   = {0.0, 0.0, 1.0, 0.0};
 
     Matrix viewTrans = m.viewTransformation(from, to, up);
     cam.setTransformM(viewTrans);
 
-    std::cout << "[DEBUG] Rendering hexagon scene..." << std::endl;
+    std::cout << "[DEBUG] Rendering top-down hexagon scene..." << std::endl;
 
     Canvas canvas = render(cam, *world);
 

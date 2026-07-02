@@ -3,6 +3,8 @@
 #define SPHERE_H
 
 #include "geometry/Shape.h"
+#include "Bound.h"
+
 
 class Sphere : public Shape {
 private: 
@@ -17,6 +19,9 @@ public:
     void intersect(Ray ray, Intersections& intersectionsList) override;
 
     vector<double> normal_at(const vector<double>& worldPoint) const override;
+
+    bound local_bounds() const override; 
 };
 
 #endif
+

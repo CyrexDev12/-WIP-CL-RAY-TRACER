@@ -2,6 +2,7 @@
 #define CYLINDER_H
 
 #include "Shape.h"
+#include "Bound.h"
 
 class Cylinder : public Shape {
 public:
@@ -21,6 +22,7 @@ private:
 
     void intersect_caps(const Ray& ray, Intersections& xs) const;
     bool check_cap(const Ray& ray, double t) const;
+    bound local_bounds() const override; 
 };
 
 #endif

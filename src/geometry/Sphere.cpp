@@ -65,3 +65,7 @@ vector<double> Sphere::normal_at(const vector<double>& worldPoint) const {
     return NormalizeTuple(worldNormal);
 
 }
+
+bound Sphere::local_bounds() const {
+    return bound(-1.0, -1.0, -1.0, 1.0, 1.0, 1.0);
+}
