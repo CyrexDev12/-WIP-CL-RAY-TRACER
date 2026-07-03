@@ -95,4 +95,6 @@ inline Color operator*(const Color&c1, double scalar) {
 }
 
 
+
+
 #endif

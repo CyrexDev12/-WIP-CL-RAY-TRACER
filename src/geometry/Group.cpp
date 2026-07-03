@@ -97,3 +97,20 @@ std::vector<double> Group::normal_at(const std::vector<double>& worldPoint) cons
 std::vector<double> Group::local_normal_at(const std::vector<double>& localPoint) const {
     return {0.0, 0.0, 0.0};
 }
+
+
+void ApplyMaterialRecursive(std::shared_ptr<Shape> shape) {
+    shape->setMaterialColor(Color{0.2, 0.6, 1.0});
+    shape->setAmbient(0.1);
+    shape->setDiffuse(0.7);
+    shape->setSpecular(0.3);
+    shape->setShininess(100);
+
+    Group* group = dynamic_cast<Group*>(shape.get());
+
+    if (group != nullptr) {
+        for (auto& child : group->get_children()) {
+            ApplyMaterialRecursive(child);
+        }
+    }
+}

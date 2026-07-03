@@ -6,6 +6,7 @@
 #include <vector>
 #include <memory>
 
+
 class Group : public Shape {
     private:
 
@@ -33,7 +34,8 @@ public:
 
 };
 
-
+// Misc Shape Group Functions 
+void ApplyMaterialRecursive(std::shared_ptr<Shape> shape); 
 
 
 #endif

@@ -99,9 +99,11 @@ void setRefractiveIndex(double num) {
 
     bound parent_space_bounds() const;
 
-
-
+    void setEmissiveColor(const Color& color);
+    void setEmissiveStrength(double strength);
 
 };
+
+
 
 #endif

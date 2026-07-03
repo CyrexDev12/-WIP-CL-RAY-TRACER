@@ -1,19 +1,51 @@
 #ifndef CANVAS_H
 #define CANVAS_H
+
 #include <vector>
 #include <cstdint>
+#include <string>
 #include "math/Operations.h"
 
 struct Canvas {
     int width; 
     int height; 
-    std::vector<Color> pixels; 
+    std::vector<Color> pixels;
 
-     Canvas(int w, int h)
-        : width(w), height(h), pixels(w * h, Color{0, 0, 0}) // all black
+    // Bloom settings
+    bool bloomEnabled;
+    double bloomIntensity;
+    double bloomThreshold;
+    int bloomRadius;
+
+    // Normal constructor: bloom off
+    Canvas(int w, int h)
+        : width(w),
+          height(h),
+          pixels(w * h, Color{0, 0, 0}),
+          bloomEnabled(false),
+          bloomIntensity(0.0),
+          bloomThreshold(1.0),
+          bloomRadius(6)
     {}
 
-      // Access pixel at (x, y)
+    // Bloom constructor
+    Canvas(
+        int w,
+        int h,
+        bool bloom,
+        double intensity,
+        double threshold = 1.0,
+        int radius = 6
+    )
+        : width(w),
+          height(h),
+          pixels(w * h, Color{0, 0, 0}),
+          bloomEnabled(bloom),
+          bloomIntensity(intensity),
+          bloomThreshold(threshold),
+          bloomRadius(radius)
+    {}
+
     Color& at(int x, int y) {
         return pixels[y * width + x];
     }
@@ -23,20 +55,21 @@ struct Canvas {
     }
 
     void writePixel(int x, int y, const Color& C);
+
     void canvasOut(); 
+
     std::string convertToPpm();
     std::string constructPixelData();
+
     int getMaxColorVal();
+
+private:
+    Canvas applyBloom() const;
+    Canvas extractBrightPixels(double threshold) const;
+    Canvas horizontalBlur(int radius) const;
+    Canvas verticalBlur(int radius) const;
+
+    static double brightness(const Color& color);
 };
-
-// PPM FILE 
-// (IDENTIFIER)
-// (WIDTH) (HEIGHT)
-// (MAX COLOR VALUE)
-
-
-
-
-
 
 #endif

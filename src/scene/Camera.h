@@ -66,7 +66,7 @@ class Camera {
 Ray ray_for_pixel(Camera cam, double x, double y); 
 
 // Returns rendered canvas 
-Canvas render(Camera cam, World& world); 
+Canvas render(Camera cam, World& world,  bool multiThreaded); 
 
 
 

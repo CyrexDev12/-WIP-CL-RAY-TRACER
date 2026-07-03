@@ -19,7 +19,8 @@
 #include "geometry/Cube.h"
 #include "geometry/Cylinder.h"
 #include "geometry/Hexagon.h"
-#include "geometry/Group.h"
+#include "geometry/Group.h"|
+#include "geometry/Triangle.h"
 
 
 using namespace std; 
@@ -1834,23 +1835,8 @@ void CubeCylinderSceneTest() {
     std::cout << "[DEBUG] CubeCylinderSceneTest completed." << std::endl;
 }
 
-*/
 
-void ApplyMaterialRecursive(std::shared_ptr<Shape> shape) {
-    shape->setMaterialColor(Color{0.2, 0.6, 1.0});
-    shape->setAmbient(0.1);
-    shape->setDiffuse(0.7);
-    shape->setSpecular(0.3);
-    shape->setShininess(100);
 
-    Group* group = dynamic_cast<Group*>(shape.get());
-
-    if (group != nullptr) {
-        for (auto& child : group->get_children()) {
-            ApplyMaterialRecursive(child);
-        }
-    }
-}
 
 
 void RenderHexagonTest() {
@@ -1906,4 +1892,217 @@ void RenderHexagonTest() {
     delete world;
 
     std::cout << "[DEBUG] RenderHexagonTest completed." << std::endl;
+}
+
+*/
+
+
+void DarkSideTriangleTest() {
+    std::cout << "[DEBUG] Starting DarkSideTriangleTest..." << std::endl;
+
+    Matrix m;
+
+    // ---------------------------------------------------------
+    // 1. Light
+    // ---------------------------------------------------------
+    PointLight light(
+        {-8.0, 10.0, -10.0, 1.0},
+        Color{1.0, 1.0, 1.0}
+    );
+
+    Lighting lighting(light);
+    World* world = new World(lighting);
+
+    // ---------------------------------------------------------
+    // 2. Dark reflective floor
+    // ---------------------------------------------------------
+    Shape* floor = new Plane();
+
+    floor->setMaterialColor(Color{0.015, 0.015, 0.02});
+    floor->setAmbient(0.12);
+    floor->setDiffuse(0.35);
+    floor->setSpecular(0.05);
+    floor->setShininess(80);
+    floor->setReflective(0.15);
+
+    world->AddShape(floor);
+
+    // ---------------------------------------------------------
+    // 3. Dark back wall
+    // ---------------------------------------------------------
+    Shape* backWall = new Plane();
+
+    Matrix wallTrans = m.translation(0.0, 0.0, 8.0);
+    Matrix wallRotX  = m.rotateX(M_PI / 2.0);
+    backWall->setTransform(wallTrans.multiplyMatrix(wallRotX));
+
+    backWall->setMaterialColor(Color{0.01, 0.01, 0.012});
+    backWall->setAmbient(0.25);
+    backWall->setDiffuse(0.30);
+    backWall->setSpecular(0.0);
+
+    world->AddShape(backWall);
+
+    // ---------------------------------------------------------
+    // 4. Main refractive triangle
+    // ---------------------------------------------------------
+    std::shared_ptr<Triangle> triangle = std::make_shared<Triangle>(
+        std::vector<double>{ 0.0,  1.65, 0.0, 1.0},   // top
+        std::vector<double>{-1.45, -1.0, 0.0, 1.0},   // bottom left
+        std::vector<double>{ 1.45, -1.0, 0.0, 1.0}    // bottom right
+    );
+
+    Matrix triTrans = m.translation(0.0, 1.45, 2.7);
+    triangle->setTransform(triTrans);
+
+    triangle->setMaterialColor(Color{0.75, 0.85, 1.0});
+    triangle->setAmbient(0.02);
+    triangle->setDiffuse(0.06);
+    triangle->setSpecular(1.0);
+    triangle->setShininess(200);
+    triangle->setReflective(0.18);
+    triangle->setTransparency(0.88);
+    triangle->setRefractiveIndex(1.52);
+
+    // subtle prism glow
+    triangle->setEmissiveColor(Color{0.35, 0.45, 0.8});
+    triangle->setEmissiveStrength(0.12);
+
+    world->AddShape(triangle.get());
+
+    // ---------------------------------------------------------
+    // 5. Beam helper
+    // Faint cylinders + strong emission -> bloom carries the look
+    // ---------------------------------------------------------
+    auto makeBeam = [&](double x, double y, double z,
+                        double length,
+                        double angleZ,
+                        double radius,
+                        const Color& color,
+                        double emissionStrength,
+                        double transparency) -> Cylinder* {
+        Cylinder* beam = new Cylinder();
+
+        beam->setMin(0.0);
+        beam->setMax(length);
+        beam->setClosed(true);
+
+        Matrix trans = m.translation(x, y, z);
+        Matrix rotZ  = m.rotateZ(angleZ);
+        Matrix scale = m.scale(radius, 1.0, radius);
+
+        Matrix transform = trans.multiplyMatrix(rotZ);
+        transform = transform.multiplyMatrix(scale);
+
+        beam->setTransform(transform);
+
+        // Keep cylinder subtle, not invisible
+        beam->setMaterialColor(color);
+        beam->setAmbient(0.10);
+        beam->setDiffuse(0.03);
+        beam->setSpecular(0.0);
+        beam->setShininess(10);
+
+        beam->setTransparency(transparency);
+        beam->setRefractiveIndex(1.0);
+        beam->setReflective(0.0);
+
+        // Emission drives the glow
+        beam->setEmissiveColor(color);
+        beam->setEmissiveStrength(emissionStrength);
+
+        return beam;
+    };
+
+    // ---------------------------------------------------------
+    // 6. Triangle edge helpers
+    // Triangle world-space vertices after translation:
+    // top         = (0.0, 3.10)
+    // bottom left = (-1.45, 0.45)
+    // bottom right= ( 1.45, 0.45)
+    // ---------------------------------------------------------
+    const double triTopY = 3.10;
+    const double triBaseY = 0.45;
+    const double triHalfWidth = 1.45;
+    const double triZ = 2.70;
+
+    auto rightEdgeXAtY = [&](double y) -> double {
+        return triHalfWidth * ((triTopY - y) / (triTopY - triBaseY));
+    };
+
+    auto leftEdgeXAtY = [&](double y) -> double {
+        return -rightEdgeXAtY(y);
+    };
+
+    // ---------------------------------------------------------
+    // 7. Incoming white beam
+    // Ends slightly inside the LEFT side of the triangle
+    // ---------------------------------------------------------
+    {
+        double beamY = 1.50;
+        double startX = -2.70;
+
+        // Slightly inside the left face
+        double endX = leftEdgeXAtY(beamY) + 0.06;
+
+        // Because angle = -PI/2, cylinder extends in +X
+        double length = endX - startX;
+
+        world->AddShape(
+            makeBeam(
+                startX,
+                beamY,
+                triZ,
+                length,
+                -M_PI / 2.0,
+                0.032,
+                Color{1.0, 1.0, 1.0},
+                12.0,
+                0.82
+            )
+        );
+    }
+
+    // ---------------------------------------------------------
+    // 8. Outgoing rainbow beams
+    // Start slightly inside the RIGHT side of the triangle
+    // so they look like they emerge from it.
+    // ---------------------------------------------------------
+    world->AddShape(makeBeam(0.935, 1.34, triZ, 2.55, -1.12, 0.026, Color{1.0, 0.0, 0.0},   9.0, 0.85)); // red
+    world->AddShape(makeBeam(0.908, 1.39, triZ, 2.55, -1.03, 0.026, Color{1.0, 0.38, 0.0},  9.0, 0.85)); // orange
+    world->AddShape(makeBeam(0.880, 1.44, triZ, 2.55, -0.94, 0.026, Color{1.0, 1.0, 0.0},   9.0, 0.85)); // yellow
+    world->AddShape(makeBeam(0.853, 1.49, triZ, 2.55, -0.85, 0.026, Color{0.0, 1.0, 0.0},   9.0, 0.85)); // green
+    world->AddShape(makeBeam(0.825, 1.54, triZ, 2.55, -0.76, 0.026, Color{0.0, 0.45, 1.0},  9.0, 0.85)); // blue
+    world->AddShape(makeBeam(0.798, 1.59, triZ, 2.55, -0.67, 0.026, Color{0.55, 0.0, 1.0},  9.0, 0.85)); // violet
+
+    // ---------------------------------------------------------
+    // 9. Camera
+    // ---------------------------------------------------------
+    Camera cam(1000, 500, M_PI / 3.0);
+
+    std::vector<double> from = {0.0, 2.0, -7.2, 1.0};
+    std::vector<double> to   = {0.0, 1.3,  2.7, 1.0};
+    std::vector<double> up   = {0.0, 1.0,  0.0, 0.0};
+
+    Matrix viewTrans = m.viewTransformation(from, to, up);
+    cam.setTransformM(viewTrans);
+
+    std::cout << "[DEBUG] Rendering Dark Side Triangle scene..." << std::endl;
+
+    Canvas canvas = render(cam, *world, true);
+
+    // ---------------------------------------------------------
+    // 10. Bloom
+    // ---------------------------------------------------------
+    canvas.bloomEnabled   = true;
+    canvas.bloomIntensity = 5.0;
+    canvas.bloomThreshold = 0.08;
+    canvas.bloomRadius    = 7;
+
+    std::cout << "[DEBUG] Outputting canvas with bloom..." << std::endl;
+    canvas.canvasOut();
+
+    delete world;
+
+    std::cout << "[DEBUG] DarkSideTriangleTest completed." << std::endl;
 }

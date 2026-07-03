@@ -15,7 +15,7 @@ using namespace std;
 
 int main() {
    
-   RenderHexagonTest(); 
+   DarkSideTriangleTest(); 
 
 
    return 0; 

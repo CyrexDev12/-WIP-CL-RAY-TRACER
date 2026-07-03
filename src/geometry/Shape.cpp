@@ -67,3 +67,11 @@ bound Shape::parent_space_bounds() const {
 
     return result;
 }
+
+void Shape::setEmissiveColor(const Color& color) {
+    material.emissiveColor = color;
+}
+
+void Shape::setEmissiveStrength(double strength) {
+    material.emissiveStrength = strength;
+}

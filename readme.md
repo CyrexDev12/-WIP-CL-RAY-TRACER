@@ -8,11 +8,27 @@ mingw32-make clean
 
 
 -------------------------------------------------------------------------------------------------------------
+Singlethread Vs. Multithread Compute times 
+
+Times:
+
+Render: Dark Side of the moon render 
+
+SingleThreaded: 678581 MS
+
+MultiThreaded: 
+
 
 Project TODOS: 
 Current Status: 
 
-implementing Hexagon, can properly render, however we need to add it so you can add materials and patterns with no issues. 
+The goal is to achieve simplicity, and make this ray Tracer as easy to use as possible.
+
+
+
+
+
+AI -> Python -> JSON -> API -> Render 
 
 
 This project is currently all entirely based off on the CPU. We plan to use CUDA using NVIDA technology. 
@@ -21,6 +37,10 @@ This project is currently all entirely based off on the CPU. We plan to use CUDA
 1. Finish CPU ray tracer.
 Triangle, CSG
 
+Add JSON file Intepreting 
+
+JSON PARSER USING
+nlohmann/json 
 
 2. Add CPU multithreading.
     - Compare Times for more complex renders (with multi threading vs without)

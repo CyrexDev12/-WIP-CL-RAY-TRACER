@@ -125,18 +125,20 @@ Color World::shade_hit(const Computations& comps, int remaining) {
     lsv.N = comps.normalv;
 
 
-    Color surface = lighting->ProcessLighting(
-        comps.object,
-        comps.object->getMaterial(),
-        lsv,
-        comps.point, 
-        is_shadowed(comps.overPt)
-    );
+   Color surface = lighting->ProcessLighting(
+    comps.object,
+    comps.object->getMaterial(),
+    lsv,
+    comps.point, 
+    is_shadowed(comps.overPt)
+);
+
+    Material mat = comps.object->getMaterial();
+
+    Color emissive = mat.emissiveColor * mat.emissiveStrength;
 
     Color reflected = reflected_color(comps, remaining); 
     Color refracted = refracted_color(comps, remaining);
-
-    Material mat = comps.object->getMaterial(); 
 
     if (mat.reflective > 0 && mat.transparency > 0) {
         double reflectance = schlick(comps); 

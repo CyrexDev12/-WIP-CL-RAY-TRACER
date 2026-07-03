@@ -2,7 +2,9 @@
 #include <iostream>
 #include <iomanip>
 #include <cmath>
-
+#include <thread>
+#include <atomic>
+#include <chrono>
 
 // Constructor 
 Camera::Camera(double h, double v, double f) {
@@ -111,36 +113,136 @@ void updateProgress(int completedSlots) {
 // Params; Camera, world
 // Renders the canvas  
 // NEW: Added a percentage completion timer for render
-Canvas render(Camera cam, World& world) {
+Canvas render(Camera cam, World& world, bool multiThreaded) {
+    if (!multiThreaded) {
+        // ---------------------------------------------------------
+        // Standard single-threaded render
+        // ---------------------------------------------------------
+        int width = cam.gethSize();
+        int height = cam.getvSize();
+
+        Canvas canvas(width, height);
+
+        int totalPixels = canvas.width * canvas.height;
+        int pixCount = 0;
+
+        int maxSlots = 20;
+        int lastSlots = -1;
+
+        std::cout << "[DEBUG] Rendering single-threaded..." << std::endl;
+
+        auto start = std::chrono::high_resolution_clock::now();
+
+        for (int y = 0; y < canvas.height; y++) {
+            for (int x = 0; x < canvas.width; x++) {
+                Ray r = ray_for_pixel(cam, x, y);
+                Color c = world.Color_at(r);
+                canvas.writePixel(x, y, c);
+
+                pixCount++;
+
+                int completedSlots = (pixCount * maxSlots) / totalPixels;
+
+                if (completedSlots != lastSlots) {
+                    updateProgress(completedSlots);
+                    lastSlots = completedSlots;
+                }
+            }
+        }
+
+        std::cout << std::endl;
+
+        auto end = std::chrono::high_resolution_clock::now();
+        auto durationMs =
+            std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+
+        std::cout << "[DEBUG] Single-threaded render time: "
+                  << durationMs.count() << " ms" << std::endl;
+
+        return canvas;
+    }
+
+    // ---------------------------------------------------------
+    // Multithreaded render
+    // ---------------------------------------------------------
     int width = cam.gethSize();
     int height = cam.getvSize();
 
     Canvas canvas(width, height);
 
-    int totalPixels = canvas.width * canvas.height;
-    int pixCount = 0;
+    unsigned int threadCount = std::thread::hardware_concurrency();
 
-    int maxSlots = 20;
-    int lastSlots = -1;
-
-    for (int y = 0; y < canvas.height; y++) {
-        for (int x = 0; x < canvas.width; x++) {
-            Ray r = ray_for_pixel(cam, x, y);
-            Color c = world.Color_at(r);
-            canvas.writePixel(x, y, c);
-
-            pixCount++;
-
-            int completedSlots = (pixCount * maxSlots) / totalPixels;
-
-            if (completedSlots != lastSlots) {
-                updateProgress(completedSlots);
-                lastSlots = completedSlots;
-            }
-        }
+    if (threadCount == 0) {
+        threadCount = 4;
     }
 
+    threadCount = std::min(threadCount, static_cast<unsigned int>(height));
+
+    std::cout << "[DEBUG] Rendering multithreaded with "
+              << threadCount << " threads..." << std::endl;
+
+    auto start = std::chrono::high_resolution_clock::now();
+
+    std::atomic<int> rowsCompleted{0};
+
+    int maxSlots = 20;
+    std::atomic<int> lastSlots{-1};
+
+    auto renderRows = [&](int yStart, int yEnd) {
+        for (int y = yStart; y < yEnd; ++y) {
+            for (int x = 0; x < width; ++x) {
+                Ray r = ray_for_pixel(cam, x, y);
+                Color c = world.Color_at(r);
+                canvas.writePixel(x, y, c);
+            }
+
+            int completedRows = ++rowsCompleted;
+
+            int completedSlots = (completedRows * maxSlots) / height;
+
+            int previousSlots = lastSlots.load();
+
+            if (completedSlots != previousSlots) {
+                if (lastSlots.compare_exchange_strong(previousSlots, completedSlots)) {
+                    updateProgress(completedSlots);
+                }
+            }
+        }
+    };
+
+    std::vector<std::thread> threads;
+
+    int rowsPerThread = height / threadCount;
+    int extraRows = height % threadCount;
+
+    int currentY = 0;
+
+    for (unsigned int i = 0; i < threadCount; ++i) {
+        int yStart = currentY;
+        int yEnd = yStart + rowsPerThread;
+
+        if (static_cast<int>(i) < extraRows) {
+            yEnd += 1;
+        }
+
+        currentY = yEnd;
+
+        threads.emplace_back(renderRows, yStart, yEnd);
+    }
+
+    for (auto& t : threads) {
+        t.join();
+    }
+
+    updateProgress(20);
     std::cout << std::endl;
+
+    auto end = std::chrono::high_resolution_clock::now();
+    auto durationMs =
+        std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+
+    std::cout << "[DEBUG] Multithreaded render time: "
+              << durationMs.count() << " ms" << std::endl;
 
     return canvas;
 }
