@@ -19,7 +19,7 @@
 #include "geometry/Cube.h"
 #include "geometry/Cylinder.h"
 #include "geometry/Hexagon.h"
-#include "geometry/Group.h"|
+#include "geometry/Group.h"
 #include "geometry/Triangle.h"
 
 
@@ -1946,10 +1946,10 @@ void DarkSideTriangleTest() {
     // ---------------------------------------------------------
     // 4. Main refractive triangle
     // ---------------------------------------------------------
-    std::shared_ptr<Triangle> triangle = std::make_shared<Triangle>(
-        std::vector<double>{ 0.0,  1.65, 0.0, 1.0},   // top
-        std::vector<double>{-1.45, -1.0, 0.0, 1.0},   // bottom left
-        std::vector<double>{ 1.45, -1.0, 0.0, 1.0}    // bottom right
+    Triangle* triangle = new Triangle(
+    std::vector<double>{ 0.0,  1.65, 0.0, 1.0},   // top
+    std::vector<double>{-1.45, -1.0, 0.0, 1.0},   // bottom left
+    std::vector<double>{ 1.45, -1.0, 0.0, 1.0}    // bottom right
     );
 
     Matrix triTrans = m.translation(0.0, 1.45, 2.7);
@@ -1968,7 +1968,7 @@ void DarkSideTriangleTest() {
     triangle->setEmissiveColor(Color{0.35, 0.45, 0.8});
     triangle->setEmissiveStrength(0.12);
 
-    world->AddShape(triangle.get());
+    world->AddShape(triangle);
 
     // ---------------------------------------------------------
     // 5. Beam helper

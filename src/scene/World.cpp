@@ -142,11 +142,11 @@ Color World::shade_hit(const Computations& comps, int remaining) {
 
     if (mat.reflective > 0 && mat.transparency > 0) {
         double reflectance = schlick(comps); 
-        return surface + reflected * reflectance + refracted * (1 - reflectance); 
+        return surface + emissive + reflected * reflectance + refracted * (1 - reflectance); 
     }
 
     // added the refracted 
-    return surface + reflected + refracted; 
+    return surface + emissive + reflected + refracted; 
 }
 
 

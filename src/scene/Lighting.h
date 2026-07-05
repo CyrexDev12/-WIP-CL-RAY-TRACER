@@ -17,10 +17,15 @@ public:
     // Constructor accepts any light type that inherits from Light
     Lighting(const Light& lightSource) : sceneLight(lightSource) {}
 
-    // Destructor 
-    ~Lighting() {
-        delete &sceneLight; 
-    }
+    // // Destructor 
+    // ~Lighting() {
+    //     delete &sceneLight; 
+    // }
+
+    /*POTENTIAL BUG FIX*/
+    // Lighting does not own sceneLight because it stores it by reference
+    // The caller owns the actual light object
+    ~Lighting() = default;
 
     vector<double> getPos() {
         return sceneLight.getPosition(); 
