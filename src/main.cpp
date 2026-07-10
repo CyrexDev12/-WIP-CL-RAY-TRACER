@@ -36,12 +36,13 @@ int main(int argc, char** argv) {
       Camera cam;
       World world;
       std::string outFile = "out.ppm";
-      bool ok = LoadSceneFromJson(scenePath, cam, world, outFile);
+      bool multiThreaded = false;
+      bool ok = LoadSceneFromJson(scenePath, cam, world, outFile, multiThreaded);
       if (!ok) {
          std::cerr << "Failed to load scene: " << scenePath << std::endl;
          return 1;
       }
-      Canvas cnv = render(cam, world, false);
+      Canvas cnv = render(cam, world, multiThreaded);
       writeCanvasToFile(cnv, outFile);
       std::cout << "Rendered scene to " << outFile << std::endl;
       return 0;

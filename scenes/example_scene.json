@@ -2,7 +2,8 @@
   "image": {
     "width": 200,
     "height": 100,
-    "file": "raySceneRender.ppm"
+    "file": "raySceneRender.ppm",
+    "multithreaded": true
   },
   "camera": {
     "hsize": 200,

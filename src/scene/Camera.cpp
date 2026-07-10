@@ -5,6 +5,7 @@
 #include <thread>
 #include <atomic>
 #include <chrono>
+#include <mutex>
 
 // Constructor 
 Camera::Camera(double h, double v, double f) {
@@ -97,22 +98,26 @@ std::string dashes(int count) {
 std::string GreenHashes(int count) {
     return "\033[32m" + std::string(count, '#') + "\033[0m";
 }
+static std::mutex progressMutex;
 
 void updateProgress(int completedSlots) {
     const int maxSlots = 20;
 
     double percentage = (static_cast<double>(completedSlots) / maxSlots) * 100.0;
 
-    std::cout << "\r"
-              << GreenHashes(completedSlots)
-              << dashes(maxSlots - completedSlots)
-              << " (" << static_cast<int>(percentage) << "%)"
-              << std::flush;
+    // Build a fixed-width progress bar string so updates overwrite cleanly
+    std::string bar = std::string(completedSlots, '#') + std::string(maxSlots - completedSlots, '-');
+    std::string out = "[" + bar + "] (" + std::to_string(static_cast<int>(percentage)) + "%)";
+
+    // Pad to a constant width to clear any leftover characters from previous prints
+    const size_t padWidth = 64;
+    if (out.size() < padWidth) out += std::string(padWidth - out.size(), ' ');
+
+    std::lock_guard<std::mutex> lg(progressMutex);
+    std::cout << "\r" << out << std::flush;
 }
 
-// Params; Camera, world
-// Renders the canvas  
-// NEW: Added a percentage completion timer for render
+// Params: camera, world, and whether to render with multiple threads.
 Canvas render(Camera cam, World& world, bool multiThreaded) {
     if (!multiThreaded) {
         // ---------------------------------------------------------

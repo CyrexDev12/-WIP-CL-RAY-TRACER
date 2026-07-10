@@ -25,16 +25,18 @@ static Color jsonToColor(const json& a) {
     return Color(v[0], v[1], v[2]);
 }
 
-bool LoadSceneFromJson(const std::string& path, Camera& outCam, World& outWorld, std::string& outImageFile) {
+bool LoadSceneFromJson(const std::string& path, Camera& outCam, World& outWorld, std::string& outImageFile, bool& outMultiThreaded) {
     std::ifstream ifs(path);
     if (!ifs) return false;
     json root;
     try { ifs >> root; } catch (...) { return false; }
 
     // Image
+    outMultiThreaded = false;
     if (root.contains("image")) {
         auto img = root["image"];
         if (img.contains("file")) outImageFile = img["file"].get<std::string>();
+        if (img.contains("multithreaded")) outMultiThreaded = img["multithreaded"].get<bool>();
     }
 
     // Camera

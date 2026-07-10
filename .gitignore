@@ -5,3 +5,9 @@ raytracer.exe
 # C/C++ generated files
 *.o
 *.d
+
+# Python tooling and local secrets
+__pycache__/
+*.py[cod]
+.venv/
+.env

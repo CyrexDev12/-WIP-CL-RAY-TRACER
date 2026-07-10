@@ -7,6 +7,7 @@
 
 // Loads a scene from a JSON file into provided Camera and World instances.
 // Returns true on success and sets outImageFile to the target output filename (if present).
-bool LoadSceneFromJson(const std::string& path, Camera& outCam, World& outWorld, std::string& outImageFile);
+// outMultiThreaded will be set true if the JSON requests a multithreaded render
+bool LoadSceneFromJson(const std::string& path, Camera& outCam, World& outWorld, std::string& outImageFile, bool& outMultiThreaded);
 
 #endif

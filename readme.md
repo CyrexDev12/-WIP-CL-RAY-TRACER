@@ -1,38 +1,143 @@
-Notes: 
+AI Scene Generator
+------------------
+The Python generator turns a natural-language description into scene JSON that the
+C++ ray tracer can render. It uses OpenAI Structured Outputs and validates every
+response against the renderer's actual limits before writing a file.
 
-Compile Command 
+### 1. Build the ray tracer
+
+From the project root:
+
+```powershell
 mingw32-make
+```
 
-Clean Command: 
-mingw32-make clean 
+Verify the renderer with the included example:
 
-Running: 
+```powershell
+.\raytracer.exe --scene scenes/example_scene.json
+```
 
-./raytracer.exe --scene scenes/example_scene.json
+### 2. Set up Python
 
+Create and activate a virtual environment, then install the dependencies:
 
--------------------------------------------------------------------------------------------------------------
-Singlethread Vs. Multithread Compute times 
+```powershell
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install -r requirements.txt
+```
 
-Times:
+Run the activation command again whenever you open a new PowerShell window.
 
-Render: Dark Side of the moon render 
+### 3. Configure the OpenAI API key
 
-SingleThreaded: 678581 MS
+Create an API key in your OpenAI Platform account, then set it in the current
+PowerShell session:
 
-MultiThreaded: 
+```powershell
+$env:OPENAI_API_KEY = "your-api-key"
+```
 
+Do not paste a real key into Python, JSON, `.env`, or any committed file. This
+environment variable lasts only for the current PowerShell session.
 
-Project TODOS: 
-Current Status: 
+Optionally select the default model for the session:
 
-The goal is to achieve simplicity, and make this ray Tracer as easy to use as possible.
+```powershell
+$env:OPENAI_SCENE_MODEL = "gpt-5.4-mini"
+```
 
+### 4. Generate a scene
 
+```powershell
+python tools/generate_scene.py `
+  "three glossy planets floating above a red ground" `
+  --output scenes/planets.json
+```
 
+Descriptions can include composition, colors, materials, camera position, output
+resolution, and multithreading. For example:
 
+```powershell
+python tools/generate_scene.py `
+  "A blue glass planet between two small red moons, viewed from slightly above. Use 300 by 150 resolution." `
+  -o scenes/glass_planet.json
+```
 
-AI -> Python -> JSON -> API -> Render 
+Generator options:
+
+- `-o` or `--output` is required and must point to a `.json` file.
+- `--force` allows an existing JSON file to be replaced.
+- `--model MODEL_NAME` overrides the default model for one request.
+- `OPENAI_SCENE_MODEL` changes the default model for the current shell.
+- The default model is `gpt-5.4-mini`.
+
+Example using all relevant options:
+
+```powershell
+python tools/generate_scene.py "A simple solar system" `
+  -o scenes/planets.json `
+  --model gpt-5.4-mini `
+  --force
+```
+
+Generating a scene makes an OpenAI API request and may incur API usage charges.
+
+### 5. Inspect and render the generated JSON
+
+Review the generated file before rendering, then run:
+
+```powershell
+.\raytracer.exe --scene scenes/planets.json
+```
+
+The rendered PPM is written to the filename in `image.file`. That filename is
+relative to the directory from which `raytracer.exe` is run.
+
+### Current generated-scene limits
+
+The generator deliberately supports only features implemented by
+`src/SceneLoader.cpp`:
+
+- Exactly one point light.
+- Between 1 and 100 sphere objects.
+- Sphere scaling and translation; rotation is not currently loaded from JSON.
+- RGB color components from `0` to `1`.
+- `ambient`, `diffuse`, `specular`, `reflective`, and `transparency` from `0` to `1`.
+- `shininess` from `10` to `200`, inclusive. Other values terminate the C++ renderer.
+- `refractiveIndex` from `1` to `3`.
+- A field of view greater than `0` and less than pi radians.
+- Image dimensions from `1` to `4096`; `image.width/height` must match
+  `camera.hsize/vsize`.
+- A simple `.ppm` output filename without directory components.
+- Non-zero scale values and valid camera vectors.
+
+Floors and walls are approximated using heavily scaled spheres because planes are
+not yet supported by the JSON loader.
+
+### Troubleshooting
+
+`OPENAI_API_KEY is not set`
+: Set `$env:OPENAI_API_KEY` in the same PowerShell window used to run Python.
+
+`ModuleNotFoundError: openai` or `ModuleNotFoundError: pydantic`
+: Activate `.venv`, then run `python -m pip install -r requirements.txt`.
+
+`already exists; pass --force to replace it`
+: Choose another output filename or add `--force` if replacement is intentional.
+
+Scene validation failure
+: The model attempted to use a value or structure outside the supported renderer
+  schema. No JSON file is written. Refine the description or try again.
+
+`Must be a value between 10-200!`
+: A hand-edited or older scene contains an invalid `material.shininess`. Change it to
+  a value from `10` through `200`. Newly generated scenes enforce this automatically.
+
+The schema and boundary checks live in `tools/scene_schema.py`. The renderer-specific
+AI instructions live in `tools/scene_prompt.py`. Update both whenever the C++ scene
+loader gains a feature or changes a numeric boundary.
 
 
 This project is currently all entirely based off on the CPU. We plan to use CUDA using NVIDA technology. 
@@ -161,6 +266,80 @@ Usage:
 - Run the executable with `--scene <path/to/scene.json>`
 - An example scene lives at `scenes/example_scene.json`.
 
+JSON Scene Format (Quick Reference)
+----------------------------------
+This project supports loading scenes described in JSON. The loader understands a compact schema that covers the common elements needed to build a scene: image output settings, a camera, lights, and objects (spheres supported currently).
+
+Top-level keys
+- `image` (optional): `{ "width": int, "height": int, "file": string }` — output image settings.
+- `camera` (optional): `{ "hsize": int, "vsize": int, "fov": float, "from": [x,y,z], "to": [x,y,z], "up": [x,y,z] }` — camera and view transform.
+- `lights` (optional): an array of lights. Supported light object example:
+    - `{ "type": "point", "position": [x,y,z], "color": [r,g,b] }`
+- `objects` (optional): an array of scene objects. Currently supported:
+    - Sphere:
+        - `type`: "sphere"
+        - `transform`: optional object with `scale` and/or `translate` arrays: `{ "scale": [sx,sy,sz], "translate": [tx,ty,tz] }`
+        - `material`: optional object with properties like `color` (`[r,g,b]`), `ambient`, `diffuse`, `specular`, `shininess`, `reflective`, `transparency`, `refractiveIndex`.
+
+    - `image.multithreaded` (optional): boolean to request a multithreaded render. Example: `{ "image": { "file": "out.ppm", "multithreaded": true } }`.
+
+Notes about tuples
+- This codebase uses 4D tuples internally `(x, y, z, w)`. The JSON format uses 3-element arrays for positions and vectors; the loader converts them to the expected 4D tuples internally (points get `w=1`, direction vectors get `w=0`).
+
+Example
+-------
+See `scenes/example_scene.json` for a working example. Run it like:
+
+```powershell
+./raytracer.exe --scene scenes/example_scene.json
+```
+
+Build & Dependency Notes
+------------------------
+- The loader uses the header-only library `nlohmann/json`. Install it with your package manager or via vcpkg.
+
+Examples:
+
+Windows (vcpkg):
+```powershell
+vcpkg install nlohmann-json
+```
+
+Ubuntu / Debian:
+```bash
+sudo apt install nlohmann-json3-dev
+```
+
+If you install via system packages, your compiler should find the header `<nlohmann/json.hpp>` automatically. If you use vcpkg, either integrate vcpkg into your build environment or adjust `CXXFLAGS` in the Makefile to include the vcpkg include path.
+
+Quick Build
+-----------
+On Windows (MinGW) using the provided Makefile:
+
+```powershell
+mingw32-make
+```
+
+On Unix-like systems (if `make` is available):
+
+```bash
+make
+```
+
+If your build fails due to missing `nlohmann/json.hpp`, install the library or add its include directory to `CXXFLAGS` in the `Makefile` (the Makefile already uses `-Isrc`).
+
+Where to look in the code
+- Loader implementation: [src/SceneLoader.cpp](src/SceneLoader.cpp#L1)
+- Loader header: [src/SceneLoader.h](src/SceneLoader.h#L1)
+- Example scene: [scenes/example_scene.json](scenes/example_scene.json#L1)
+- CLI integration: [src/main.cpp](src/main.cpp#L1)
+
+Next steps
+----------
+- Add more object types (planes, cubes, triangles) and patterns to the JSON schema.
+- Add automated validation tests for JSON scenes and unit tests for the loader.
+
+
 
 
 
@@ -218,4 +397,4 @@ Then multiply the result by the reflective value. If reflective is set to someth
 
 Implement int remaining to color_at() reflectedColor() and shadeHit() to limit recursion calls 
 
-Groups are abstract shapes with no surface of their own. Taking their form instead from the shapes they contain. 
+Groups are abstract shapes with no surface of their own. Taking their form instead from the shapes they contain.
