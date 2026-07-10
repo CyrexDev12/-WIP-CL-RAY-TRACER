@@ -6,6 +6,10 @@ mingw32-make
 Clean Command: 
 mingw32-make clean 
 
+Running: 
+
+./raytracer.exe --scene scenes/example_scene.json
+
 
 -------------------------------------------------------------------------------------------------------------
 Singlethread Vs. Multithread Compute times 
@@ -136,6 +140,27 @@ Cameras Canvas will always be one unit away from the camera
 To Do: 
 
 - Switch from using vector<double> to using a tuple class, so it is dealt with on the stack istead of heap to make the program faster. 
+
+JSON Scenes
+-----------
+This project supports loading scenes from JSON files. The loader uses the header-only library `nlohmann/json`.
+
+Install (examples):
+
+Windows (vcpkg):
+```
+vcpkg install nlohmann-json
+```
+
+Ubuntu:
+```
+sudo apt install nlohmann-json3-dev
+```
+
+Usage:
+- Run the executable with `--scene <path/to/scene.json>`
+- An example scene lives at `scenes/example_scene.json`.
+
 
 
 
