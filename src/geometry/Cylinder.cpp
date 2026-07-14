@@ -1,4 +1,5 @@
 #include "Cylinder.h"
+#include "math/LegacyMathAdapters.h"
 #include <cmath>
 #include <algorithm>
 
@@ -9,8 +10,8 @@ Cylinder::Cylinder()
 
 
 // --- Intersection ---
-void Cylinder::intersect(Ray ray, Intersections& intersectionsList) {
-    Ray localRay = ray.transform(this->getTransform().inverse());
+void Cylinder::intersect(const Ray& ray, Intersections& intersectionsList) {
+    const Ray localRay = ray.transform(getInverseTransform());
 
     double a = localRay.direction[0] * localRay.direction[0] +
                localRay.direction[2] * localRay.direction[2];
@@ -76,44 +77,30 @@ void Cylinder::intersect_caps(const Ray& ray, Intersections& xs) const {
 
 
 // --- Normal ---
-std::vector<double> Cylinder::normal_at(const std::vector<double>& worldPoint) const {
-    Matrix inv = this->getTransform().inverse();
-    std::vector<double> point = inv.multiplyTuple(worldPoint);
+clrt::math::Vec3 Cylinder::normalAt(const clrt::math::Point3& worldPoint) const {
+    const clrt::math::Point3 point = getInverseTransform() * worldPoint;
 
-    double dist = point[0]*point[0] + point[2]*point[2];
+    double dist = point.x * point.x + point.z * point.z;
 
-    std::vector<double> objectNormal;
+    clrt::math::Vec3 objectNormal;
 
     // --- Cap normals (MUST be w=0)
-    if (dist < 1.0 && point[1] >= max - EPSILON) {
-        objectNormal = {0.0, 1.0, 0.0, 0.0};
+    if (dist < 1.0 && point.y >= max - EPSILON) {
+        objectNormal = {0.0, 1.0, 0.0};
     }
-    else if (dist < 1.0 && point[1] <= min + EPSILON) {
-        objectNormal = {0.0, -1.0, 0.0, 0.0};
+    else if (dist < 1.0 && point.y <= min + EPSILON) {
+        objectNormal = {0.0, -1.0, 0.0};
     }
     else {
-        objectNormal = {point[0], 0.0, point[2], 0.0};
+        objectNormal = {point.x, 0.0, point.z};
     }
 
     // Transform normal to world space
-    Matrix transInv = inv.transpose();
-    std::vector<double> worldNormal = transInv.multiplyTuple(objectNormal);
+    const clrt::math::Vec3 worldNormal =
+        getInverseTranspose() * objectNormal;
 
     // Force correct tuple type
-    worldNormal[3] = 0.0;
-
-    // Normalize (ignore w)
-    double mag = std::sqrt(
-        worldNormal[0]*worldNormal[0] +
-        worldNormal[1]*worldNormal[1] +
-        worldNormal[2]*worldNormal[2]
-    );
-
-    worldNormal[0] /= mag;
-    worldNormal[1] /= mag;
-    worldNormal[2] /= mag;
-
-    return worldNormal;
+    return worldNormal.normalized();
 }
 
 bound Cylinder::local_bounds() const {

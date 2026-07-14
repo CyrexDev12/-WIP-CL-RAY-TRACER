@@ -1,4 +1,5 @@
 #include "Cube.h"
+#include "math/LegacyMathAdapters.h"
 #include <algorithm>
 #include <cmath>
 
@@ -24,8 +25,8 @@ std::pair<double, double> Cube::check_axis(double origin, double direction) cons
 }
 
 // Ray–cube intersection
-void Cube::intersect(Ray ray, Intersections& intersectionsList) {
-    Ray localRay = ray.transform(this->getTransform().inverse());
+void Cube::intersect(const Ray& ray, Intersections& intersectionsList) {
+    const Ray localRay = ray.transform(getInverseTransform());
 
     auto xt = check_axis(localRay.origin[0], localRay.direction[0]);
     auto yt = check_axis(localRay.origin[1], localRay.direction[1]);
@@ -42,49 +43,34 @@ void Cube::intersect(Ray ray, Intersections& intersectionsList) {
 
 
 // Surface normal
-std::vector<double> Cube::normal_at(const std::vector<double>& worldPoint) const {
-    Matrix inv = this->getTransform().inverse();
-
+clrt::math::Vec3 Cube::normalAt(const clrt::math::Point3& worldPoint) const {
     // convert to object space (point → w = 1 stays)
-    std::vector<double> point = inv.multiplyTuple(worldPoint);
+    const clrt::math::Point3 point = getInverseTransform() * worldPoint;
 
     double maxc = std::max({
-        std::abs(point[0]),
-        std::abs(point[1]),
-        std::abs(point[2])
+        std::abs(point.x),
+        std::abs(point.y),
+        std::abs(point.z)
     });
 
-    std::vector<double> objectNormal;
+    clrt::math::Vec3 objectNormal;
 
-    if (maxc == std::abs(point[0])) {
-        objectNormal = { point[0], 0.0, 0.0, 0.0 };
+    if (maxc == std::abs(point.x)) {
+        objectNormal = {point.x, 0.0, 0.0};
     } 
-    else if (maxc == std::abs(point[1])) {
-        objectNormal = { 0.0, point[1], 0.0, 0.0 };
+    else if (maxc == std::abs(point.y)) {
+        objectNormal = {0.0, point.y, 0.0};
     } 
     else {
-        objectNormal = { 0.0, 0.0, point[2], 0.0 };
+        objectNormal = {0.0, 0.0, point.z};
     }
 
     // Transform normal back (IMPORTANT: w must stay 0)
-    Matrix transInv = inv.transpose();
-    std::vector<double> worldNormal = transInv.multiplyTuple(objectNormal);
+    const clrt::math::Vec3 worldNormal =
+        getInverseTranspose() * objectNormal;
 
     // Force w = 0 (safety in case matrix math pollutes it)
-    worldNormal[3] = 0.0;
-
-    // Normalize (ignore w)
-    double mag = std::sqrt(
-        worldNormal[0]*worldNormal[0] +
-        worldNormal[1]*worldNormal[1] +
-        worldNormal[2]*worldNormal[2]
-    );
-
-    worldNormal[0] /= mag;
-    worldNormal[1] /= mag;
-    worldNormal[2] /= mag;
-
-    return worldNormal;
+    return worldNormal.normalized();
 }
 
 

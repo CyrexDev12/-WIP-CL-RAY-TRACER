@@ -1,8 +1,8 @@
 #include "geometry/Computations.h"
 #include "geometry/Shape.h"
-#include "scene/LightShadeVector.h"
 #include <algorithm>
 #include <cmath>
+#include <iostream>
 
 
 
@@ -22,7 +22,7 @@ bool sameIntersection(
 
  double schlick(const Computations& comps) {
     // Find the cosine of the angle between the eye and normal vectors
-    double cos = CalculateDotProd(comps.eyev, comps.normalv);
+    double cos = clrt::math::dot(comps.eyev, comps.normalv);
 
     // Total internal reflection can only occur if n1 > n2
     if (comps.n1 > comps.n2) {
@@ -53,25 +53,12 @@ Computations prepareComputations(const Intersection& intersection, const Ray& ra
     comps.object = intersection.getObject();
 
     comps.point = ray.position(comps.t);
+    comps.eyev = -ray.direction;
+    comps.normalv = comps.object->normalAt(comps.point);
 
-    comps.eyev = {
-        -ray.direction[0],
-        -ray.direction[1],
-        -ray.direction[2],
-        0
-    };
-
-    comps.normalv = comps.object->normal_at(comps.point);
-
-    if (CalculateDotProd(comps.normalv, comps.eyev) < 0) {
+    if (clrt::math::dot(comps.normalv, comps.eyev) < 0) {
         comps.inside = true;
-
-        comps.normalv = {
-            -comps.normalv[0],
-            -comps.normalv[1],
-            -comps.normalv[2],
-            0
-        };
+        comps.normalv = -comps.normalv;
     } else {
         comps.inside = false;
     }
@@ -79,13 +66,13 @@ Computations prepareComputations(const Intersection& intersection, const Ray& ra
     // Offset points prevent reflection and refraction rays from intersecting the surface they originate from, which can cause artifacts in the rendered image.
     // Over Point = point + (normal * epsilon)
     const double EPSILON = 1e-5;
-    vector<double> normEps = ScaleTuple(comps.normalv, EPSILON); 
-    comps.overPt = AddTuples(comps.point, normEps); 
-    comps.underPt = SubtractTuples(comps.point, normEps);
+    const clrt::math::Vec3 normalOffset = comps.normalv * EPSILON;
+    comps.overPt = comps.point + normalOffset;
+    comps.underPt = comps.point - normalOffset;
 
     // Reflection Vector 
     // Compute reflectv by reflecting the ray's direction vector around the objects normal vector 
-    comps.reflectv = reflect(comps.normalv, ray.direction); 
+    comps.reflectv = clrt::math::reflect(ray.direction, comps.normalv);
 
 // Track which transparent objects the ray is currently inside.
 vector<const Shape*> containers;
@@ -147,44 +134,17 @@ Computations prepareComputations(const Intersection& intersection,const Ray& ray
 
 
 void Computations::print() const {
-    cout << "--- Computations ---\n";
+    std::cout << "--- Computations ---\n";
 
-    cout << "t: " << t << "\n";
-    cout << "object address: " << object << "\n";
-
-    cout << "point: ";
-    for (double value : point) {
-        cout << value << " ";
-    }
-    cout << "\n";
-
-    cout << "eyev: ";
-    for (double value : eyev) {
-        cout << value << " ";
-    }
-    cout << "\n";
-
-    cout << "normalv: ";
-    for (double value : normalv) {
-        cout << value << " ";
-    }
-    cout << "\n";
-
-    cout << "reflectionv: ";
-    for (double value : reflectv) {
-        cout << value << " ";
-    }
-    cout << "\n";
-    
-    cout << "underPt: ";
-    for (double value : underPt) {
-        cout << value << " ";
-    }
-    cout << "\n";
-
-    cout << "n1: " << n1 << "\n";
-    cout << "n2: " << n2 << "\n";
-    
-    cout << "inside: " << (inside ? "true" : "false") << "\n";
+    std::cout << "t: " << t << "\n";
+    std::cout << "object address: " << object << "\n";
+    std::cout << "point: " << point.x << ' ' << point.y << ' ' << point.z << "\n";
+    std::cout << "eyev: " << eyev.x << ' ' << eyev.y << ' ' << eyev.z << "\n";
+    std::cout << "normalv: " << normalv.x << ' ' << normalv.y << ' ' << normalv.z << "\n";
+    std::cout << "reflectionv: " << reflectv.x << ' ' << reflectv.y << ' ' << reflectv.z << "\n";
+    std::cout << "underPt: " << underPt.x << ' ' << underPt.y << ' ' << underPt.z << "\n";
+    std::cout << "n1: " << n1 << "\n";
+    std::cout << "n2: " << n2 << "\n";
+    std::cout << "inside: " << (inside ? "true" : "false") << "\n";
 
 }

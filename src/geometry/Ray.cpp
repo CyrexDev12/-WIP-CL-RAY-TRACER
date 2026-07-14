@@ -1,21 +1,33 @@
 #include "geometry/Ray.h"
 
+#include <iostream>
 
-// Compute the point at the given distance t along the ray
-  vector<double> Ray::position(double t) const {
-    vector<double> scaledDirection = ScaleTuple(direction, t);
-    return AddTuples(origin, scaledDirection);
+#include "math/LegacyMathAdapters.h"
+
+Ray::Ray(
+    const std::vector<double>& originTuple,
+    const std::vector<double>& directionTuple
+) : clrt::math::Ray(
+        clrt::compat::pointFromLegacyTuple(originTuple),
+        clrt::compat::vectorFromLegacyTuple(directionTuple)
+    ) {}
+
+clrt::math::Point3 Ray::position(double distance) const noexcept {
+    return clrt::math::Ray::position(distance);
 }
 
-// Apply a transformation to the ray by transforming both its origin and direction using the provided matrix
-// Then return a new ray with the transformed origin and direction
-Ray Ray::transform(Matrix m) {
-    Ray transformed_ray; 
+Ray Ray::transform(const Matrix& matrix) const {
+    return transform(clrt::compat::matrixFromLegacy(matrix));
+}
 
+Ray Ray::transform(const clrt::math::Mat4& matrix) const {
+    return Ray{matrix * origin, matrix * direction};
+}
 
-    transformed_ray.origin = m.multiplyTuple(this->origin);
-    transformed_ray.direction = m.multiplyTuple(this->direction);
-
-  return transformed_ray;
-
+void Ray::printRay() const {
+    std::cout << "Ray Origin: "
+              << origin.x << ' ' << origin.y << ' ' << origin.z
+              << " 1\nRay Direction: "
+              << direction.x << ' ' << direction.y << ' ' << direction.z
+              << " 0\n";
 }

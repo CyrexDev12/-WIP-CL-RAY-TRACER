@@ -15,8 +15,15 @@ TARGET    := raytracer.exe
 # ==============================================================================
 # File tracking
 # ==============================================================================
-# Finds all .cpp files in src/ root AND all one-level-deep subdirectories
-SRCS := $(wildcard $(SRC_DIR)/*.cpp) $(wildcard $(SRC_DIR)/*/*.cpp)
+# Explicit module groups mirror the CMake target boundaries. Keep this build path
+# available during migration; CMake is the canonical build system.
+SRCS := $(wildcard $(SRC_DIR)/app/*.cpp) \
+        $(wildcard $(SRC_DIR)/core/math/*.cpp) \
+        $(wildcard $(SRC_DIR)/loaders/*.cpp) \
+        $(wildcard $(SRC_DIR)/renderers/cpu/*.cpp) \
+        $(wildcard $(SRC_DIR)/geometry/*.cpp) \
+        $(wildcard $(SRC_DIR)/math/*.cpp) \
+        $(wildcard $(SRC_DIR)/scene/*.cpp)
 OBJS := $(SRCS:$(SRC_DIR)/%.cpp=$(BUILD_DIR)/%.o)
 DEPS := $(OBJS:.o=.d)
 

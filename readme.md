@@ -6,17 +6,30 @@ response against the renderer's actual limits before writing a file.
 
 ### 1. Build the ray tracer
 
-From the project root:
+The canonical build uses CMake. From the project root with the current MinGW
+toolchain:
 
 ```powershell
-mingw32-make
+cmake --preset mingw-debug
+cmake --build --preset mingw-debug
+ctest --preset mingw-debug
 ```
 
 Verify the renderer with the included example:
 
 ```powershell
+.\build\cmake-mingw-debug\src\raytracer.exe --scene scenes/example_scene.json
+```
+
+The original Makefile remains available during the migration:
+
+```powershell
+mingw32-make
 .\raytracer.exe --scene scenes/example_scene.json
 ```
+
+The current module boundaries and dependency rules are documented in
+[`src/ARCHITECTURE.md`](src/ARCHITECTURE.md).
 
 ### 2. Set up Python
 
@@ -98,7 +111,7 @@ relative to the directory from which `raytracer.exe` is run.
 ### Current generated-scene limits
 
 The generator deliberately supports only features implemented by
-`src/SceneLoader.cpp`:
+`src/loaders/SceneLoader.cpp`:
 
 - Exactly one point light.
 - Between 1 and 100 sphere objects.
@@ -140,22 +153,293 @@ AI instructions live in `tools/scene_prompt.py`. Update both whenever the C++ sc
 loader gains a feature or changes a numeric boundary.
 
 
-This project is currently all entirely based off on the CPU. We plan to use CUDA using NVIDA technology. 
+OpenGL and NVIDIA CUDA Roadmap
+------------------------------
 
+The long-term goal is an application that can load one scene and use three render
+paths:
 
-1. Finish CPU ray tracer.
-Triangle, CSG
+- The existing CPU ray tracer, retained as the correctness reference and fallback.
+- An OpenGL rasterized preview for immediate scene inspection and camera movement.
+- An NVIDIA CUDA ray tracer that can progressively render into the OpenGL window.
 
-Add JSON file Intepreting 
+OpenGL and CUDA have different responsibilities. OpenGL first provides a fast,
+approximate view of the scene; it is not expected to exactly reproduce recursive
+reflection, refraction, patterns, or ray-traced shadows. CUDA will later provide the
+accurate ray-traced viewport. All three paths must consume the same scene model so
+that the project does not develop separate, incompatible scene representations.
 
-JSON PARSER USING
-nlohmann/json 
+### Target architecture
 
-2. Add CPU multithreading.
-    - Compare Times for more complex renders (with multi threading vs without)
-3. Build CUDA mini-renderer with spheres and planes.
-4. Compare render times.
-5. Add reflection/refraction/Schlick to the GPU version.
+```text
+Scene JSON
+    |
+    v
+Shared owned Scene model
+    |---> CPU ray tracer ------> ImageBuffer ------> PPM/image output
+    |---> OpenGL preview --------------------------> Interactive window
+    `---> CUDA ray tracer -----> OpenGL texture ---> Interactive window
+```
+
+The shared engine code should not depend on OpenGL or CUDA. Renderer-specific code
+may translate the shared scene into backend-friendly data, such as preview meshes
+for OpenGL or flat device buffers for CUDA.
+
+### Two-contributor implementation strategy
+
+The work is split into two lanes so contributors can make progress in parallel after
+the shared interfaces are agreed upon:
+
+- **Contributor A - Core and CPU lane:** fixed-size math, scene ownership, CPU
+  renderer extraction, JSON loading, reference tests, and CPU/CUDA comparisons.
+- **Contributor B - Graphics and GPU lane:** CMake/toolchain setup, GLFW/OpenGL
+  viewer, preview meshes and shaders, CUDA kernels, and CUDA/OpenGL interoperability.
+- **Shared integration points:** scene structures, camera conventions, material
+  layout, renderer interfaces, CLI behavior, and acceptance of reference images.
+
+The contributor labels describe work lanes, not permanent ownership. Add a name or
+GitHub handle beside a checklist item when claiming it. Avoid changing a shared
+interface on one lane without notifying the other contributor first.
+
+Recommended collaboration rules:
+
+- Keep pull requests focused on one checklist group or one backend boundary.
+- Land shared types and interfaces before code that consumes them.
+- Do not mix broad math/scene refactors with OpenGL or CUDA implementation in the
+  same pull request.
+- Keep the CPU backend working at every integration checkpoint.
+- Add or update tests whenever a shared data structure or rendering convention
+  changes.
+- Document matrix layout, handedness, camera forward direction, angle units, and
+  color range before connecting the OpenGL and CUDA backends.
+- Use small deterministic scenes for correctness comparisons and separate larger
+  scenes for performance measurements.
+
+### Phase 0 - Baseline and decisions
+
+Both contributors should complete this phase together. Its output is a stable
+reference against which the refactor and GPU renderer can be checked.
+
+- [x] **Shared:** Record build instructions and supported development platforms.
+      Owner: Codex.
+- [ ] **Shared:** Select and document the OpenGL dependencies. Initial recommendation:
+      GLFW for the window/input layer and GLAD for OpenGL function loading.
+      Owner: unassigned.
+- [x] **Shared:** Adopt CMake as the canonical build system while temporarily keeping
+      the current Makefile available during migration. Owner: Codex.
+- [x] **Shared:** Document the math conventions: row/column-major storage,
+      multiplication order, coordinate handedness, camera forward axis, and degrees
+      versus radians. Owner: Codex.
+- [ ] **Core/CPU:** Save small CPU reference renders covering a sphere, plane,
+      triangle, shadow, reflection, transparency/refraction, Schlick reflectance,
+      pattern, group, and bounding box. Owner: unassigned.
+- [ ] **Core/CPU:** Add repeatable timing output that excludes JSON loading and file
+      writing. Owner: unassigned.
+- [ ] **Graphics/GPU:** Verify the chosen NVIDIA GPU, driver, Visual Studio/MSVC, and
+      CUDA toolkit by compiling and running a minimal CUDA program. Owner: unassigned.
+
+Acceptance criteria:
+
+- The current example scenes still render through the CPU path.
+- Reference images and baseline timings are recorded reproducibly.
+- Both contributors agree on the shared coordinate and matrix conventions.
+
+### Phase 1 - Shared engine foundation
+
+CUDA kernels cannot directly use the current virtual shape hierarchy,
+`std::vector<double>` tuples, or `vector<vector<double>>` matrices efficiently. This
+phase creates fixed-layout engine types without changing rendered results.
+
+- [x] **Core/CPU:** Add fixed-size `Vec3`, `Point3`, `Color`, `Mat4`, and `Ray` types
+      with contiguous storage and no per-operation heap allocation. Owner: Codex.
+- [x] **Core/CPU:** Port tuple/vector operations and tests to the fixed-size types.
+      Legacy tuple overloads remain only as explicit compatibility adapters while
+      older callers are retired. Owner: Codex.
+- [x] **Core/CPU:** Port matrix transforms, inversion, and camera ray generation.
+      Cache the inverse camera transform instead of calculating it for every pixel.
+      Owner: Codex.
+- [x] **Core/CPU:** Port shape transforms, intersections, normals, group bounds, hit
+      computations, lighting vectors, patterns, shadows, reflection, and refraction
+      to fixed-size math. Cache inverse and inverse-transpose transforms on shapes
+      and patterns. Owner: Codex.
+- [ ] **Shared:** Define an owned, enumerable `Scene` containing cameras, lights,
+      objects, transforms, and materials. Owner: unassigned.
+- [ ] **Core/CPU:** Replace ambiguous raw ownership in `World` and the JSON loader
+      with RAII ownership. Owner: unassigned.
+- [ ] **Shared:** Give renderable objects and materials stable IDs so intersections
+      and backend data do not depend on host pointers. Owner: unassigned.
+- [ ] **Shared:** Decide how groups are flattened into final world transforms before
+      a scene is handed to a rendering backend. Owner: unassigned.
+- [ ] **Core/CPU:** Extend the JSON loader and its Python schema/prompt together when
+      adding planes, cubes, cylinders, triangles, groups, patterns, or additional
+      lights. Owner: unassigned.
+
+Acceptance criteria:
+
+- Existing CPU reference scenes remain visually equivalent within an agreed numeric
+  tolerance.
+- The shared scene owns its data and can be enumerated without exposing `World`
+  internals.
+- No ray or vector operation allocates dynamic memory in the render hot path.
+
+### Phase 2 - Renderer boundaries and build system
+
+- [ ] **Shared:** Introduce a renderer-facing `Scene` snapshot and `CameraState`.
+      Owner: unassigned.
+- [ ] **Core/CPU:** Move the existing render loop behind a `CpuRayTracer` interface.
+      Owner: unassigned.
+- [ ] **Shared:** Replace PPM-specific render output with a general floating-point
+      `ImageBuffer`; keep PPM encoding as a separate output step. Owner: unassigned.
+- [ ] **Graphics/GPU:** Create CMake targets for shared core code, CPU rendering,
+      OpenGL, CUDA, the application, and tests. Owner: unassigned.
+- [ ] **Graphics/GPU:** Add dependency handling for GLFW and GLAD. Owner: unassigned.
+- [ ] **Shared:** Add CLI backend selection, with planned forms such as
+      `--backend cpu`, `--view`, `--view-after-render`, and later `--backend cuda`.
+      Owner: unassigned.
+- [ ] **Shared:** Add clear runtime errors when OpenGL or CUDA support is unavailable.
+      Owner: unassigned.
+
+Acceptance criteria:
+
+- The CPU renderer can be selected explicitly and produces the reference output.
+- A non-graphical build remains possible when OpenGL/CUDA targets are disabled.
+- Shared engine headers do not include OpenGL or CUDA headers.
+
+### Phase 3 - OpenGL interactive preview
+
+- [ ] **Graphics/GPU:** Create a GLFW window and modern OpenGL context with a clean
+      startup/shutdown path. Owner: unassigned.
+- [ ] **Graphics/GPU:** Add shader compilation/linking with actionable error output.
+      Owner: unassigned.
+- [ ] **Graphics/GPU:** Add resize-aware projection and framebuffer handling.
+      Owner: unassigned.
+- [ ] **Graphics/GPU:** Add WASD movement, mouse look, configurable movement speed,
+      and a key to reset to the scene camera. Owner: unassigned.
+- [ ] **Graphics/GPU:** Generate reusable preview meshes for spheres, planes, cubes,
+      cylinders, and triangles. Owner: unassigned.
+- [ ] **Graphics/GPU:** Upload object transforms and material properties from the
+      shared scene. Owner: unassigned.
+- [ ] **Graphics/GPU:** Implement approximate direct lighting and emissive materials
+      in GLSL. Owner: unassigned.
+- [ ] **Graphics/GPU:** Implement `--view` without requiring a completed ray trace.
+      Owner: unassigned.
+- [ ] **Graphics/GPU:** Implement `--view-after-render` and optionally display the
+      completed CPU image as an overlay or comparison panel. Owner: unassigned.
+- [ ] **Core/CPU:** Add shared camera tests proving that CPU rays and the OpenGL camera
+      agree on position, orientation, field of view, and aspect ratio. Owner:
+      unassigned.
+
+Acceptance criteria:
+
+- A loaded scene opens in a responsive 3D window and every supported JSON object is
+  represented in the expected location, scale, and orientation.
+- The user can navigate freely and reset to the authored render camera.
+- Closing the viewer releases its graphics resources cleanly.
+
+### Phase 4 - Minimal CUDA ray tracer
+
+The CUDA renderer should use a flat, data-oriented copy of the shared scene. Do not
+attempt to copy C++ virtual objects, `shared_ptr`, or host pointers to device memory.
+
+- [ ] **Graphics/GPU:** Add CUDA as a first-class CMake language and compile `.cu`
+      sources with the supported MSVC host compiler. Owner: unassigned.
+- [ ] **Graphics/GPU:** Implement CUDA error-checking and RAII wrappers for device
+      buffers. Owner: unassigned.
+- [ ] **Shared:** Define packed GPU scene records for camera, materials, lights, and
+      each initially supported primitive. Owner: unassigned.
+- [ ] **Core/CPU:** Implement and test the host-to-device scene flattener. Owner:
+      unassigned.
+- [ ] **Graphics/GPU:** Launch one CUDA thread per pixel and produce a test gradient.
+      Owner: unassigned.
+- [ ] **Graphics/GPU:** Generate camera rays and render sphere/plane silhouettes and
+      normals. Owner: unassigned.
+- [ ] **Graphics/GPU:** Add closest-hit selection, materials, Phong lighting, and
+      shadows. Owner: unassigned.
+- [ ] **Core/CPU:** Build automated CPU/CUDA pixel comparisons with tolerances and
+      diagnostic difference images. Owner: unassigned.
+- [ ] **Graphics/GPU:** Add triangles, cubes, and cylinders after sphere/plane output
+      matches the CPU reference. Owner: unassigned.
+
+Acceptance criteria:
+
+- CUDA renders the agreed basic scenes within the documented CPU/GPU tolerance.
+- Backend selection falls back or fails clearly when no compatible NVIDIA device is
+  available.
+- Timings separate scene upload, kernel execution, and output transfer.
+
+### Phase 5 - CUDA feature parity
+
+- [ ] **Graphics/GPU:** Add bounded reflection using an iterative ray stack or queue.
+      Owner: unassigned.
+- [ ] **Graphics/GPU:** Add refraction, total internal reflection, and Schlick
+      reflectance. Owner: unassigned.
+- [ ] **Graphics/GPU:** Add patterns and emissive material behavior. Owner:
+      unassigned.
+- [ ] **Graphics/GPU:** Support the remaining shared scene light and primitive types.
+      Owner: unassigned.
+- [ ] **Core/CPU:** Expand CPU/CUDA reference comparisons for every added feature.
+      Owner: unassigned.
+- [ ] **Shared:** Define supported recursion depth and behavior when device limits are
+      reached. Owner: unassigned.
+
+Acceptance criteria:
+
+- Every declared CUDA-supported feature has a CPU comparison scene and test.
+- Unsupported scene features produce explicit errors rather than silently rendering
+  incorrectly.
+
+### Phase 6 - CUDA/OpenGL interactive ray tracing
+
+- [ ] **Graphics/GPU:** Allocate an OpenGL texture or pixel buffer suitable for CUDA
+      interoperability. Owner: unassigned.
+- [ ] **Graphics/GPU:** Register the resource with CUDA once, then map, render, unmap,
+      and display it safely each frame. Owner: unassigned.
+- [ ] **Graphics/GPU:** Reset accumulation when the camera or scene changes. Owner:
+      unassigned.
+- [ ] **Graphics/GPU:** Add progressive accumulation while the camera is stationary.
+      Owner: unassigned.
+- [ ] **Graphics/GPU:** Allow switching between raster preview and CUDA ray-traced
+      display without reloading the scene. Owner: unassigned.
+- [ ] **Shared:** Add resolution scale, sample count, recursion depth, and render-mode
+      controls. Owner: unassigned.
+- [ ] **Core/CPU:** Verify that saving an interactive CUDA frame uses the same color
+      conversion rules as CPU output. Owner: unassigned.
+
+Acceptance criteria:
+
+- Camera movement produces a responsive low-sample image and stopping movement
+  progressively improves it.
+- CUDA never writes a graphics resource while OpenGL is using it.
+- Resizing, switching modes, reloading scenes, and closing the application do not
+  leak or invalidate GPU resources.
+
+### Phase 7 - Acceleration and polish
+
+- [ ] **Core/CPU:** Build a CPU-side bounding volume hierarchy from flattened scene
+      bounds. Owner: unassigned.
+- [ ] **Graphics/GPU:** Upload flat BVH nodes and traverse them in CUDA. Owner:
+      unassigned.
+- [ ] **Shared:** Add benchmark scenes and publish CPU single-threaded, CPU
+      multithreaded, and CUDA timing methodology. Owner: unassigned.
+- [ ] **Graphics/GPU:** Profile memory access, branch divergence, occupancy, and
+      transfer costs before applying optimizations. Owner: unassigned.
+- [ ] **Graphics/GPU:** Add optional OpenGL instancing and preview shadow maps if they
+      materially improve real scenes. Owner: unassigned.
+- [ ] **Shared:** Update setup, controls, troubleshooting, screenshots, and feature
+      compatibility documentation. Owner: unassigned.
+
+Acceptance criteria:
+
+- Performance changes include before/after measurements and preserve correctness.
+- The README accurately identifies which features are supported by CPU, OpenGL
+  preview, and CUDA.
+
+### Definition of done for each checklist item
+
+An item is complete only when its implementation builds in the intended
+configuration, relevant tests pass, user-visible behavior is documented, and the
+other contributor can reproduce it from a clean build. Check the item and replace
+`Owner: unassigned` with the contributor's name or handle in the same pull request.
 
 -------------------------------------------------------------------------------------------------------------
 
@@ -310,29 +594,32 @@ Ubuntu / Debian:
 sudo apt install nlohmann-json3-dev
 ```
 
-If you install via system packages, your compiler should find the header `<nlohmann/json.hpp>` automatically. If you use vcpkg, either integrate vcpkg into your build environment or adjust `CXXFLAGS` in the Makefile to include the vcpkg include path.
+If you install via system packages, CMake should find `<nlohmann/json.hpp>`
+automatically. With a non-standard installation, set
+`CLRT_NLOHMANN_JSON_INCLUDE_DIR` to the directory containing the `nlohmann` folder.
 
 Quick Build
 -----------
-On Windows (MinGW) using the provided Makefile:
+On Windows using the MinGW CMake preset:
 
 ```powershell
-mingw32-make
+cmake --preset mingw-debug
+cmake --build --preset mingw-debug
+ctest --preset mingw-debug
 ```
 
-On Unix-like systems (if `make` is available):
+Visual Studio 2022 users can substitute the `msvc-debug` preset after installing
+the C++ desktop build tools. The legacy `mingw32-make` path remains available while
+the build migration is in progress.
 
-```bash
-make
-```
-
-If your build fails due to missing `nlohmann/json.hpp`, install the library or add its include directory to `CXXFLAGS` in the `Makefile` (the Makefile already uses `-Isrc`).
+If configuration fails because `nlohmann/json.hpp` is missing, install the library
+or provide `CLRT_NLOHMANN_JSON_INCLUDE_DIR` during CMake configuration.
 
 Where to look in the code
-- Loader implementation: [src/SceneLoader.cpp](src/SceneLoader.cpp#L1)
-- Loader header: [src/SceneLoader.h](src/SceneLoader.h#L1)
+- Loader implementation: [src/loaders/SceneLoader.cpp](src/loaders/SceneLoader.cpp#L1)
+- Loader header: [src/loaders/SceneLoader.h](src/loaders/SceneLoader.h#L1)
 - Example scene: [scenes/example_scene.json](scenes/example_scene.json#L1)
-- CLI integration: [src/main.cpp](src/main.cpp#L1)
+- CLI integration: [src/app/main.cpp](src/app/main.cpp#L1)
 
 Next steps
 ----------

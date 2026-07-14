@@ -1,5 +1,5 @@
 #include "Group.h" 
-#include "Math/Operations.h"
+#include "math/Operations.h"
 
 Group::Group() : Shape(), bounds_dirty(true) {}
 
@@ -35,19 +35,17 @@ bound Group::world_bounds() const {
 
     // 5. Get the group's forward transformation matrix
     //    (Replace 'this->getTransform()' with your actual matrix getter function)
-    auto transformMatrix = this->getTransform();
+    const auto& transformMatrix = getTransform();
 
     // 6. Transform all 8 corners and expand the world box to fit them
     for (int i = 0; i < 8; ++i) {
-        // Construct a 4D point (w = 1.0 for points to allow translation)
-        std::vector<double> local_point = {corners[i][0], corners[i][1], corners[i][2], 1.0};
-        
-        // Multiply matrix by vector (using your Math/Operations setup)
-        // Adjust this syntax if your library uses operators like: transformMatrix * local_point
-        std::vector<double> world_point = transformMatrix.multiplyTuple(local_point);
+        const clrt::math::Point3 localPoint{
+            corners[i][0], corners[i][1], corners[i][2]
+        };
+        const clrt::math::Point3 worldPoint = transformMatrix * localPoint;
 
         // Add the transformed 3D coordinates to our world bounding box
-        world.add_point(world_point[0], world_point[1], world_point[2]);
+        world.add_point(worldPoint.x, worldPoint.y, worldPoint.z);
     }
 
     return world;
@@ -68,9 +66,9 @@ bound Group::local_bounds() const {
     return cached_bounds;
 }
 
-void Group::intersect(Ray ray, Intersections& intersectionsList) {
+void Group::intersect(const Ray& ray, Intersections& intersectionsList) {
     // 1. Transform the ray into the group's local space
-    Ray localRay = ray.transform(this->getTransform().inverse());
+    const Ray localRay = ray.transform(getInverseTransform());
 
     // 2. Optimization: Check if the ray misses this group's bounding box
     //    If it misses, stop immediately and don't check any children!
@@ -86,15 +84,13 @@ void Group::intersect(Ray ray, Intersections& intersectionsList) {
 
 // When an intersection occurs with a group, the intersection record itself references the intersected child shape. 
 // Groups themselves don't have a unique surface, so this should never be directly hit.
-std::vector<double> Group::normal_at(const std::vector<double>& worldPoint) const {
-    std::vector<double> local_pt = this->world_to_object(worldPoint);
-    std::vector<double> local_normal = this->local_normal_at(local_pt); 
-
-    return this->normal_to_world(local_normal);
+clrt::math::Vec3 Group::normalAt(const clrt::math::Point3& worldPoint) const {
+    const clrt::math::Point3 localPoint = worldToObject(worldPoint);
+    return normalToWorld(localNormalAt(localPoint));
 }
 
 // Stub implementation since a group container has no physical surface structure of its own
-std::vector<double> Group::local_normal_at(const std::vector<double>& localPoint) const {
+clrt::math::Vec3 Group::localNormalAt(const clrt::math::Point3&) const {
     return {0.0, 0.0, 0.0};
 }
 

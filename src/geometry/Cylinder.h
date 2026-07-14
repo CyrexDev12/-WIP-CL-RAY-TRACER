@@ -8,8 +8,8 @@ class Cylinder : public Shape {
 public:
     Cylinder();
 
-    void intersect(Ray ray, Intersections& intersectionsList) override;
-    std::vector<double> normal_at(const std::vector<double>& worldPoint) const override;
+    void intersect(const Ray& ray, Intersections& intersectionsList) override;
+    clrt::math::Vec3 normalAt(const clrt::math::Point3& worldPoint) const override;
 
     void setMin(double m) { min = m; }
     void setMax(double m) { max = m; }

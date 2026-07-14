@@ -4,20 +4,20 @@
 #include "Shape.h"
 #include "Ray.h"
 #include "Intersection.h"
-#include "bound.h"
+#include "Bound.h"
 
 #include <vector>
 
 class Triangle : public Shape {
 private:
-    std::vector<double> p1;
-    std::vector<double> p2;
-    std::vector<double> p3;
+    clrt::math::Point3 p1;
+    clrt::math::Point3 p2;
+    clrt::math::Point3 p3;
 
-    std::vector<double> e1;
-    std::vector<double> e2;
+    clrt::math::Vec3 e1;
+    clrt::math::Vec3 e2;
 
-    std::vector<double> normal;
+    clrt::math::Vec3 normal;
 
 public:
     Triangle(
@@ -25,11 +25,16 @@ public:
         const std::vector<double>& point2,
         const std::vector<double>& point3
     );
+    Triangle(
+        const clrt::math::Point3& point1,
+        const clrt::math::Point3& point2,
+        const clrt::math::Point3& point3
+    );
 
-    void intersect(Ray ray, Intersections& intersectionsList) override;
+    void intersect(const Ray& ray, Intersections& intersectionsList) override;
 
-    std::vector<double> normal_at(const std::vector<double>& worldPoint) const override;
-    std::vector<double> local_normal_at(const std::vector<double>& localPoint) const;
+    clrt::math::Vec3 normalAt(const clrt::math::Point3& worldPoint) const override;
+    clrt::math::Vec3 localNormalAt(const clrt::math::Point3& localPoint) const;
 
     bound local_bounds() const override;
 

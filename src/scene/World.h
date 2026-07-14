@@ -44,7 +44,7 @@ public:
 
     Intersections intersect_world(const Ray& ray); 
 
-    bool is_shadowed(const vector<double>& pt); 
+    bool is_shadowed(const clrt::math::Point3& point);
 
     Color reflected_color(const Computations& comps, int remaining);
     

@@ -1,27 +1,54 @@
 #include "Shape.h"
-#include "Math/Operations.h"
+#include "math/Operations.h"
+#include "math/LegacyMathAdapters.h"
 
-std::vector<double> Shape::world_to_object(const std::vector<double>& point) const {
-  if (parent != nullptr) {
-    std::vector<double> parentPoint = parent->world_to_object(point);
-    return this->getTransform().inverse().multiplyTuple(parentPoint);
-  } else {
-    return this->getTransform().inverse().multiplyTuple(point);
-  }
+void Shape::setTransform(const clrt::math::Mat4& matrix) {
+    transformMatrix = matrix;
+    inverseTransform = matrix.inverse();
+    inverseTranspose = inverseTransform.transposed();
 }
 
+void Shape::setTransform(const Matrix& matrix) {
+    setTransform(clrt::compat::matrixFromLegacy(matrix));
+}
 
-std::vector<double> Shape::normal_to_world(const std::vector<double>& normal) const {
-    vector<double> worldNormal = this->getTransform().inverse().transpose().multiplyTuple(normal);
-    worldNormal[3] = 0.0; // Ensure w=0 for normal
+void Shape::setPosition(const std::vector<double>& point) {
+    position = clrt::compat::pointFromLegacyTuple(point);
+}
+
+clrt::math::Point3 Shape::worldToObject(const clrt::math::Point3& point) const {
+  if (parent != nullptr) {
+    return inverseTransform * parent->worldToObject(point);
+  }
+  return inverseTransform * point;
+}
+
+clrt::math::Vec3 Shape::normalToWorld(const clrt::math::Vec3& normal) const {
+    clrt::math::Vec3 worldNormal = inverseTranspose * normal;
 
     if (parent != nullptr) {
-        worldNormal = parent->normal_to_world(worldNormal);
+        return parent->normalToWorld(worldNormal);
     }
 
-    // Normalize the resulting normal vector
-    worldNormal = NormalizeTuple(worldNormal);
-    return worldNormal;
+    return worldNormal.normalized();
+}
+
+std::vector<double> Shape::normal_at(const std::vector<double>& worldPoint) const {
+    return clrt::compat::toLegacyTuple(
+        normalAt(clrt::compat::pointFromLegacyTuple(worldPoint))
+    );
+}
+
+std::vector<double> Shape::world_to_object(const std::vector<double>& point) const {
+    return clrt::compat::toLegacyTuple(
+        worldToObject(clrt::compat::pointFromLegacyTuple(point))
+    );
+}
+
+std::vector<double> Shape::normal_to_world(const std::vector<double>& normal) const {
+    return clrt::compat::toLegacyTuple(
+        normalToWorld(clrt::compat::vectorFromLegacyTuple(normal))
+    );
 }
 
 
@@ -46,22 +73,18 @@ bound Shape::parent_space_bounds() const {
         {local.max_x, local.max_y, local.max_z}
     };
 
-    Matrix transformMatrix = this->getTransform();
-
     for (int i = 0; i < 8; ++i) {
-        std::vector<double> p = {
+        const clrt::math::Point3 point{
             corners[i][0],
             corners[i][1],
-            corners[i][2],
-            1.0
+            corners[i][2]
         };
-
-        std::vector<double> transformed = transformMatrix.multiplyTuple(p);
+        const clrt::math::Point3 transformed = transformMatrix * point;
 
         result.add_point(
-            transformed[0],
-            transformed[1],
-            transformed[2]
+            transformed.x,
+            transformed.y,
+            transformed.z
         );
     }
 

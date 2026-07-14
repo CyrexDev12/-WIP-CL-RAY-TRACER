@@ -1,7 +1,7 @@
 #include "Hexagon.h"
 #include "Cylinder.h"
 #include "Sphere.h"
-#include "Math/Operations.h"
+#include "math/Operations.h"
 #include <cmath>
 
 #ifndef M_PI

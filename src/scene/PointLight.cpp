@@ -1,24 +1,17 @@
 #include "scene/PointLight.h"
+#include "math/LegacyMathAdapters.h"
 
 
 
-PointLight::PointLight() {
-  position = {0, 0, 0}; 
-  Color white(1, 1, 1); // Pure white
-
-  intensity = white; 
-}
+PointLight::PointLight() : position{0, 0, 0}, intensity{1, 1, 1} {}
 
 
 // Constructor for PointLight, initializes position and intensity
 // White Color default 
-  PointLight::PointLight(const std::vector<double>& pos, const Color& col) {
-    if (!isPoint(pos)) {
-        throw invalid_argument("Must be a point tuple!");
-    }
+PointLight::PointLight(const clrt::math::Point3& position, const clrt::math::Color& intensity)
+    : position(position), intensity(intensity) {}
 
-    position = pos; 
-    intensity = col; 
-  }
+PointLight::PointLight(const std::vector<double>& position, const clrt::math::Color& intensity)
+    : PointLight(clrt::compat::pointFromLegacyTuple(position), intensity) {}
 
 

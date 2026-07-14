@@ -4,6 +4,8 @@
 
 #include <vector>
 #include <stdexcept>
+#include "core/math/Mat4.h"
+#include "core/math/Point3.h"
 #include "geometry/Ray.h"
 #include "scene/Material.h" 
 #include "math/Matrix.h" 
@@ -16,8 +18,10 @@ class Pattern;
 
 class Shape {
 protected:
-    std::vector<double> position;
-    Matrix transformMatrix; 
+    clrt::math::Point3 position;
+    clrt::math::Mat4 transformMatrix;
+    clrt::math::Mat4 inverseTransform;
+    clrt::math::Mat4 inverseTranspose;
     Material material; 
     Shape* parent{nullptr}; // Pointer to parent shape, default to nullptr
 
@@ -26,16 +30,20 @@ public:
 
 
     // Virtual functions
-    virtual void intersect(Ray ray, Intersections& intersectionsList) = 0;
-    virtual std::vector<double> normal_at(const std::vector<double>& worldPoint) const = 0; // Fixed missing std::
+    virtual void intersect(const Ray& ray, Intersections& intersectionsList) = 0;
+    virtual clrt::math::Vec3 normalAt(const clrt::math::Point3& worldPoint) const = 0;
     virtual bound local_bounds() const = 0;
 
     // --- Common Getters & Setters ---
-    Matrix getTransform() const { return transformMatrix; }
-    void setTransform(const Matrix& m) { this->transformMatrix = m; } 
+    const clrt::math::Mat4& getTransform() const noexcept { return transformMatrix; }
+    const clrt::math::Mat4& getInverseTransform() const noexcept { return inverseTransform; }
+    const clrt::math::Mat4& getInverseTranspose() const noexcept { return inverseTranspose; }
+    void setTransform(const clrt::math::Mat4& matrix);
+    void setTransform(const Matrix& matrix);
 
-    std::vector<double> getPosition() const { return position; }
-    void setPosition(const std::vector<double>& pos) { this->position = pos; }
+    clrt::math::Point3 getPosition() const noexcept { return position; }
+    void setPosition(const clrt::math::Point3& point) noexcept { position = point; }
+    void setPosition(const std::vector<double>& point);
 
     // NEW: Add const Material& to return value, so we are not returning a new copy every time
     const Material& getMaterial() const { return material; }
@@ -94,6 +102,11 @@ void setRefractiveIndex(double num) {
     Shape* getParent() const { return parent; }
     void setParent(Shape* p) { parent = p; }
 
+    clrt::math::Point3 worldToObject(const clrt::math::Point3& point) const;
+    clrt::math::Vec3 normalToWorld(const clrt::math::Vec3& normal) const;
+
+    // Transitional wrappers for legacy tests and callers.
+    std::vector<double> normal_at(const std::vector<double>& worldPoint) const;
     std::vector<double> world_to_object(const std::vector<double>& point) const;
     std::vector<double> normal_to_world(const std::vector<double>& normal) const;
 

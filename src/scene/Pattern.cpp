@@ -1,35 +1,53 @@
-#include "scene/pattern.h"
+#include "scene/Pattern.h"
 #include "geometry/Shape.h"
 #include <cmath> 
 #include <random>
 #include <algorithm>
+#include "math/LegacyMathAdapters.h"
+
+using clrt::math::Color;
+
+void Pattern::setTransform(const clrt::math::Mat4& matrix) {
+    transform = matrix;
+    inverseTransform = matrix.inverse();
+}
+
+void Pattern::setTransform(const Matrix& matrix) {
+    setTransform(clrt::compat::matrixFromLegacy(matrix));
+}
 
 // Step 1: Convert World Point to Object Space
-Color Pattern::PatternAtShape(const Shape* shape, const std::vector<double>& world_point) {
+Color Pattern::PatternAtShape(const Shape* shape, const clrt::math::Point3& worldPoint) {
     if (!shape) return Color{0, 0, 0}; 
-    std::vector<double> object_point = shape->getTransform().inverse().multiplyTuple(world_point);
-    return PatternAtPoint(object_point);
+    return PatternAtPoint(shape->worldToObject(worldPoint));
 }
 
 // Step 2: Convert Object Space to Pattern Local Space
-Color Pattern::PatternAtPoint(const std::vector<double>& object_point) {
-    std::vector<double> pattern_point = this->transform.inverse().multiplyTuple(object_point);
-    return LocalPatternAt(pattern_point);
+Color Pattern::PatternAtPoint(const clrt::math::Point3& objectPoint) {
+    return LocalPatternAt(inverseTransform * objectPoint);
+}
+
+Color Pattern::PatternAtShape(const Shape* shape, const std::vector<double>& worldPoint) {
+    return PatternAtShape(shape, clrt::compat::pointFromLegacyTuple(worldPoint));
+}
+
+Color Pattern::PatternAtPoint(const std::vector<double>& objectPoint) {
+    return PatternAtPoint(clrt::compat::pointFromLegacyTuple(objectPoint));
 }
 
 // Stripe Pattern
-Color StripePattern::LocalPatternAt(const std::vector<double>& pattern_point)  {
-    if (static_cast<int>(std::floor(pattern_point[0])) % 2 == 0) {
+Color StripePattern::LocalPatternAt(const clrt::math::Point3& patternPoint)  {
+    if (static_cast<int>(std::floor(patternPoint.x)) % 2 == 0) {
         return colorA;
     }
     return colorB;
 }
 
 // Checkers Pattern (with surface-fighting offset fix)
-Color CheckersPattern::LocalPatternAt(const std::vector<double>& pattern_point) {
-    double sum = std::floor(pattern_point[0] + 0.00001) + 
-                 std::floor(pattern_point[1] + 0.00001) + 
-                 std::floor(pattern_point[2] + 0.00001);
+Color CheckersPattern::LocalPatternAt(const clrt::math::Point3& patternPoint) {
+    double sum = std::floor(patternPoint.x + 0.00001) +
+                 std::floor(patternPoint.y + 0.00001) +
+                 std::floor(patternPoint.z + 0.00001);
                  
     if (static_cast<int>(sum) % 2 == 0) {
         return colorA;
@@ -38,9 +56,9 @@ Color CheckersPattern::LocalPatternAt(const std::vector<double>& pattern_point) 
 }
 
 // Gradient Pattern
-Color GradientPattern::LocalPatternAt(const std::vector<double>& pattern_point) {
+Color GradientPattern::LocalPatternAt(const clrt::math::Point3& patternPoint) {
     Color distance = colorB - colorA;
-    double x = pattern_point[0];
+    double x = patternPoint.x;
     double fraction = (x + 1.0) / 2.0;
 
     if (fraction < 0.0) fraction = 0.0;
@@ -50,8 +68,8 @@ Color GradientPattern::LocalPatternAt(const std::vector<double>& pattern_point) 
 }
 
 // Ring Pattern (Corrected 2D Concentric Math using X and Z)
-Color RingPattern::LocalPatternAt(const std::vector<double>& pattern_point) {
-    double eval = std::floor(std::sqrt(std::pow(pattern_point[0], 2) + std::pow(pattern_point[2], 2))); 
+Color RingPattern::LocalPatternAt(const clrt::math::Point3& patternPoint) {
+    double eval = std::floor(std::sqrt(std::pow(patternPoint.x, 2) + std::pow(patternPoint.z, 2)));
 
     if (static_cast<int>(eval) % 2 == 0) {
         return colorA; 
@@ -71,23 +89,22 @@ PertubedPattern::PertubedPattern(std::shared_ptr<Pattern> base, double scale, do
 }
 
 // Distort coordinates cleanly without duplicating matrix mathematical logic
-Color PertubedPattern::LocalPatternAt(const std::vector<double>& pattern_point) {
+Color PertubedPattern::LocalPatternAt(const clrt::math::Point3& patternPoint) {
     if (!base_pattern) return Color{0, 0, 0}; // Safety guard against nulls
 
-    double px = pattern_point[0] * noise_frequency;
-    double py = pattern_point[1] * noise_frequency;
-    double pz = pattern_point[2] * noise_frequency;
+    double px = patternPoint.x * noise_frequency;
+    double py = patternPoint.y * noise_frequency;
+    double pz = patternPoint.z * noise_frequency;
 
     // Distort coordinates using 3D Perlin noise spatial shifts
-    std::vector<double> perturbed_point = {
-        pattern_point[0] + Noise3D(px, py, pz) * distortion_scale,
-        pattern_point[1] + Noise3D(px + 11.5, py + 22.3, pz + 33.1) * distortion_scale,
-        pattern_point[2] + Noise3D(px + 44.2, py + 55.6, pz + 66.7) * distortion_scale,
-        pattern_point[3] // Maintains clean homogeneous layout tracking (1.0)
-    }; 
+    const clrt::math::Point3 perturbedPoint{
+        patternPoint.x + Noise3D(px, py, pz) * distortion_scale,
+        patternPoint.y + Noise3D(px + 11.5, py + 22.3, pz + 33.1) * distortion_scale,
+        patternPoint.z + Noise3D(px + 44.2, py + 55.6, pz + 66.7) * distortion_scale
+    };
 
     // Zero code duplication! This automatically transforms the point using the sub-pattern's matrix
-    return base_pattern->PatternAtPoint(perturbed_point); 
+    return base_pattern->PatternAtPoint(perturbedPoint);
 }
 
 // Perlin 3D Lookup Function

@@ -16,9 +16,9 @@ public:
     Sphere(); 
 
     // Implements the specific math for a sphere
-    void intersect(Ray ray, Intersections& intersectionsList) override;
+    void intersect(const Ray& ray, Intersections& intersectionsList) override;
 
-    vector<double> normal_at(const vector<double>& worldPoint) const override;
+    clrt::math::Vec3 normalAt(const clrt::math::Point3& worldPoint) const override;
 
     bound local_bounds() const override; 
 };

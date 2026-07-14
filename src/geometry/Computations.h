@@ -1,7 +1,8 @@
 #ifndef COMPUTATIONS_H
 #define COMPUTATIONS_H
 
-#include <vector>
+#include "core/math/Point3.h"
+#include "core/math/Vec3.h"
 #include "geometry/Intersection.h"
 #include "geometry/Ray.h"
 
@@ -15,12 +16,12 @@ struct Computations {
     const Shape* object; 
 
 
-    vector<double> point; 
-    vector<double> overPt; // Adjusted pt, slightly in the direction of the normal (Prevents self shadowing)
-    vector<double> underPt; // places a refracted ray slightly beneath the surface so it does not accidentally intersect the same surface immediately
-    vector<double> eyev; 
-    vector<double> normalv; 
-    vector<double> reflectv; // Reflection vector
+    clrt::math::Point3 point;
+    clrt::math::Point3 overPt; // Offset along the normal to prevent self-shadowing.
+    clrt::math::Point3 underPt; // Offset beneath the surface for refraction rays.
+    clrt::math::Vec3 eyev;
+    clrt::math::Vec3 normalv;
+    clrt::math::Vec3 reflectv;
     double n1{1.0};
     double n2{1.0};
 

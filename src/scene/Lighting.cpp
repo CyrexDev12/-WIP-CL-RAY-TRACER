@@ -5,7 +5,7 @@
 
 // NEW: big improvement here, we changes Material mat, to const Material& mat as passing by value was essentially duplicating the object 
 // Numerous times. And with patterns being shared_ptrs that was just causing complete chaos on memory
- Color Lighting::ProcessLighting(const Shape* shape, const Material& mat, LightShadeVector& lsv, const std::vector<double>& point, bool in_shadow) {
+ Color Lighting::ProcessLighting(const Shape* shape, const Material& mat, LightShadeVector& lsv, const clrt::math::Point3& point, bool in_shadow) {
     
 
     Color black(0, 0, 0);
@@ -35,13 +35,13 @@
             return ambient; 
         }
         
-        double lightDotNorm = CalculateDotProd(lsv.L, lsv.N); 
+        double lightDotNorm = clrt::math::dot(lsv.L, lsv.N);
         
         if (lightDotNorm >= 0.0) {
             diffuse = multiplyByScalar(effectiveColor, mat.diffuse * lightDotNorm);
 
             lsv.CalculateReflectionVector();
-            double reflectDotProd = CalculateDotProd(lsv.R, lsv.E); 
+            double reflectDotProd = clrt::math::dot(lsv.R, lsv.E);
 
             if (reflectDotProd > 0.0) {
                 double factor = pow(reflectDotProd, mat.shininess);

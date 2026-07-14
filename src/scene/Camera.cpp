@@ -2,10 +2,8 @@
 #include <iostream>
 #include <iomanip>
 #include <cmath>
-#include <thread>
-#include <atomic>
-#include <chrono>
-#include <mutex>
+
+#include "math/LegacyMathAdapters.h"
 
 // Constructor 
 Camera::Camera(double h, double v, double f) {
@@ -33,6 +31,26 @@ Camera::Camera(double h, double v, double f) {
 
 }
 
+const clrt::math::Mat4& Camera::getTransform() const noexcept {
+    return transform;
+}
+
+const clrt::math::Mat4& Camera::getInverseTransform() const noexcept {
+    return inverseTransform;
+}
+
+Matrix Camera::getTransformM() const {
+    return clrt::compat::matrixToLegacy(transform);
+}
+
+void Camera::setTransform(const clrt::math::Mat4& matrix) {
+    transform = matrix;
+    inverseTransform = matrix.inverse();
+}
+
+void Camera::setTransformM(const Matrix& matrix) {
+    setTransform(clrt::compat::matrixFromLegacy(matrix));
+}
 
 void Camera::print() {
      // Set floating-point formatting for clean reading
@@ -59,18 +77,22 @@ void Camera::print() {
     // Transformation Matrix
     std::cout << "  Transformation Matrix:\n";
     
-    transform.printMatrix(); 
+    for (std::size_t row = 0; row < 4; ++row) {
+        for (std::size_t column = 0; column < 4; ++column) {
+            std::cout << transform(row, column) << ' ';
+        }
+        std::cout << '\n';
+    }
     
     std::cout << "========================================\n" << std::endl;
 }
 
 // Must compute the world coordinates at the center of a given pixel, and then construct a ray that passes through that point 
-Ray ray_for_pixel(Camera cam, double x, double y) {
+Ray ray_for_pixel(const Camera& camera, double x, double y) {
     // The offset from the edge of the canvas to the pixels center 
-    double pixelSize = cam.getPixelSize(); 
-    double halfWidth = cam.getHalfWidth(); 
-    double halfHeight = cam.getHalfHeight(); 
-    Matrix trans = cam.getTransformM(); 
+    const double pixelSize = camera.getPixelSize();
+    const double halfWidth = camera.getHalfWidth();
+    const double halfHeight = camera.getHalfHeight();
 
     double xOffset = (x + 0.5) * pixelSize; 
     double yOffset = (y + 0.5) * pixelSize; 
@@ -83,171 +105,12 @@ Ray ray_for_pixel(Camera cam, double x, double y) {
     // Using the camera matrix, transform the canvas point and the origin. 
     // And then compute the rays direction vector
     // (Canvas is at z = -1)
-    Matrix inv = trans.inverse(); 
-    vector<double> pixel = inv.multiplyTuple({world_x, world_y, -1, 1}); 
-    vector<double> origin = inv.multiplyTuple({0, 0, 0, 1}); 
-    vector<double> direction = NormalizeTuple(SubtractTuples(pixel, origin)); 
+    const clrt::math::Mat4& inverse = camera.getInverseTransform();
+    const clrt::math::Point3 pixel =
+        inverse * clrt::math::Point3{world_x, world_y, -1.0};
+    const clrt::math::Point3 origin =
+        inverse * clrt::math::Point3{0.0, 0.0, 0.0};
+    const clrt::math::Vec3 direction = (pixel - origin).normalized();
 
-    return Ray(origin, direction); 
-}
-
-std::string dashes(int count) {
-    return std::string(count, '-');
-}
-
-std::string GreenHashes(int count) {
-    return "\033[32m" + std::string(count, '#') + "\033[0m";
-}
-static std::mutex progressMutex;
-
-void updateProgress(int completedSlots) {
-    const int maxSlots = 20;
-
-    double percentage = (static_cast<double>(completedSlots) / maxSlots) * 100.0;
-
-    // Build a fixed-width progress bar string so updates overwrite cleanly
-    std::string bar = std::string(completedSlots, '#') + std::string(maxSlots - completedSlots, '-');
-    std::string out = "[" + bar + "] (" + std::to_string(static_cast<int>(percentage)) + "%)";
-
-    // Pad to a constant width to clear any leftover characters from previous prints
-    const size_t padWidth = 64;
-    if (out.size() < padWidth) out += std::string(padWidth - out.size(), ' ');
-
-    std::lock_guard<std::mutex> lg(progressMutex);
-    std::cout << "\r" << out << std::flush;
-}
-
-// Params: camera, world, and whether to render with multiple threads.
-Canvas render(Camera cam, World& world, bool multiThreaded) {
-    if (!multiThreaded) {
-        // ---------------------------------------------------------
-        // Standard single-threaded render
-        // ---------------------------------------------------------
-        int width = cam.gethSize();
-        int height = cam.getvSize();
-
-        Canvas canvas(width, height);
-
-        int totalPixels = canvas.width * canvas.height;
-        int pixCount = 0;
-
-        int maxSlots = 20;
-        int lastSlots = -1;
-
-        std::cout << "[DEBUG] Rendering single-threaded..." << std::endl;
-
-        auto start = std::chrono::high_resolution_clock::now();
-
-        for (int y = 0; y < canvas.height; y++) {
-            for (int x = 0; x < canvas.width; x++) {
-                Ray r = ray_for_pixel(cam, x, y);
-                Color c = world.Color_at(r);
-                canvas.writePixel(x, y, c);
-
-                pixCount++;
-
-                int completedSlots = (pixCount * maxSlots) / totalPixels;
-
-                if (completedSlots != lastSlots) {
-                    updateProgress(completedSlots);
-                    lastSlots = completedSlots;
-                }
-            }
-        }
-
-        std::cout << std::endl;
-
-        auto end = std::chrono::high_resolution_clock::now();
-        auto durationMs =
-            std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
-
-        std::cout << "[DEBUG] Single-threaded render time: "
-                  << durationMs.count() << " ms" << std::endl;
-
-        return canvas;
-    }
-
-    // ---------------------------------------------------------
-    // Multithreaded render
-    // ---------------------------------------------------------
-    int width = cam.gethSize();
-    int height = cam.getvSize();
-
-    Canvas canvas(width, height);
-
-    unsigned int threadCount = std::thread::hardware_concurrency();
-
-    if (threadCount == 0) {
-        threadCount = 4;
-    }
-
-    threadCount = std::min(threadCount, static_cast<unsigned int>(height));
-
-    std::cout << "[DEBUG] Rendering multithreaded with "
-              << threadCount << " threads..." << std::endl;
-
-    auto start = std::chrono::high_resolution_clock::now();
-
-    std::atomic<int> rowsCompleted{0};
-
-    int maxSlots = 20;
-    std::atomic<int> lastSlots{-1};
-
-    auto renderRows = [&](int yStart, int yEnd) {
-        for (int y = yStart; y < yEnd; ++y) {
-            for (int x = 0; x < width; ++x) {
-                Ray r = ray_for_pixel(cam, x, y);
-                Color c = world.Color_at(r);
-                canvas.writePixel(x, y, c);
-            }
-
-            int completedRows = ++rowsCompleted;
-
-            int completedSlots = (completedRows * maxSlots) / height;
-
-            int previousSlots = lastSlots.load();
-
-            if (completedSlots != previousSlots) {
-                if (lastSlots.compare_exchange_strong(previousSlots, completedSlots)) {
-                    updateProgress(completedSlots);
-                }
-            }
-        }
-    };
-
-    std::vector<std::thread> threads;
-
-    int rowsPerThread = height / threadCount;
-    int extraRows = height % threadCount;
-
-    int currentY = 0;
-
-    for (unsigned int i = 0; i < threadCount; ++i) {
-        int yStart = currentY;
-        int yEnd = yStart + rowsPerThread;
-
-        if (static_cast<int>(i) < extraRows) {
-            yEnd += 1;
-        }
-
-        currentY = yEnd;
-
-        threads.emplace_back(renderRows, yStart, yEnd);
-    }
-
-    for (auto& t : threads) {
-        t.join();
-    }
-
-    updateProgress(20);
-    std::cout << std::endl;
-
-    auto end = std::chrono::high_resolution_clock::now();
-    auto durationMs =
-        std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
-
-    std::cout << "[DEBUG] Multithreaded render time: "
-              << durationMs.count() << " ms" << std::endl;
-
-    return canvas;
+    return Ray{origin, direction};
 }

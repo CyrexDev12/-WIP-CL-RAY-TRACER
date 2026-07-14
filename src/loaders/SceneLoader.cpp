@@ -1,4 +1,6 @@
-#include "SceneLoader.h"
+#include "loaders/SceneLoader.h"
+#include "geometry/Sphere.h"
+#include "scene/PointLight.h"
 #include <fstream>
 #include <iostream>
 #include <nlohmann/json.hpp>
@@ -10,14 +12,12 @@ static std::array<double,3> asTriple(const json& a) {
     return { a.at(0).get<double>(), a.at(1).get<double>(), a.at(2).get<double>() };
 }
 
-// Return a 4D tuple representing a point (w=1)
-static std::vector<double> asPoint(const json& a) {
-    return { a.at(0).get<double>(), a.at(1).get<double>(), a.at(2).get<double>(), 1.0 };
+static clrt::math::Point3 asPoint(const json& a) {
+    return { a.at(0).get<double>(), a.at(1).get<double>(), a.at(2).get<double>() };
 }
 
-// Return a 4D tuple representing a vector (w=0)
-static std::vector<double> asVector(const json& a) {
-    return { a.at(0).get<double>(), a.at(1).get<double>(), a.at(2).get<double>(), 0.0 };
+static clrt::math::Vec3 asVector(const json& a) {
+    return { a.at(0).get<double>(), a.at(1).get<double>(), a.at(2).get<double>() };
 }
 
 static Color jsonToColor(const json& a) {
@@ -47,12 +47,10 @@ bool LoadSceneFromJson(const std::string& path, Camera& outCam, World& outWorld,
         double fov = cam.value("fov", 1.0471975512);
         outCam = Camera(h, v, fov);
         if (cam.contains("from") && cam.contains("to") && cam.contains("up")) {
-            std::vector<double> from = asPoint(cam["from"]);
-            std::vector<double> to = asPoint(cam["to"]);
-            std::vector<double> up = asVector(cam["up"]);
-            Matrix m;
-            Matrix view = m.viewTransformation(from, to, up);
-            outCam.setTransformM(view);
+            const clrt::math::Point3 from = asPoint(cam["from"]);
+            const clrt::math::Point3 to = asPoint(cam["to"]);
+            const clrt::math::Vec3 up = asVector(cam["up"]);
+            outCam.setTransform(clrt::math::Mat4::viewTransform(from, to, up));
         }
     }
 
@@ -82,19 +80,17 @@ bool LoadSceneFromJson(const std::string& path, Camera& outCam, World& outWorld,
                 // Transform
                 if (o.contains("transform")) {
                     auto t = o["transform"];
-                    Matrix m;
-                    Matrix tr = Matrix();
+                    clrt::math::Mat4 transform;
                     // apply scale then translate if present
                     if (t.contains("scale")) {
                         auto sc = asTriple(t["scale"]);
-                        tr = m.scale(sc[0], sc[1], sc[2]);
+                        transform = clrt::math::Mat4::scaling(sc[0], sc[1], sc[2]);
                     }
                     if (t.contains("translate")) {
                         auto tv = asTriple(t["translate"]);
-                        Matrix tt = m.translation(tv[0], tv[1], tv[2]);
-                        tr = tt.multiplyMatrix(tr);
+                        transform = clrt::math::Mat4::translation(tv[0], tv[1], tv[2]) * transform;
                     }
-                    s->setTransform(tr);
+                    s->setTransform(transform);
                 }
 
                 // Material

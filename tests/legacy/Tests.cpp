@@ -1,4 +1,4 @@
-#include "Tests.h"
+#include "legacy/Tests.h"
 #define M_PI       3.14159265358979323846   // pi
 #include <cmath>
 #include <fstream>
@@ -19,8 +19,9 @@
 #include "geometry/Cube.h"
 #include "geometry/Cylinder.h"
 #include "geometry/Hexagon.h"
-#include "geometry/Group.h"|
+#include "geometry/Group.h"
 #include "geometry/Triangle.h"
+#include "renderers/cpu/CpuRenderer.h"
 
 
 using namespace std; 
@@ -975,7 +976,7 @@ void MultiSpherereRender() {
     cam.setTransformM(viewTrans);
 
     // 9. Execution and Frame Flush
-    Canvas canvas = render(cam, *world);
+    Canvas canvas = renderCpu(cam, *world);
     canvas.canvasOut(); 
 
     // Clean up memory
@@ -1034,7 +1035,7 @@ void PlaneRenderTest() {
     cam.setTransformM(viewTrans);
 
     // 6. Execution and Frame Flush
-    Canvas canvas = render(cam, *world);
+    Canvas canvas = renderCpu(cam, *world);
     canvas.canvasOut(); 
 
     // Clean up memory
@@ -1163,7 +1164,7 @@ void PatternRenderTest() {
     cam.setTransformM(viewTrans);
 
     std::cout << "[DEBUG] ENTERING RENDER LOOP (Shooting rays)..." << std::endl; // This is where the problem occurs 
-    Canvas canvas = render(cam, *world);
+    Canvas canvas = renderCpu(cam, *world);
     std::cout << "[DEBUG] EXITING RENDER LOOP (Render finished successfully!)." << std::endl;
 
     std::cout << "[DEBUG] Outputting Canvas image payload..." << std::endl;
@@ -1695,7 +1696,7 @@ void ReflectionRefractionSceneTest() {
 
     std::cout << "[DEBUG] Rendering reflection/refraction scene..." << std::endl;
 
-    Canvas canvas = render(cam, *world);
+    Canvas canvas = renderCpu(cam, *world);
 
     std::cout << "[DEBUG] Render finished. Outputting canvas..." << std::endl;
 
@@ -1824,7 +1825,7 @@ void CubeCylinderSceneTest() {
 
     std::cout << "[DEBUG] Rendering cube + cylinder scene..." << std::endl;
 
-    Canvas canvas = render(cam, *world);
+    Canvas canvas = renderCpu(cam, *world);
 
     std::cout << "[DEBUG] Render finished. Outputting canvas..." << std::endl;
 
@@ -1883,7 +1884,7 @@ void RenderHexagonTest() {
 
     std::cout << "[DEBUG] Rendering top-down hexagon scene..." << std::endl;
 
-    Canvas canvas = render(cam, *world);
+    Canvas canvas = renderCpu(cam, *world);
 
     std::cout << "[DEBUG] Render finished. Outputting canvas..." << std::endl;
 
@@ -2089,7 +2090,7 @@ void DarkSideTriangleTest() {
 
     std::cout << "[DEBUG] Rendering Dark Side Triangle scene..." << std::endl;
 
-    Canvas canvas = render(cam, *world, true);
+    Canvas canvas = renderCpu(cam, *world, true);
 
     // ---------------------------------------------------------
     // 10. Bloom

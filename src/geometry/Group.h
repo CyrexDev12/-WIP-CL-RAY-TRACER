@@ -2,7 +2,7 @@
 #define GROUP_H
 
 #include "Shape.h"
-#include "bound.h" // Ensures the 'bound' structure is visible
+#include "Bound.h" // Ensures the 'bound' structure is visible
 #include <vector>
 #include <memory>
 
@@ -23,13 +23,13 @@ public:
     void add_child(std::shared_ptr<Shape> shape);
     Shape* get_child(size_t index) const { return children.at(index).get(); }
     const std::vector<std::shared_ptr<Shape>>& get_children() const { return children; }
-    void intersect(Ray ray, Intersections& intersectionsList) override;
-    std::vector<double> normal_at(const std::vector<double>& worldPoint) const override;
+    void intersect(const Ray& ray, Intersections& intersectionsList) override;
+    clrt::math::Vec3 normalAt(const clrt::math::Point3& worldPoint) const override;
     
     // Bounding Box Overrides
     bound world_bounds() const; // Function to compute world bounds based on local bounds and transform
     bound local_bounds() const; 
-    std::vector<double> local_normal_at(const std::vector<double>& localPoint) const;
+    clrt::math::Vec3 localNormalAt(const clrt::math::Point3& localPoint) const;
 
 
 };

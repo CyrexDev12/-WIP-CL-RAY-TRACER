@@ -3,16 +3,10 @@
 #include <vector>
 #include <iostream>
 #include <cstdint>
+#include "core/math/Color.h"
 using namespace std; 
 
-struct Color {
-    double r = 0.0;
-    double g = 0.0;
-    double b = 0.0;
-
-    Color() = default; 
-    Color(double giveR, double giveG, double giveB) : r(giveR), g(giveG), b(giveB) {}
-};
+using Color = clrt::math::Color;
 
 
 
@@ -76,25 +70,5 @@ Color multiplyColors(const Color& c1, const Color& c2);
 Color multiplyByScalar(const Color& c1, double scalar);
 // Color hadamard_product(const Color& c1, const Color& c2); Dont need, same as multiply colors
 void PrintColor(const std::string& label, const Color& c);
-
-// Operators for conveinance 
-inline Color operator+(const Color&c1, const Color& c2) {
-    return addColors(c1, c2);
-}
-
-inline Color operator-(const Color&c1, const Color& c2) {
-    return subtractColors(c1, c2); 
-}
-
-inline Color operator*(const Color&c1, const Color& c2) {
-    return multiplyColors(c1, c2); 
-}
-
-inline Color operator*(const Color&c1, double scalar) {
-    return multiplyByScalar(c1, scalar); 
-}
-
-
-
 
 #endif

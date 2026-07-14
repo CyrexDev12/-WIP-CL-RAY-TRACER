@@ -1,8 +1,10 @@
 #ifndef PATTERN_H
 #define PATTERN_H
 
+#include "core/math/Color.h"
+#include "core/math/Mat4.h"
+#include "core/math/Point3.h"
 #include "math/Matrix.h"
-#include "math/Operations.h"
 #include <cmath>
 #include <memory>
 #include <vector>
@@ -14,20 +16,29 @@ class Shape;
 // 1. BASE PATTERN CLASS
 // =========================================================================
 class Pattern {
-public:
-    Matrix transform; 
+private:
+    clrt::math::Mat4 transform;
+    clrt::math::Mat4 inverseTransform;
 
+public:
     Pattern() = default; 
     virtual ~Pattern() = default;
 
+    void setTransform(const clrt::math::Mat4& matrix);
+    void setTransform(const Matrix& matrix);
+    [[nodiscard]] const clrt::math::Mat4& getTransform() const noexcept { return transform; }
+    [[nodiscard]] const clrt::math::Mat4& getInverseTransform() const noexcept { return inverseTransform; }
+
     // Handles World-Space to Object-Space transformation
-    Color PatternAtShape(const Shape* shape, const std::vector<double>& world_point);
+    clrt::math::Color PatternAtShape(const Shape* shape, const clrt::math::Point3& worldPoint);
+    clrt::math::Color PatternAtShape(const Shape* shape, const std::vector<double>& worldPoint);
     
     // Handles Object-Space to Pattern-Space transformation (Enables safe nesting!)
-    Color PatternAtPoint(const std::vector<double>& object_point); 
+    clrt::math::Color PatternAtPoint(const clrt::math::Point3& objectPoint);
+    clrt::math::Color PatternAtPoint(const std::vector<double>& objectPoint);
     
     // Pure mathematical formula evaluated locally by derived classes
-    virtual Color LocalPatternAt(const std::vector<double>& pattern_point) = 0;
+    virtual clrt::math::Color LocalPatternAt(const clrt::math::Point3& patternPoint) = 0;
 };
 
 // =========================================================================
@@ -35,13 +46,13 @@ public:
 // =========================================================================
 class StripePattern : public Pattern {
 private:
-    Color colorA;
-    Color colorB;
+    clrt::math::Color colorA;
+    clrt::math::Color colorB;
 
 public:
-    StripePattern(Color a, Color b) : colorA(a), colorB(b) {}
+    StripePattern(clrt::math::Color a, clrt::math::Color b) : colorA(a), colorB(b) {}
 
-    Color LocalPatternAt(const std::vector<double>& pattern_point) override;
+    clrt::math::Color LocalPatternAt(const clrt::math::Point3& patternPoint) override;
 };
 
 // =========================================================================
@@ -49,13 +60,13 @@ public:
 // =========================================================================
 class CheckersPattern : public Pattern {
 private:
-    Color colorA;
-    Color colorB;
+    clrt::math::Color colorA;
+    clrt::math::Color colorB;
 
 public:
-    CheckersPattern(Color a, Color b) : colorA(a), colorB(b) {}
+    CheckersPattern(clrt::math::Color a, clrt::math::Color b) : colorA(a), colorB(b) {}
 
-    Color LocalPatternAt(const std::vector<double>& pattern_point) override;
+    clrt::math::Color LocalPatternAt(const clrt::math::Point3& patternPoint) override;
 };
 
 // =========================================================================
@@ -63,13 +74,13 @@ public:
 // =========================================================================
 class GradientPattern : public Pattern {
 private:
-    Color colorA; 
-    Color colorB; 
+    clrt::math::Color colorA;
+    clrt::math::Color colorB;
 
 public: 
-    GradientPattern(Color a, Color b) : colorA(a), colorB(b) {}
+    GradientPattern(clrt::math::Color a, clrt::math::Color b) : colorA(a), colorB(b) {}
 
-    Color LocalPatternAt(const std::vector<double>& pattern_point) override;
+    clrt::math::Color LocalPatternAt(const clrt::math::Point3& patternPoint) override;
 };
 
 // =========================================================================
@@ -77,13 +88,13 @@ public:
 // =========================================================================
 class RingPattern : public Pattern {
 private: 
-    Color colorA; 
-    Color colorB; 
+    clrt::math::Color colorA;
+    clrt::math::Color colorB;
 
 public: 
-    RingPattern(Color a, Color b) : colorA(a), colorB(b) {}
+    RingPattern(clrt::math::Color a, clrt::math::Color b) : colorA(a), colorB(b) {}
 
-    Color LocalPatternAt(const std::vector<double>& pattern_point) override;
+    clrt::math::Color LocalPatternAt(const clrt::math::Point3& patternPoint) override;
 };
 
 // =========================================================================
@@ -116,7 +127,7 @@ public:
     // Constructor requires an underlying pattern to wrap with noise spatial shifts
     PertubedPattern(std::shared_ptr<Pattern> base, double scale = 0.2, double freq = 2.0);
 
-    Color LocalPatternAt(const std::vector<double>& pattern_point) override;
+    clrt::math::Color LocalPatternAt(const clrt::math::Point3& patternPoint) override;
 };
 
 #endif // PATTERN_H

@@ -1,12 +1,10 @@
 #ifndef RAY_H
 #define RAY_H
-#include <iostream>
 #include <vector>
-#include "math/Operations.h"
+#include "core/math/Point3.h"
+#include "core/math/Ray.h"
+#include "core/math/Vec3.h"
 #include "math/Matrix.h"
-
-
-using namespace std; 
 
 
 // RAY CLASS 
@@ -17,31 +15,19 @@ using namespace std;
 
 // We think of the rays direction vector as its speed
 
-struct Ray {
-    vector<double> origin; // POINT
-    vector<double> direction; // VECTOR
-    
-    Ray() = default; 
-    Ray(vector<double> org, vector<double> dir) : origin(org), direction(dir) {}
+struct Ray : clrt::math::Ray {
+    using clrt::math::Ray::Ray;
+
+    Ray() = default;
+    Ray(const std::vector<double>& originTuple, const std::vector<double>& directionTuple);
 
     // Compute the point at the given distance t along the ray
-    vector<double> position(double t) const;
-    Ray transform(Matrix m);
+    [[nodiscard]] clrt::math::Point3 position(double distance) const noexcept;
+    [[nodiscard]] Ray transform(const clrt::math::Mat4& matrix) const;
+    [[nodiscard]] Ray transform(const Matrix& matrix) const;
 
     // Debug function
-    void printRay() {
-        cout << "Ray Origin: ";
-        for (double value : origin) {
-            cout << value << " ";
-        }
-        cout << "\nRay Direction: ";
-        for (double value : direction) {
-            cout << value << " ";
-        }
-        cout << endl;
-    }
-
-    
+    void printRay() const;
 };
 
 

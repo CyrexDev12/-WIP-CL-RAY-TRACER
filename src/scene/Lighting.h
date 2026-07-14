@@ -1,9 +1,7 @@
 #ifndef LIGHTING_H
 #define LIGHTING_H
-#include "math/Operations.h"
 #include "scene/Material.h"
 #include "scene/LightShadeVector.h"
-#include "scene/PointLight.h"
 #include "scene/Light.h"
 
 class Lighting { 
@@ -22,7 +20,7 @@ public:
         delete &sceneLight; 
     }
 
-    vector<double> getPos() {
+    clrt::math::Point3 getPos() const {
         return sceneLight.getPosition(); 
     }
 
@@ -30,7 +28,7 @@ public:
     Color ProcessLighting(const Shape* shape,
                                 const Material& mat, 
                            LightShadeVector& lsv, 
-                           const std::vector<double>& point, bool in_shadow);
+                           const clrt::math::Point3& point, bool in_shadow);
 
 };
 

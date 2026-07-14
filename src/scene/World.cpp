@@ -1,12 +1,13 @@
 #include "World.h"
 #include "scene/LightShadeVector.h"
+#include "scene/PointLight.h"
 #include <stdexcept>
 #include <cmath>
 
 // Default World constructor 
 
 World::World() {
-    PointLight* ptLight = new PointLight({{-10, 10, -10, 1}, Color(1, 1, 1)});
+    PointLight* ptLight = new PointLight(clrt::math::Point3{-10, 10, -10}, Color{1, 1, 1});
 
     Lighting *ling = new Lighting(*ptLight); 
 
@@ -33,18 +34,18 @@ Intersections World::intersect_world(const Ray& ray) {
 // Create a ray from point toward the light source by normalizing the vector from step 1
 // Intersect the World with that Ray
 // Check to see if there was a hit, and if so wether t is less than distance. If so, the hit lies between the point and the light source, and the point is in shadow. 
-bool World::is_shadowed(const vector<double>& pt) {
-    vector<double> v = SubtractTuples(lighting->getPos(), pt); 
-    double mag = GetMagnitude(v); // Distance
-    vector<double> dir = NormalizeTuple(v); 
+bool World::is_shadowed(const clrt::math::Point3& point) {
+    const clrt::math::Vec3 lightOffset = lighting->getPos() - point;
+    const double distance = lightOffset.length();
+    const clrt::math::Vec3 direction = lightOffset.normalized();
 
-    Ray ray(pt, dir); 
+    Ray ray(point, direction);
     Intersections ints; 
     ints = intersect_world(ray); 
 
    const Intersection* intersection = ints.hit(); 
 
-   if (intersection != nullptr && intersection->getT() < mag) {
+   if (intersection != nullptr && intersection->getT() < distance) {
         return true; 
    }
 
@@ -85,7 +86,7 @@ Color World::refracted_color(const Computations& comps,int remaining) {
 
     // Angle between the eye vector and surface normal
     const double cosI =
-        CalculateDotProd(comps.eyev, comps.normalv);
+        clrt::math::dot(comps.eyev, comps.normalv);
 
     // Calculate the squared sine of the transmitted angle
     const double sin2T =
@@ -99,7 +100,7 @@ Color World::refracted_color(const Computations& comps,int remaining) {
     const double cosT = std::sqrt(1.0 - sin2T);
 
     // implemented to calculate the direction of the refracted ray
-    const vector<double> direction =
+    const clrt::math::Vec3 direction =
         comps.normalv * (nRatio * cosI - cosT)
         - comps.eyev * nRatio;
 
@@ -134,8 +135,6 @@ Color World::shade_hit(const Computations& comps, int remaining) {
 );
 
     Material mat = comps.object->getMaterial();
-
-    Color emissive = mat.emissiveColor * mat.emissiveStrength;
 
     Color reflected = reflected_color(comps, remaining); 
     Color refracted = refracted_color(comps, remaining);

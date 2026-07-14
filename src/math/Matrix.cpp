@@ -10,7 +10,7 @@ using namespace std;
 Matrix::Matrix(int r, int c, const vector<double>& arr) {
     int n = r * c;
 
-    if (n != arr.size()) {
+    if (static_cast<std::size_t>(n) != arr.size()) {
         throw invalid_argument("Array is incorrectly sized!");
     }
 
@@ -52,9 +52,9 @@ Matrix Matrix::scalarMultiply(double& scalar) {
 
     vector<vector<double>> result(rows, vector<double>(cols));
 
-    for (int i = 0; i < matrix.size(); i++) {
+    for (std::size_t i = 0; i < matrix.size(); i++) {
 
-        for (int j = 0; j < matrix[i].size(); j++) {
+        for (std::size_t j = 0; j < matrix[i].size(); j++) {
             result[i][j] = matrix[i][j] * scalar;
         }
 
@@ -99,9 +99,9 @@ Matrix Matrix::multiplyMatrix(Matrix& b) {
    Matrix Matrix::transpose() {
         vector<vector<double>> result(cols, vector<double>(rows));
 
-        for (int i = 0; i < matrix.size(); i++) {
+        for (std::size_t i = 0; i < matrix.size(); i++) {
 
-            for (int j = 0; j < matrix[i].size(); j++) {
+            for (std::size_t j = 0; j < matrix[i].size(); j++) {
                 result[j][i] = matrix[i][j];
             }
         }
@@ -379,8 +379,8 @@ Matrix Matrix::viewTransformation(vector<double>& from, vector<double>& to, vect
     // Debug functions 
 
     void Matrix::printMatrix() {
-    for (int row = 0; row < matrix.size(); row++) {
-        for (int col = 0; col < matrix[row].size(); col++) {
+    for (std::size_t row = 0; row < matrix.size(); row++) {
+        for (std::size_t col = 0; col < matrix[row].size(); col++) {
             cout << matrix[row][col] << " ";
         }
         cout << endl;

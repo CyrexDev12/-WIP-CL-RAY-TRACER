@@ -1,6 +1,7 @@
 // Sphere.cpp
 #include "geometry/Sphere.h"
 #include "geometry/Intersection.h" // Needed to construct Intersection objects
+#include "math/LegacyMathAdapters.h"
 #include <cmath>
 
 // Default constructor
@@ -11,17 +12,22 @@ Sphere::Sphere() {
 }
 
 // Populates the intersections collection with concrete Intersection objects
-void Sphere::intersect(Ray ray, Intersections& intersectionsList) {
+void Sphere::intersect(const Ray& ray, Intersections& intersectionsList) {
 
     // 1. Apply the inverse of the sphere's transformation to the ray
     // transformMatrix is cleanly accessible here because it is protected in Shape
-    Ray transformedRay = ray.transform(transformMatrix.inverse());
+    const Ray transformedRay = ray.transform(inverseTransform);
 
     // 2. Compute the coefficients of the quadratic equation
     // (Using Object space: sphere is centered at origin with radius 1)
-    double a = CalculateDotProd(transformedRay.direction, transformedRay.direction);
-    double b = 2.0 * CalculateDotProd(transformedRay.direction, transformedRay.origin);
-    double c = CalculateDotProd(transformedRay.origin, transformedRay.origin) - 1.0; 
+    const clrt::math::Vec3 objectOrigin{
+        transformedRay.origin.x,
+        transformedRay.origin.y,
+        transformedRay.origin.z
+    };
+    double a = clrt::math::dot(transformedRay.direction, transformedRay.direction);
+    double b = 2.0 * clrt::math::dot(transformedRay.direction, objectOrigin);
+    double c = clrt::math::dot(objectOrigin, objectOrigin) - 1.0;
     
     // 3. Compute the discriminant
     double discriminant = b * b - 4.0 * a * c;
@@ -45,25 +51,11 @@ void Sphere::intersect(Ray ray, Intersections& intersectionsList) {
 but normal_at() currently transforms the normal with only the inverse matrix, not inverse-transpose.*/
 
 
-vector<double> Sphere::normal_at(const vector<double>& worldPoint) const {
-   
-    Matrix inverseTransform = Matrix(transformMatrix).inverse();
-
-    vector<double> objectPoint = inverseTransform.multiplyTuple(worldPoint);
-
-    vector<double> objectNormal = SubtractTuples(
-        objectPoint,
-        {0, 0, 0, 1}
-    );
-
-    vector<double> worldNormal =
-        inverseTransform.transpose().multiplyTuple(objectNormal);
-    
-    // this should be a vector, super important
-    worldNormal[3] = 0.0;
-
-    return NormalizeTuple(worldNormal);
-
+clrt::math::Vec3 Sphere::normalAt(const clrt::math::Point3& worldPoint) const {
+    const clrt::math::Point3 objectPoint = inverseTransform * worldPoint;
+    const clrt::math::Vec3 objectNormal =
+        objectPoint - clrt::math::Point3{0.0, 0.0, 0.0};
+    return (inverseTranspose * objectNormal).normalized();
 }
 
 bound Sphere::local_bounds() const {

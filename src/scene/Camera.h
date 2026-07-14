@@ -1,9 +1,8 @@
 #ifndef CAMERA_H
 #define CAMERA_H
-#include "math/Matrix.h"
+#include "core/math/Mat4.h"
 #include "geometry/Ray.h"
-#include "scene/World.h"
-#include "scene/canvas.h"
+#include "math/Matrix.h"
 #define M_PI       3.14159265358979323846   // pi
 
 
@@ -13,7 +12,8 @@ class Camera {
     double hSize; // Horizontal Size of the canvas that the picture will be rendered too
     double vSize; // Is the canvas vertical size
     double fov; // Field of View, an angle that describes how much the camera can see (IN RADIANS)
-    Matrix transform; // Matrix describing how the world should be oriented relative to the camera
+    clrt::math::Mat4 transform; // World-to-camera transform
+    clrt::math::Mat4 inverseTransform; // Cached camera-to-world transform
     double pixelSize;
     double aspect;  // Aspect ratio of the horizontal size of the canvas to its vertical size
     double halfView;  // The width of half the canvas 
@@ -29,33 +29,31 @@ class Camera {
     // Leave the body completely empty
 }
 
-    double getPixelSize() {
+    double getPixelSize() const {
         return pixelSize; 
     }
 
-    double getHalfWidth() {
+    double getHalfWidth() const {
         return halfWidth;
     }
 
-    double getHalfHeight() {
+    double getHalfHeight() const {
         return halfHeight; 
     }
 
-    double gethSize() {
+    double gethSize() const {
         return hSize; 
     }
 
-    double getvSize() {
+    double getvSize() const {
         return vSize; 
     }
 
-    Matrix getTransformM() {
-        return transform; 
-    }
-
-    void setTransformM(Matrix m) {
-        transform = m; 
-    }
+    [[nodiscard]] const clrt::math::Mat4& getTransform() const noexcept;
+    [[nodiscard]] const clrt::math::Mat4& getInverseTransform() const noexcept;
+    [[nodiscard]] Matrix getTransformM() const;
+    void setTransform(const clrt::math::Mat4& matrix);
+    void setTransformM(const Matrix& matrix);
 
     // Debug Functions
 
@@ -63,16 +61,6 @@ class Camera {
 };
 
 // Returns new ray that starts at the camera and passes through the indicated (x, y) pixels on the canvas
-Ray ray_for_pixel(Camera cam, double x, double y); 
-
-// Returns rendered canvas 
-Canvas render(Camera cam, World& world,  bool multiThreaded); 
-
-
-
-
-
-
-
+Ray ray_for_pixel(const Camera& camera, double x, double y);
 
 #endif

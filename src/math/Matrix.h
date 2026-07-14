@@ -23,12 +23,16 @@ class Matrix {
 
     // Getters 
 
-    int getRows() {
+    int getRows() const {
         return rows; 
     }
 
-    int getCols() {
+    int getCols() const {
         return cols; 
+    }
+
+    double at(int row, int col) const {
+        return matrix.at(row).at(col);
     }
 
 

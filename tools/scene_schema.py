@@ -1,4 +1,4 @@
-"""Validated scene model matching src/SceneLoader.cpp."""
+"""Validated scene model matching src/loaders/SceneLoader.cpp."""
 
 from __future__ import annotations
 

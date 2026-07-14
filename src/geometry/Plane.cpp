@@ -1,17 +1,19 @@
 #include "geometry/Plane.h"
+#include "math/LegacyMathAdapters.h"
 #include <cmath>
 #include <limits>
 
 
 // - Local Intersect: If the ray is parallel to the plane (ray.direction.y is close to 0), it misses completeley. Otherwise, t = -rayorigin.y  ray.direction.y 
-void Plane::intersect(Ray ray, Intersections& intersectionsList) {
+void Plane::intersect(const Ray& ray, Intersections& intersectionsList) {
+    const Ray localRay = ray.transform(getInverseTransform());
 
     const double EPSILON = 1e-5; // Small epsilon product to protect against floating pt issues 
-    double local_ray_originY = ray.origin[1];
-    double local_ray_directionY = ray.direction[1]; 
+    double local_ray_originY = localRay.origin.y;
+    double local_ray_directionY = localRay.direction.y;
 
     // If the ray is moving parallel to the XZ plane, it misses
-    if (abs(ray.direction[1]) < EPSILON) {
+    if (std::abs(localRay.direction.y) < EPSILON) {
         return; // We return nothing no intersection exists 
     }
 
@@ -25,6 +27,10 @@ void Plane::intersect(Ray ray, Intersections& intersectionsList) {
     return; 
 }
 
+clrt::math::Vec3 Plane::normalAt(const clrt::math::Point3&) const {
+    return (getInverseTranspose() * clrt::math::Vec3{0.0, 1.0, 0.0})
+        .normalized();
+}
 
 
 bound Plane::local_bounds() const {

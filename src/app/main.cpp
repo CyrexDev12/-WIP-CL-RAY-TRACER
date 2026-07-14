@@ -1,36 +1,33 @@
-#include <iostream>
-#include <vector>
-#include <string> 
-#include <sstream>
-#include <iostream>
 #include <fstream>
-#include <cmath>
-#include "math/Matrix.h"
-#include "Tests.h"
-#include "geometry/Intersection.h"
-#include "SceneLoader.h"
+#include <iostream>
+#include <string>
+
+#include "loaders/SceneLoader.h"
+#include "renderers/cpu/CpuRenderer.h"
 #include "scene/Camera.h"
 #include "scene/canvas.h"
 #include "scene/World.h"
 
-using namespace std;
+namespace {
 
-static void writeCanvasToFile(Canvas& c, const std::string& path) {
+void writeCanvasToFile(Canvas& canvas, const std::string& path) {
    std::ofstream ofs(path);
    if (!ofs) {
       std::cerr << "Failed to open output file: " << path << std::endl;
       return;
    }
-   ofs << c.convertToPpm();
-   ofs.close();
+   ofs << canvas.convertToPpm();
 }
 
+void printUsage(const char* executable) {
+   std::cout << "Usage:\n"
+             << "  " << executable << " --scene <scene.json>\n";
+}
 
-using namespace std; 
+} // namespace
 
 
 int main(int argc, char** argv) {
-   // If a scene JSON is provided, load and render it
    if (argc >= 3 && std::string(argv[1]) == "--scene") {
       std::string scenePath = argv[2];
       Camera cam;
@@ -42,13 +39,12 @@ int main(int argc, char** argv) {
          std::cerr << "Failed to load scene: " << scenePath << std::endl;
          return 1;
       }
-      Canvas cnv = render(cam, world, multiThreaded);
+      Canvas cnv = renderCpu(cam, world, multiThreaded);
       writeCanvasToFile(cnv, outFile);
       std::cout << "Rendered scene to " << outFile << std::endl;
       return 0;
    }
 
-   // Default: run tests
-   DarkSideTriangleTest();
-   return 0;
+   printUsage(argv[0]);
+   return argc == 1 ? 0 : 2;
 }

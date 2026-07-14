@@ -1,10 +1,7 @@
 #ifndef POINTLIGHT_H
 #define POINTLIGHT_H
-#include <iostream>
 #include <vector>
-#include "math/Operations.h"
 #include "scene/Light.h"
-using namespace std;
 
 
 // No size or shape, exists at a single point in space, defined by intensity (how bright it is), the intensity also describes the light source.
@@ -14,16 +11,17 @@ using namespace std;
 // Your updated PointLight class inheriting from Light
 class PointLight : public Light {
 private:
-    std::vector<double> position;
-    Color intensity;
+    clrt::math::Point3 position;
+    clrt::math::Color intensity;
 
 public:
     PointLight();
 
-    PointLight(const std::vector<double>& pos, const Color& col);
+    PointLight(const clrt::math::Point3& position, const clrt::math::Color& intensity);
+    PointLight(const std::vector<double>& position, const clrt::math::Color& intensity);
 
-    Color getIntensity() const override { return intensity; }
-    std::vector<double> getPosition() const override { return position; }
+    clrt::math::Color getIntensity() const override { return intensity; }
+    clrt::math::Point3 getPosition() const override { return position; }
 };
 
 
