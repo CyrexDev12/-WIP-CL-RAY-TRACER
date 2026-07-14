@@ -1,0 +1,83 @@
+Graphics Library Dependencies
+
+GLFW (Required)
+
+Role: Window, Input, and OpenGL context management. 
+
+GLFW: Will handle 
+- Keyboard Movement
+- Mouse look
+- Fullscreen/Windowed modes
+- Event callbacks
+- Frame timing
+
+
+GLAD (Required) 
+Role: OpenGL Function loader 
+
+Required to access modern OpenGL features. 
+- Full screen ray tracing shaders
+- Compute Shaders
+- GPU resource management
+- Buffer and texture operations
+
+GLM (Required) 
+Role: Mathematics library 
+
+For a navigable 3D environment, GLM becomes essential rather than optional, used for: 
+- Camera transforms 
+- Ray Generation 
+- Vectors and Matrices 
+- Collision and movement calculations
+- Frustum and orientation math 
+
+
+For Debugging 
+
+ImGUI 
+
+Purpose: Runtime debugging and scene control. 
+
+Useful Controls: 
+
+- Camera Position
+- Lighting Controls 
+- Material Settings
+- Ray Bounce Count
+- Performance Metrics 
+- Render Quality 
+
+
+STB_Image
+Purpose: Texture and HDR environment loading 
+
+Supports: 
+- Skyboxes
+- HDRI Environments
+- Material Textures 
+- Surface Maps
+
+(Can be also used for reflections, environment lighting, and physically based rendering)
+
+
+User Input
+    │
+    ▼
+ GLFW
+    │
+    ▼
+ First-Person Camera
+    │
+    ▼
+ GLM Math System
+    │
+    ▼
+ Ray Generation
+    │
+    ▼
+ OpenGL Compute/Fragment Shader
+    │
+    ▼
+ Rendered Scene
+
+

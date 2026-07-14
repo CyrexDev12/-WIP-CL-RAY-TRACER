@@ -215,6 +215,14 @@ Recommended collaboration rules:
 - Use small deterministic scenes for correctness comparisons and separate larger
   scenes for performance measurements.
 
+REFACTOR PLAN (NEW ADDITIONS)
+
+  NEW 3D Model Integration 
+
+  We will be implementing obj wavewront files for the OpenGL addition. 
+
+  This will allow us to create immersive environemts, rather than using CSG. 
+
 ### Phase 0 - Baseline and decisions
 
 Both contributors should complete this phase together. Its output is a stable
@@ -222,20 +230,20 @@ reference against which the refactor and GPU renderer can be checked.
 
 - [x] **Shared:** Record build instructions and supported development platforms.
       Owner: Codex.
-- [ ] **Shared:** Select and document the OpenGL dependencies. Initial recommendation:
+- [x] **Shared:** Select and document the OpenGL dependencies. Initial recommendation:
       GLFW for the window/input layer and GLAD for OpenGL function loading.
-      Owner: unassigned.
+      Owner: unassigned. (NOTE: FIISHED, located in docs/dependencies)
 - [x] **Shared:** Adopt CMake as the canonical build system while temporarily keeping
       the current Makefile available during migration. Owner: Codex.
 - [x] **Shared:** Document the math conventions: row/column-major storage,
       multiplication order, coordinate handedness, camera forward axis, and degrees
       versus radians. Owner: Codex.
-- [ ] **Core/CPU:** Save small CPU reference renders covering a sphere, plane,
+- [x] **Core/CPU:** Save small CPU reference renders covering a sphere, plane,
       triangle, shadow, reflection, transparency/refraction, Schlick reflectance,
       pattern, group, and bounding box. Owner: unassigned.
 - [ ] **Core/CPU:** Add repeatable timing output that excludes JSON loading and file
-      writing. Owner: unassigned.
-- [ ] **Graphics/GPU:** Verify the chosen NVIDIA GPU, driver, Visual Studio/MSVC, and
+      writing. Owner: unassigned. (IMPLEMENT LATER; PUSHBACK TO LATER PHASE)
+- TODO:: NEXT [ ] **Graphics/GPU:** Verify the chosen NVIDIA GPU, driver, Visual Studio/MSVC, and
       CUDA toolkit by compiling and running a minimal CUDA program. Owner: unassigned.
 
 Acceptance criteria:

@@ -1,0 +1,30 @@
+Hardware in use: 
+
+NVIDIA PNY 5070 OC
+Code Targeting: 
+-arch=sm_120 (Delivers maximum optimization and compute capability for the 5070)
+
+Dependencies: 
+- CUDA 12.x toolkit from NVDIA​‌
+
+RTX 5070
+   ↓
+Compute Capability 12.0
+   ↓
+CUDA Toolkit 12.x
+   ↓
+NVIDIA Driver​‌
+
+
+Common Stack ​‌
+
+OpenGL (display)
+GLFW
+GLAD
+GLM
+
+CUDA 12.x
+RTX 5070
+
+CUDA does the heavy compute work, while OpenGL handles presentation and user movement throughout the scene. 
+

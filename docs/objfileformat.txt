@@ -1,0 +1,80 @@
+OBJ (Wavefront)
+
+
+
+Structure 
+
+An OBJ file contain lines with beginining keywords 
+
+# Comment
+
+v 0.0 0.0 0.0
+v 1.0 0.0 0.0
+v 0.0 1.0 0.0
+
+f 1 2 3
+
+v = vertex position 
+f = face (triangle or polygon)
+(This example creates a simple triangle)
+
+Verticies:
+
+v 0.0 0.0 0.0
+v 1.0 0.0 0.0
+v 0.0 1.0 0.0
+
+format: v x y z
+
+Texture Coordinates: 
+
+vt 0.0 0.0
+vt 1.0 0.0
+vt 0.5 1.0
+
+Normals 
+
+vn 0.0 0.0 1.0
+
+Faces 
+f 1 2 3
+
+
+Material Files (.MTL)
+OBJ models often use a material file: 
+
+mtllib house.mtl 
+
+material usage: 
+
+usemtl Brickwall 
+
+The associated MTL file may contain: 
+
+newmtl BrickWall
+
+Kd 0.8 0.3 0.3
+Ks 0.1 0.1 0.1
+
+map_Kd brick.png
+
+Where: 
+kd = diffuse color 
+ks = specular color 
+map_Kd = texture image 
+
+Normal Workflow for a CUDA Ray Tracer Utilizing OBJ Files 
+
+OBJ File
+    ↓
+Vertices
+Normals
+UVs
+Faces
+    ↓
+Triangle List
+    ↓
+BVH Construction
+    ↓
+CUDA Ray Intersections
+
