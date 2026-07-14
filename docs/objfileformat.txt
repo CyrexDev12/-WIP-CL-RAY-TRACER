@@ -6,6 +6,8 @@ Structure
 
 An OBJ file contain lines with beginining keywords 
 
+An OBJ file is mostly a list of points and instructions describing how those points connect to form triangles that make up the mesh.
+
 # Comment
 
 v 0.0 0.0 0.0

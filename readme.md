@@ -273,7 +273,7 @@ phase creates fixed-layout engine types without changing rendered results.
 - [ ] **Shared:** Define an owned, enumerable `Scene` containing cameras, lights,
       objects, transforms, and materials. Owner: unassigned.
 - [ ] **Core/CPU:** Replace ambiguous raw ownership in `World` and the JSON loader
-      with RAII ownership. Owner: unassigned.
+      with RAII ownership. Owner: unassigned. (IMPORTANT)
 - [ ] **Shared:** Give renderable objects and materials stable IDs so intersections
       and backend data do not depend on host pointers. Owner: unassigned.
 - [ ] **Shared:** Decide how groups are flattened into final world transforms before
