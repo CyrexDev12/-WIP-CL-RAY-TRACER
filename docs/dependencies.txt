@@ -1,83 +1,87 @@
-Graphics Library Dependencies
+Graphics and GPU Dependencies
+=============================
 
-GLFW (Required)
+Validated GPU toolchain
+------------------------
 
-Role: Window, Input, and OpenGL context management. 
+- CUDA toolkit 13.3
+- NVIDIA GeForce Game Ready Driver 610.74
+- NVIDIA PNY GeForce RTX 5070 OC
+- Native CUDA target: `sm_120` (compute capability 12.0)
 
-GLFW: Will handle 
-- Keyboard Movement
+CUDA performs the ray-tracing computation while OpenGL handles presentation and
+interactive camera movement. This is the known-working development combination, not
+a minimum system requirement.
+
+Required graphics libraries
+---------------------------
+
+GLFW
+
+Role: window creation, input, and OpenGL context management.
+
+- Keyboard movement
 - Mouse look
-- Fullscreen/Windowed modes
+- Fullscreen and windowed modes
 - Event callbacks
 - Frame timing
 
+GLAD
 
-GLAD (Required) 
-Role: OpenGL Function loader 
+Role: modern OpenGL function loading.
 
-Required to access modern OpenGL features. 
-- Full screen ray tracing shaders
-- Compute Shaders
 - GPU resource management
 - Buffer and texture operations
+- Shader and rendering API access
 
-GLM (Required) 
-Role: Mathematics library 
+GLM
 
-For a navigable 3D environment, GLM becomes essential rather than optional, used for: 
-- Camera transforms 
-- Ray Generation 
-- Vectors and Matrices 
-- Collision and movement calculations
-- Frustum and orientation math 
+Role: viewer-side OpenGL camera and transform interoperability where useful.
 
+The shared engine and ray-tracing math must continue using the project's fixed-size
+`core/math` types. GLM types must not leak into the shared Scene, CPU renderer, or
+CUDA scene records.
 
-For Debugging 
+Optional development libraries
+------------------------------
 
-ImGUI 
+Dear ImGui
 
-Purpose: Runtime debugging and scene control. 
+Purpose: runtime debugging and scene control.
 
-Useful Controls: 
+- Camera position
+- Lighting controls
+- Material settings
+- Ray bounce count
+- Performance metrics
+- Render quality
 
-- Camera Position
-- Lighting Controls 
-- Material Settings
-- Ray Bounce Count
-- Performance Metrics 
-- Render Quality 
+stb_image
 
+Purpose: future texture and HDR environment loading.
 
-STB_Image
-Purpose: Texture and HDR environment loading 
+- Skyboxes and HDR environments
+- Material textures
+- Surface maps
 
-Supports: 
-- Skyboxes
-- HDRI Environments
-- Material Textures 
-- Surface Maps
+OBJ geometry support does not initially require image textures. MTL texture maps are
+deferred until the shared texture subsystem is designed.
 
-(Can be also used for reflections, environment lighting, and physically based rendering)
+High-level runtime flow
+-----------------------
 
-
-User Input
-    │
-    ▼
- GLFW
-    │
-    ▼
- First-Person Camera
-    │
-    ▼
- GLM Math System
-    │
-    ▼
- Ray Generation
-    │
-    ▼
- OpenGL Compute/Fragment Shader
-    │
-    ▼
- Rendered Scene
-
-
+```text
+User input
+    |
+    v
+GLFW and OpenGL viewer
+    |
+    v
+Shared camera/scene state
+    |
+    v
+CUDA ray generation and rendering
+    |
+    v
+CUDA/OpenGL shared display resource
+```

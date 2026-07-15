@@ -1,0 +1,32 @@
+
+
+CUDA Validation Baseline
+========================
+Recorded: July 14, 2026
+Hardware: NVIDIA PNY GeForce RTX 5070 OC
+CUDA toolkit: 13.3
+NVIDIA driver: GeForce Game Ready Driver 610.74
+Compute target: sm_120
+
+Validation Program Output: 
+
+CUDA Validation Harness
+======================
+Device: NVIDIA GeForce RTX 5070
+Compute capability: 12.0
+Global memory: 11.94 GiB
+Multi-processors: 48
+Max threads per block: 1024
+
+Kernel runtime: 0.408 ms
+Estimated throughput: 30.811 GFLOP/s
+Effective memory bandwidth: 76.521 GiB/s
+Validation result: PASS
+Mismatches: 0
+
+Interpretation
+==============
+This is a correctness and toolchain microbenchmark baseline. The timing, throughput,
+and bandwidth values are not ray-tracer benchmarks or theoretical GPU peak values.
+Compare future runs only when the validation workload, input size, build settings,
+warm-up procedure, and timing boundaries are unchanged.

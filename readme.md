@@ -169,16 +169,73 @@ reflection, refraction, patterns, or ray-traced shadows. CUDA will later provide
 accurate ray-traced viewport. All three paths must consume the same scene model so
 that the project does not develop separate, incompatible scene representations.
 
+### Validated NVIDIA/CUDA development baseline
+
+The following configuration is the project's currently validated NVIDIA development
+baseline, recorded July 14, 2026. It is a known-working reference configuration, not
+a minimum system requirement.
+
+| Component | Validated value |
+|---|---|
+| GPU | NVIDIA PNY GeForce RTX 5070 OC |
+| Compute capability | 12.0 |
+| CUDA architecture target | `sm_120` |
+| CUDA toolkit | 13.3 |
+| NVIDIA driver | GeForce Game Ready Driver 610.74 |
+| Reported global memory | 11.94 GiB |
+| Streaming multiprocessors | 48 |
+| Maximum threads per block | 1024 |
+
+The CUDA validation harness completed successfully with zero mismatches:
+
+| Validation measurement | Baseline result |
+|---|---:|
+| Kernel runtime | 0.408 ms |
+| Estimated throughput | 30.811 GFLOP/s |
+| Effective memory bandwidth | 76.521 GiB/s |
+| Validation result | PASS |
+| Mismatches | 0 |
+
+These numbers validate the CUDA toolchain, device execution, result correctness, and
+basic timing path. They are microbenchmark results, not ray-tracer performance claims
+and not the GPU's theoretical peak. Future results should only be compared with this
+baseline when they use the same validation workload, input size, build configuration,
+warm-up procedure, and timing boundaries.
+
+CUDA work should follow these baseline rules:
+
+- Configure native RTX 5070 builds for compute capability 12.0 (`sm_120`); retain a
+  documented alternative architecture list when portability testing begins.
+- Treat CUDA 13.3 and driver 610.74 as the known-working pair. Record both versions
+  in bug reports because changing either can affect compilation and runtime behavior.
+- Check every CUDA API call and kernel launch, synchronize before reading kernel
+  timing or validation results, and report the selected device at startup.
+- Keep validation/correctness tests separate from rendering benchmarks. A rendering
+  benchmark must also record scene name, resolution, samples, bounce depth, compiler,
+  build type, upload time, kernel time, display/download time, and repeated-run
+  statistics.
+- Do not assume 11.94 GiB is entirely available. Budget device memory explicitly for
+  geometry, OBJ triangle/BVH data, materials, accumulation buffers, and CUDA/OpenGL
+  shared resources, and fail clearly when a scene exceeds the available budget.
+- Preserve a CPU-only build and provide an actionable error or fallback when CUDA is
+  disabled, the driver is incompatible, or no supported NVIDIA device is present.
+
+The full captured harness output is stored in `docs/CUDAValidation.txt`; supporting
+hardware and dependency notes are in `docs/hardware.txt` and `docs/dependencies.txt`.
+
 ### Target architecture
 
 ```text
-Scene JSON
-    |
-    v
-Shared owned Scene model
-    |---> CPU ray tracer ------> ImageBuffer ------> PPM/image output
-    |---> OpenGL preview --------------------------> Interactive window
-    `---> CUDA ray tracer -----> OpenGL texture ---> Interactive window
+Scene JSON -----> OBJ/MTL asset references
+    |                       |
+    |                       v
+    |              Shared mesh asset loader
+    |                       |
+    `---------------> Owned Scene model
+                            |
+                            |---> CPU ray tracer ------> ImageBuffer ------> PPM/image output
+                            |---> OpenGL preview --------------------------> Interactive window
+                            `---> CUDA ray tracer -----> OpenGL texture ---> Interactive window
 ```
 
 The shared engine code should not depend on OpenGL or CUDA. Renderer-specific code
@@ -190,10 +247,12 @@ for OpenGL or flat device buffers for CUDA.
 The work is split into two lanes so contributors can make progress in parallel after
 the shared interfaces are agreed upon:
 
-- **Contributor A - Core and CPU lane:** fixed-size math, scene ownership, CPU
-  renderer extraction, JSON loading, reference tests, and CPU/CUDA comparisons.
+- **Contributor A - Core and CPU lane:** fixed-size math, scene ownership, OBJ/MTL
+  parsing, CPU renderer extraction, JSON loading, reference tests, and CPU/CUDA
+  comparisons.
 - **Contributor B - Graphics and GPU lane:** CMake/toolchain setup, GLFW/OpenGL
-  viewer, preview meshes and shaders, CUDA kernels, and CUDA/OpenGL interoperability.
+  viewer, mesh upload and shaders, CUDA triangle kernels and BVH traversal, and
+  CUDA/OpenGL interoperability.
 - **Shared integration points:** scene structures, camera conventions, material
   layout, renderer interfaces, CLI behavior, and acceptance of reference images.
 
@@ -215,13 +274,46 @@ Recommended collaboration rules:
 - Use small deterministic scenes for correctness comparisons and separate larger
   scenes for performance measurements.
 
-REFACTOR PLAN (NEW ADDITIONS)
+### Wavefront OBJ model integration
 
-  NEW 3D Model Integration 
+Wavefront OBJ models will be supported as shared scene assets. OBJ integration is
+not owned by the OpenGL backend: the file is parsed once into a backend-neutral
+indexed triangle mesh that can be consumed by the CPU reference renderer, OpenGL,
+and CUDA. Meshes complement the existing analytic primitives and CSG; they do not
+require those features to be removed.
 
-  We will be implementing obj wavewront files for the OpenGL addition. 
+```text
+.obj/.mtl file
+      |
+      v
+OBJ asset loader ---> MeshAsset (positions, normals, UVs, indices, material slots)
+                              |
+                              v
+                    MeshInstance (asset ID, transform, material overrides)
+                       |              |              |
+                       v              v              v
+                  CPU triangles   OpenGL VBOs    CUDA triangles/BVH
+```
 
-  This will allow us to create immersive environemts, rather than using CSG. 
+The first supported OBJ subset will include vertex positions (`v`), normals (`vn`),
+texture coordinates (`vt`), faces (`f`), object/group names, smoothing groups (`s`),
+`usemtl`, and `mtllib`. The loader must resolve positive and negative OBJ indices,
+triangulate polygon faces, and generate normals when a model does not provide them.
+Because OBJ indexes positions, normals, and UVs independently, import canonicalizes
+each unique position/normal/UV index triplet into one `MeshVertex` and one unified
+index buffer suitable for all three renderers. Initial rendering support will cover
+geometry, flat/smooth normals, and basic MTL material colors. Image texture maps,
+normal maps, animation, skinning, and formats such as FBX or glTF are later
+extensions, not requirements for the first OBJ milestone.
+
+Asset data and scene instances must remain separate. Loading the same OBJ more than
+once should reuse one immutable `MeshAsset`, while each `MeshInstance` has its own
+transform and optional material overrides. Asset paths are resolved relative to the
+scene file, OBJ-relative MTL paths are preserved, and importing must not silently
+change handedness, axes, winding, or units. Scene transforms handle deliberate
+orientation and scale changes.
+
+See `docs/objfileformat.txt` for the format notes and planned data flow.
 
 ### Phase 0 - Baseline and decisions
 
@@ -243,8 +335,15 @@ reference against which the refactor and GPU renderer can be checked.
       pattern, group, and bounding box. Owner: unassigned.
 - [ ] **Core/CPU:** Add repeatable timing output that excludes JSON loading and file
       writing. Owner: unassigned. (IMPLEMENT LATER; PUSHBACK TO LATER PHASE)
-- TODO:: NEXT [ ] **Graphics/GPU:** Verify the chosen NVIDIA GPU, driver, Visual Studio/MSVC, and
-      CUDA toolkit by compiling and running a minimal CUDA program. Owner: unassigned.
+- [x] **Graphics/GPU:** Verify the RTX 5070, driver 610.74, CUDA toolkit 13.3, and
+      `sm_120` target by compiling and running the CUDA validation harness. The
+      captured result reports zero mismatches. Owner: project contributors.
+- [ ] **Shared:** Lock the initial OBJ/MTL feature subset, coordinate/winding rules,
+      triangulation behavior, missing-normal policy, and asset path rules described
+      above. Owner: unassigned.
+- [ ] **Core/CPU:** Save tiny deterministic OBJ fixtures covering triangles, quads,
+      negative indices, shared vertices, smooth normals, missing normals, groups,
+      malformed input, and multiple material slots. Owner: unassigned.
 
 Acceptance criteria:
 
@@ -276,6 +375,12 @@ phase creates fixed-layout engine types without changing rendered results.
       with RAII ownership. Owner: unassigned. (IMPORTANT)
 - [ ] **Shared:** Give renderable objects and materials stable IDs so intersections
       and backend data do not depend on host pointers. Owner: unassigned.
+- [ ] **Shared:** Define stable `MeshAssetId` and `MeshInstanceId` values plus an
+      immutable indexed `MeshAsset` representation containing unified mesh vertices,
+      triangle indices, bounds, source metadata, and material-slot ranges. Owner:
+      unassigned.
+- [ ] **Shared:** Represent mesh instances separately from mesh assets so transforms
+      and material overrides do not duplicate vertex data. Owner: unassigned.
 - [ ] **Shared:** Decide how groups are flattened into final world transforms before
       a scene is handed to a rendering backend. Owner: unassigned.
 - [ ] **Core/CPU:** Extend the JSON loader and its Python schema/prompt together when
@@ -290,7 +395,25 @@ Acceptance criteria:
   internals.
 - No ray or vector operation allocates dynamic memory in the render hot path.
 
-### Phase 2 - Renderer boundaries and build system
+### Phase 2 - Mesh ingestion, renderer boundaries, and build system
+
+- [ ] **Core/CPU:** Add a backend-neutral OBJ parser under `src/loaders` with
+      line-numbered errors and no OpenGL or CUDA dependencies. Owner: unassigned.
+- [ ] **Core/CPU:** Parse positions, normals, UVs, faces, groups, material libraries,
+      smoothing groups, material selections, positive/negative indices, and polygon
+      triangulation into the shared `MeshAsset` representation. Owner: unassigned.
+- [ ] **Core/CPU:** Generate deterministic flat or smooth normals when `vn` data is
+      absent, calculate mesh bounds, reject invalid indices, and test malformed files.
+      Owner: unassigned.
+- [ ] **Shared:** Add a JSON mesh-object form containing an OBJ path, transform, and
+      optional material overrides; update the C++ loader, Python schema, prompt, and
+      example scenes together. Owner: unassigned.
+- [ ] **Shared:** Add an asset cache keyed by normalized source path so repeated mesh
+      instances share parsed geometry. Owner: unassigned.
+- [ ] **Core/CPU:** Intersect mesh triangles in the CPU reference renderer and add
+      normal/barycentric regression tests plus a small reference render. A simple
+      per-mesh acceleration structure is acceptable before the shared BVH lands.
+      Owner: unassigned.
 
 - [ ] **Shared:** Introduce a renderer-facing `Scene` snapshot and `CameraState`.
       Owner: unassigned.
@@ -310,6 +433,10 @@ Acceptance criteria:
 Acceptance criteria:
 
 - The CPU renderer can be selected explicitly and produces the reference output.
+- A scene can reference one OBJ multiple times without reparsing or duplicating its
+  immutable mesh data, and the CPU renderer produces the agreed reference image.
+- Valid OBJ fixtures load deterministically and malformed files report the source
+  path and line number without leaving a partially loaded scene.
 - A non-graphical build remains possible when OpenGL/CUDA targets are disabled.
 - Shared engine headers do not include OpenGL or CUDA headers.
 
@@ -325,6 +452,15 @@ Acceptance criteria:
       and a key to reset to the scene camera. Owner: unassigned.
 - [ ] **Graphics/GPU:** Generate reusable preview meshes for spheres, planes, cubes,
       cylinders, and triangles. Owner: unassigned.
+- [ ] **Graphics/GPU:** Upload each shared `MeshAsset` once as indexed vertex/index
+      buffers and draw all `MeshInstance` transforms without duplicating GPU geometry.
+      Owner: unassigned.
+- [ ] **Graphics/GPU:** Preserve imported face normals and smooth vertex normals in
+      the preview, including the correct inverse-transpose normal transform for
+      non-uniformly scaled instances. Owner: unassigned.
+- [ ] **Graphics/GPU:** Map basic MTL diffuse/specular values and scene material
+      overrides into preview materials; use a documented fallback for missing MTL
+      files or unsupported MTL properties. Owner: unassigned.
 - [ ] **Graphics/GPU:** Upload object transforms and material properties from the
       shared scene. Owner: unassigned.
 - [ ] **Graphics/GPU:** Implement approximate direct lighting and emissive materials
@@ -341,6 +477,8 @@ Acceptance criteria:
 
 - A loaded scene opens in a responsive 3D window and every supported JSON object is
   represented in the expected location, scale, and orientation.
+- OBJ mesh instances match CPU transforms, winding, bounds, normals, and basic
+  material assignments, and repeated instances share one OpenGL mesh allocation.
 - The user can navigate freely and reset to the authored render camera.
 - Closing the viewer releases its graphics resources cleanly.
 
@@ -351,10 +489,21 @@ attempt to copy C++ virtual objects, `shared_ptr`, or host pointers to device me
 
 - [ ] **Graphics/GPU:** Add CUDA as a first-class CMake language and compile `.cu`
       sources with the supported MSVC host compiler. Owner: unassigned.
+- [ ] **Graphics/GPU:** Expose `CMAKE_CUDA_ARCHITECTURES` as a configurable build
+      setting, document `120` as the validated RTX 5070 value, and avoid silently
+      compiling for an unrelated architecture. Owner: unassigned.
+- [ ] **Graphics/GPU:** Integrate the CUDA validation harness with CTest or an
+      equivalent repeatable command that records device, toolkit, driver, build
+      configuration, workload size, warm-up count, and repeated-run statistics.
+      Owner: unassigned.
 - [ ] **Graphics/GPU:** Implement CUDA error-checking and RAII wrappers for device
       buffers. Owner: unassigned.
 - [ ] **Shared:** Define packed GPU scene records for camera, materials, lights, and
       each initially supported primitive. Owner: unassigned.
+- [ ] **Shared:** Define packed CUDA mesh records using contiguous positions,
+      normals, UVs, triangle indices, material-slot data, per-mesh bounds, and
+      instance transforms. Device records must contain offsets/indices, not host
+      pointers. Owner: unassigned.
 - [ ] **Core/CPU:** Implement and test the host-to-device scene flattener. Owner:
       unassigned.
 - [ ] **Graphics/GPU:** Launch one CUDA thread per pixel and produce a test gradient.
@@ -367,10 +516,15 @@ attempt to copy C++ virtual objects, `shared_ptr`, or host pointers to device me
       diagnostic difference images. Owner: unassigned.
 - [ ] **Graphics/GPU:** Add triangles, cubes, and cylinders after sphere/plane output
       matches the CPU reference. Owner: unassigned.
+- [ ] **Graphics/GPU:** Render the tiny OBJ fixtures through the CUDA triangle path
+      and compare their silhouettes, depths, barycentric normals, and materials with
+      CPU output. Large production models wait for BVH traversal. Owner: unassigned.
 
 Acceptance criteria:
 
 - CUDA renders the agreed basic scenes within the documented CPU/GPU tolerance.
+- The same mesh instance transform and material selection produce matching CPU,
+  OpenGL-preview, and CUDA results for the initial OBJ fixtures.
 - Backend selection falls back or fails clearly when no compatible NVIDIA device is
   available.
 - Timings separate scene upload, kernel execution, and output transfer.
@@ -383,6 +537,11 @@ Acceptance criteria:
       reflectance. Owner: unassigned.
 - [ ] **Graphics/GPU:** Add patterns and emissive material behavior. Owner:
       unassigned.
+- [ ] **Shared:** Add barycentric interpolation of imported smooth normals and UVs
+      consistently across CPU and CUDA. Owner: unassigned.
+- [ ] **Shared:** Decide and document whether MTL texture maps enter this phase or a
+      later texture subsystem; unsupported maps must produce an explicit warning
+      rather than being silently mistaken for full MTL support. Owner: unassigned.
 - [ ] **Graphics/GPU:** Support the remaining shared scene light and primitive types.
       Owner: unassigned.
 - [ ] **Core/CPU:** Expand CPU/CUDA reference comparisons for every added feature.
@@ -427,6 +586,15 @@ Acceptance criteria:
       bounds. Owner: unassigned.
 - [ ] **Graphics/GPU:** Upload flat BVH nodes and traverse them in CUDA. Owner:
       unassigned.
+- [ ] **Core/CPU:** Build triangle-level BVHs for mesh assets and a top-level
+      instance BVH so repeated models reuse their bottom-level acceleration data.
+      Owner: unassigned.
+- [ ] **Graphics/GPU:** Upload reusable mesh BVHs and traverse mesh instances in CUDA
+      without rebuilding or duplicating the bottom-level BVH per instance. Owner:
+      unassigned.
+- [ ] **Shared:** Add representative OBJ benchmark assets with documented triangle
+      counts and licenses; keep tiny correctness fixtures separate from performance
+      models. Owner: unassigned.
 - [ ] **Shared:** Add benchmark scenes and publish CPU single-threaded, CPU
       multithreaded, and CUDA timing methodology. Owner: unassigned.
 - [ ] **Graphics/GPU:** Profile memory access, branch divergence, occupancy, and
@@ -439,6 +607,8 @@ Acceptance criteria:
 Acceptance criteria:
 
 - Performance changes include before/after measurements and preserve correctness.
+- Large OBJ scenes use acceleration structures rather than brute-force testing every
+  triangle, and repeated instances reuse mesh geometry and bottom-level BVHs.
 - The README accurately identifies which features are supported by CPU, OpenGL
   preview, and CUDA.
 
