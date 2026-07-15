@@ -20,7 +20,11 @@ except ImportError:
 
 
 def build_request_options(
-    model: str, description: str, *, strict_schema: bool = False
+    model: str,
+    description: str,
+    *,
+    strict_schema: bool = False,
+    reasoning_effort: str = "auto",
 ) -> dict[str, Any]:
     options: dict[str, Any] = {
         "model": model,
@@ -35,8 +39,12 @@ def build_request_options(
         options["text"] = {"format": {"type": "json_object"}}
 
     if model.startswith("gpt-5.4-"):
-        options["reasoning"] = {"effort": "none"}
-        options.setdefault("text", {})["verbosity"] = "low"
+        if reasoning_effort == "auto":
+            reasoning_effort = "low" if "mini" in model else "none"
+        options["reasoning"] = {"effort": reasoning_effort}
+        options.setdefault("text", {})["verbosity"] = (
+            "medium" if "mini" in model else "low"
+        )
     return options
 
 
@@ -50,8 +58,14 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--model",
-        default=os.environ.get("OPENAI_SCENE_MODEL", "gpt-5.4-nano"),
-        help="OpenAI model (default: gpt-5.4-nano)",
+        default=os.environ.get("OPENAI_SCENE_MODEL", "gpt-5.4-mini"),
+        help="OpenAI model (default: gpt-5.4-mini)",
+    )
+    parser.add_argument(
+        "--reasoning-effort",
+        choices=("auto", "none", "low", "medium", "high", "xhigh"),
+        default=os.environ.get("OPENAI_SCENE_REASONING", "auto"),
+        help="reasoning effort for GPT-5.4 models (default: auto)",
     )
     parser.add_argument(
         "--timeout",
@@ -101,6 +115,7 @@ def main() -> int:
             args.model,
             " ".join(args.description),
             strict_schema=args.strict_schema,
+            reasoning_effort=args.reasoning_effort,
         )
         if args.strict_schema:
             response = client.responses.parse(**request_options)

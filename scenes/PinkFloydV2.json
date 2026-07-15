@@ -1,0 +1,556 @@
+{
+  "image": {
+    "width": 400,
+    "height": 200,
+    "file": "dark_side_prism.ppm",
+    "multithreaded": true
+  },
+  "camera": {
+    "hsize": 400,
+    "vsize": 200,
+    "fov": 1.0472,
+    "from": [
+      0.0,
+      1.8,
+      -10.0
+    ],
+    "to": [
+      0.0,
+      1.0,
+      0.0
+    ],
+    "up": [
+      0.0,
+      1.0,
+      0.0
+    ]
+  },
+  "lights": [
+    {
+      "type": "point",
+      "position": [
+        -6.0,
+        7.0,
+        -8.0
+      ],
+      "color": [
+        1.0,
+        1.0,
+        1.0
+      ]
+    }
+  ],
+  "objects": [
+    {
+      "transform": {
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "rotate": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "translate": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "material": {
+        "color": [
+          0.02,
+          0.02,
+          0.03
+        ],
+        "ambient": 0.9,
+        "diffuse": 0.1,
+        "specular": 0.0,
+        "shininess": 200.0,
+        "reflective": 0.0,
+        "transparency": 0.0,
+        "refractiveIndex": 1.0
+      },
+      "type": "plane"
+    },
+    {
+      "transform": {
+        "scale": [
+          0.03,
+          1.0,
+          0.03
+        ],
+        "rotate": [
+          0.0,
+          0.0,
+          1.5708
+        ],
+        "translate": [
+          -3.2,
+          2.0,
+          0.0
+        ]
+      },
+      "material": {
+        "color": [
+          1.0,
+          1.0,
+          0.95
+        ],
+        "ambient": 0.85,
+        "diffuse": 0.15,
+        "specular": 0.2,
+        "shininess": 50.0,
+        "reflective": 0.0,
+        "transparency": 0.0,
+        "refractiveIndex": 1.0
+      },
+      "type": "cylinder",
+      "minimum": 0.0,
+      "maximum": 8.0,
+      "closed": true
+    },
+    {
+      "type": "group",
+      "transform": {
+        "scale": [
+          1.4,
+          1.4,
+          1.4
+        ],
+        "rotate": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "translate": [
+          0.0,
+          1.8,
+          0.0
+        ]
+      },
+      "children": [
+        {
+          "transform": {
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ],
+            "rotate": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "translate": [
+              0.0,
+              0.0,
+              0.0
+            ]
+          },
+          "material": {
+            "color": [
+              0.9,
+              0.9,
+              0.95
+            ],
+            "ambient": 0.15,
+            "diffuse": 0.25,
+            "specular": 1.0,
+            "shininess": 180.0,
+            "reflective": 0.0,
+            "transparency": 0.75,
+            "refractiveIndex": 1.5
+          },
+          "type": "triangle",
+          "p1": [
+            0.0,
+            1.2,
+            0.0
+          ],
+          "p2": [
+            -1.0,
+            -0.8,
+            0.35
+          ],
+          "p3": [
+            1.0,
+            -0.8,
+            0.35
+          ]
+        },
+        {
+          "transform": {
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ],
+            "rotate": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "translate": [
+              0.0,
+              0.0,
+              0.0
+            ]
+          },
+          "material": {
+            "color": [
+              0.9,
+              0.9,
+              0.95
+            ],
+            "ambient": 0.15,
+            "diffuse": 0.25,
+            "specular": 1.0,
+            "shininess": 180.0,
+            "reflective": 0.0,
+            "transparency": 0.75,
+            "refractiveIndex": 1.5
+          },
+          "type": "triangle",
+          "p1": [
+            0.0,
+            1.2,
+            0.0
+          ],
+          "p2": [
+            1.0,
+            -0.8,
+            -0.35
+          ],
+          "p3": [
+            -1.0,
+            -0.8,
+            -0.35
+          ]
+        },
+        {
+          "transform": {
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ],
+            "rotate": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "translate": [
+              0.0,
+              0.0,
+              0.0
+            ]
+          },
+          "material": {
+            "color": [
+              0.9,
+              0.9,
+              0.95
+            ],
+            "ambient": 0.15,
+            "diffuse": 0.25,
+            "specular": 1.0,
+            "shininess": 180.0,
+            "reflective": 0.0,
+            "transparency": 0.75,
+            "refractiveIndex": 1.5
+          },
+          "type": "triangle",
+          "p1": [
+            0.0,
+            1.2,
+            0.0
+          ],
+          "p2": [
+            1.0,
+            -0.8,
+            0.35
+          ],
+          "p3": [
+            1.0,
+            -0.8,
+            -0.35
+          ]
+        },
+        {
+          "transform": {
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ],
+            "rotate": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "translate": [
+              0.0,
+              0.0,
+              0.0
+            ]
+          },
+          "material": {
+            "color": [
+              0.9,
+              0.9,
+              0.95
+            ],
+            "ambient": 0.15,
+            "diffuse": 0.25,
+            "specular": 1.0,
+            "shininess": 180.0,
+            "reflective": 0.0,
+            "transparency": 0.75,
+            "refractiveIndex": 1.5
+          },
+          "type": "triangle",
+          "p1": [
+            0.0,
+            1.2,
+            0.0
+          ],
+          "p2": [
+            -1.0,
+            -0.8,
+            -0.35
+          ],
+          "p3": [
+            -1.0,
+            -0.8,
+            0.35
+          ]
+        }
+      ]
+    },
+    {
+      "transform": {
+        "scale": [
+          0.025,
+          1.0,
+          0.025
+        ],
+        "rotate": [
+          0.0,
+          0.0,
+          1.5708
+        ],
+        "translate": [
+          3.0,
+          2.0,
+          0.0
+        ]
+      },
+      "material": {
+        "color": [
+          1.0,
+          0.2,
+          0.2
+        ],
+        "ambient": 0.9,
+        "diffuse": 0.1,
+        "specular": 0.2,
+        "shininess": 40.0,
+        "reflective": 0.0,
+        "transparency": 0.0,
+        "refractiveIndex": 1.0
+      },
+      "type": "cylinder",
+      "minimum": 0.0,
+      "maximum": 7.0,
+      "closed": true
+    },
+    {
+      "transform": {
+        "scale": [
+          0.025,
+          1.0,
+          0.025
+        ],
+        "rotate": [
+          0.35,
+          0.0,
+          1.5708
+        ],
+        "translate": [
+          4.4,
+          2.6,
+          0.0
+        ]
+      },
+      "material": {
+        "color": [
+          1.0,
+          0.5,
+          0.1
+        ],
+        "ambient": 0.9,
+        "diffuse": 0.1,
+        "specular": 0.2,
+        "shininess": 40.0,
+        "reflective": 0.0,
+        "transparency": 0.0,
+        "refractiveIndex": 1.0
+      },
+      "type": "cylinder",
+      "minimum": 0.0,
+      "maximum": 7.0,
+      "closed": true
+    },
+    {
+      "transform": {
+        "scale": [
+          0.025,
+          1.0,
+          0.025
+        ],
+        "rotate": [
+          0.75,
+          0.0,
+          1.5708
+        ],
+        "translate": [
+          5.0,
+          3.6,
+          0.0
+        ]
+      },
+      "material": {
+        "color": [
+          1.0,
+          0.95,
+          0.1
+        ],
+        "ambient": 0.9,
+        "diffuse": 0.1,
+        "specular": 0.2,
+        "shininess": 40.0,
+        "reflective": 0.0,
+        "transparency": 0.0,
+        "refractiveIndex": 1.0
+      },
+      "type": "cylinder",
+      "minimum": 0.0,
+      "maximum": 7.0,
+      "closed": true
+    },
+    {
+      "transform": {
+        "scale": [
+          0.025,
+          1.0,
+          0.025
+        ],
+        "rotate": [
+          1.15,
+          0.0,
+          1.5708
+        ],
+        "translate": [
+          5.2,
+          5.0,
+          0.0
+        ]
+      },
+      "material": {
+        "color": [
+          0.2,
+          0.9,
+          0.2
+        ],
+        "ambient": 0.9,
+        "diffuse": 0.1,
+        "specular": 0.2,
+        "shininess": 40.0,
+        "reflective": 0.0,
+        "transparency": 0.0,
+        "refractiveIndex": 1.0
+      },
+      "type": "cylinder",
+      "minimum": 0.0,
+      "maximum": 7.0,
+      "closed": true
+    },
+    {
+      "transform": {
+        "scale": [
+          0.025,
+          1.0,
+          0.025
+        ],
+        "rotate": [
+          1.5,
+          0.0,
+          1.5708
+        ],
+        "translate": [
+          4.8,
+          6.3,
+          0.0
+        ]
+      },
+      "material": {
+        "color": [
+          0.2,
+          0.4,
+          1.0
+        ],
+        "ambient": 0.9,
+        "diffuse": 0.1,
+        "specular": 0.2,
+        "shininess": 40.0,
+        "reflective": 0.0,
+        "transparency": 0.0,
+        "refractiveIndex": 1.0
+      },
+      "type": "cylinder",
+      "minimum": 0.0,
+      "maximum": 7.0,
+      "closed": true
+    },
+    {
+      "transform": {
+        "scale": [
+          0.025,
+          1.0,
+          0.025
+        ],
+        "rotate": [
+          1.85,
+          0.0,
+          1.5708
+        ],
+        "translate": [
+          4.1,
+          7.0,
+          0.0
+        ]
+      },
+      "material": {
+        "color": [
+          0.65,
+          0.2,
+          1.0
+        ],
+        "ambient": 0.9,
+        "diffuse": 0.1,
+        "specular": 0.2,
+        "shininess": 40.0,
+        "reflective": 0.0,
+        "transparency": 0.0,
+        "refractiveIndex": 1.0
+      },
+      "type": "cylinder",
+      "minimum": 0.0,
+      "maximum": 7.0,
+      "closed": true
+    }
+  ]
+}

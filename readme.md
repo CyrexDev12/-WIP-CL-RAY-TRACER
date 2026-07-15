@@ -59,7 +59,7 @@ environment variable lasts only for the current PowerShell session.
 Optionally select the default model for the session:
 
 ```powershell
-$env:OPENAI_SCENE_MODEL = "gpt-5.4-nano"
+$env:OPENAI_SCENE_MODEL = "gpt-5.4-mini"
 ```
 
 ### 4. Generate a scene
@@ -84,12 +84,14 @@ Generator options:
 - `-o` or `--output` is required and must point to a `.json` file.
 - `--force` allows an existing JSON file to be replaced.
 - `--model MODEL_NAME` overrides the default model for one request.
+- `--reasoning-effort LEVEL` accepts `auto`, `none`, `low`, `medium`, `high`, or
+  `xhigh` for GPT-5.4 models.
 - `--timeout SECONDS` bounds each API request to 60 seconds by default.
 - `--strict-schema` enables slower server-side Structured Outputs validation.
 - `OPENAI_SCENE_MODEL` changes the default model for the current shell.
-- The default model is `gpt-5.4-nano`, configured for no reasoning and low
-  verbosity to minimize generation latency. Use `gpt-5.4-mini` when a more
-  complex scene benefits from higher model quality.
+- The default model is `gpt-5.4-mini`, using low reasoning and medium verbosity
+  for richer scenes. Use `gpt-5.4-nano --reasoning-effort none` when minimum
+  generation latency matters more than composition quality.
 
 Example using all relevant options:
 
