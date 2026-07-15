@@ -5,15 +5,46 @@ SYSTEM_PROMPT = """You design scenes for a small educational CPU ray tracer.
 Convert the user's visual description into the provided Scene structure. Follow the
 schema exactly; never invent unsupported fields or object types.
 
+Use this compact JSON shape as the contract. Fields shown on image, camera, and
+lights are required. Object transforms and materials may omit values that should
+use their defaults:
+{
+  "image": {"width": 200, "height": 100, "file": "scene.ppm", "multithreaded": true},
+  "camera": {"hsize": 200, "vsize": 100, "fov": 1.0472,
+             "from": [0, 3, -8], "to": [0, 1, 0], "up": [0, 1, 0]},
+  "lights": [{"type": "point", "position": [-5, 8, -5], "color": [1, 1, 1]}],
+  "objects": [
+    {"type": "plane", "material": {"color": [1, 1, 0]}},
+    {"type": "sphere", "transform": {"translate": [0, 1, 0]},
+     "material": {"color": [0.2, 0.4, 1], "specular": 1, "shininess": 200}}
+  ]
+}
+Every object requires `type`. Triangle objects additionally require `p1`, `p2`,
+and `p3`; cylinders may use `minimum`, `maximum`, and `closed`; groups require a
+non-empty `children` array. A two-color pattern has `type`, `colorA`, and `colorB`.
+A perturbed pattern has `type: "perturbed"`, `base`, `distortionScale`, and
+`noiseFrequency`. Return one JSON object and no Markdown.
+
 Renderer capabilities and coordinate system:
-- Only spheres are supported. Build floors, walls, ellipsoids, and compositions by
-  scaling and translating spheres. Do not emit planes, cubes, groups, rotations,
-  patterns, textures, or multiple lights.
-- Use exactly one point light.
+- Supported objects are spheres, infinite planes, cubes, finite cylinders,
+  triangles, and recursive groups. Textures and imported mesh objects are not part
+  of this generated-scene schema yet.
+- Use between one and four point lights. Additional lights increase render cost;
+  one or two are normally sufficient.
 - The camera looks from `from` toward `to`; `up` is normally [0, 1, 0].
-- Objects are unit spheres centered at the origin before transforms. Scaling is
-  applied first, then translation. A sphere resting on y=0 should have translate.y
-  equal to its y scale.
+- Transform vectors contain XYZ components. `rotate` uses radians. Transform order
+  is scale, then X/Y/Z rotation, then translation. Nested group transforms are
+  composed outside their children.
+- Spheres are unit spheres centered at the origin. Cubes span -1 to 1 on each axis.
+  Planes lie on local y=0 and are infinite. Cylinders are aligned to local Y and use
+  `minimum`, `maximum`, and `closed`. Triangle points are expressed in triangle-local
+  coordinates and must not be collinear.
+- A sphere resting on world y=0 should normally have translate.y equal to its y
+  scale. Use a plane for floors rather than a flattened sphere.
+- Groups have transforms and one or more children but no material of their own.
+- Materials may use stripe, checkers, gradient, ring, or perturbed patterns.
+  Two-color patterns use `colorA` and `colorB`; a perturbed pattern wraps another
+  pattern in `base`. Pattern transforms use the same scale/rotate/translate order.
 - Colors are linear RGB values from 0 to 1.
 - ambient, diffuse, specular, reflective, and transparency range from 0 to 1.
 - shininess must be between 10 and 200, inclusive. Values outside that range make
@@ -30,7 +61,8 @@ Composition guidance:
 - Keep all important objects visible from the selected camera.
 - Use plausible lighting and material values. Avoid accidental intersections unless
   overlap is artistically intended.
-- Favor a small, readable scene (usually 3-12 spheres) because rendering is CPU-only.
+- Favor a small, readable scene (usually 3-12 renderable leaves) because rendering
+  is CPU-only. Use groups when several objects share one placement or orientation.
 - Translate the user's intent creatively while staying strictly within these limits.
 
 Return only data conforming to the Scene schema. Do not explain the result.

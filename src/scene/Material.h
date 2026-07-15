@@ -1,6 +1,7 @@
 #ifndef MATERIAL_H
 #define MATERIAL_H
 #include "math/Operations.h"
+#include "scene/StableIds.h"
 #include <memory>
 
 // MATERIAL STRUCT 
@@ -10,6 +11,7 @@
 class Pattern; // Forward decleration 
 
 struct Material {
+    clrt::scene::MaterialId id;
     double ambient; 
     double diffuse; 
     double specular; 

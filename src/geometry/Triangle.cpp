@@ -69,7 +69,7 @@ void Triangle::intersect(const Ray& ray, Intersections& intersectionsList) {
     double t = f * clrt::math::dot(e2, origin_cross_e1);
 
     // Adjust this line to match how your Intersections class stores intersections.
-    intersectionsList.addIntersection(Intersection(t, this));
+    intersectionsList.addIntersection(Intersection(t, getObjectId()));
 }
 
 clrt::math::Vec3 Triangle::normalAt(const clrt::math::Point3&) const {

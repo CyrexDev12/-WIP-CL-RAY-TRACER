@@ -1,9 +1,17 @@
 #include "Group.h" 
 #include "math/Operations.h"
+#include <stdexcept>
 
 Group::Group() : Shape(), bounds_dirty(true) {}
 
 void Group::add_child(std::shared_ptr<Shape> shape) {
+    if (!shape) {
+        throw std::invalid_argument("Group children cannot be null");
+    }
+    if (getObjectId()) {
+        throw std::logic_error(
+            "Cannot change group membership after stable IDs are assigned");
+    }
     children.push_back(shape);
     shape->setParent(this); // Let the child know this group is its parent
     bounds_dirty = true;     // Force bounding box recalculation next time it's needed

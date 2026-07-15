@@ -14,7 +14,7 @@ bool sameIntersection(
 ) {
     const double EPSILON = 1e-5;
 
-    return first.getObject() == second.getObject() &&
+    return first.getObjectId() == second.getObjectId() &&
            std::fabs(first.getT() - second.getT()) < EPSILON;
 }
 }
@@ -46,15 +46,22 @@ bool sameIntersection(
     return r0 + (1.0 - r0) * pow(1.0 - cos, 5);
 }
 
-Computations prepareComputations(const Intersection& intersection, const Ray& ray, const Intersections& intersections) {
+Computations prepareComputations(
+    const Intersection& intersection,
+    const Ray& ray,
+    const Intersections& intersections,
+    const clrt::scene::ObjectResolver& resolver
+) {
     Computations comps;
 
     comps.t = intersection.getT();
-    comps.object = intersection.getObject();
+    comps.objectId = intersection.getObjectId();
+    const Shape& object = resolver.resolve(comps.objectId);
+    comps.materialId = object.getMaterialId();
 
     comps.point = ray.position(comps.t);
     comps.eyev = -ray.direction;
-    comps.normalv = comps.object->normalAt(comps.point);
+    comps.normalv = object.normalAt(comps.point);
 
     if (clrt::math::dot(comps.normalv, comps.eyev) < 0) {
         comps.inside = true;
@@ -75,7 +82,7 @@ Computations prepareComputations(const Intersection& intersection, const Ray& ra
     comps.reflectv = clrt::math::reflect(ray.direction, comps.normalv);
 
 // Track which transparent objects the ray is currently inside.
-vector<const Shape*> containers;
+vector<clrt::scene::ObjectId> containers;
 
 for (const Intersection& current :
      intersections.getIntersections()) {
@@ -87,12 +94,10 @@ for (const Intersection& current :
     if (isCurrentIntersection) {
         comps.n1 = containers.empty()
             ? 1.0
-            : containers.back()
-                  ->getMaterial()
-                  .refractiveIndex;
+            : resolver.resolve(containers.back()).getMaterial().refractiveIndex;
     }
 
-    const Shape* currentObject = current.getObject();
+    const clrt::scene::ObjectId currentObject = current.getObjectId();
 
     auto found = std::find(
         containers.begin(),
@@ -110,9 +115,7 @@ for (const Intersection& current :
     if (isCurrentIntersection) {
         comps.n2 = containers.empty()
             ? 1.0
-            : containers.back()
-                  ->getMaterial()
-                  .refractiveIndex;
+            : resolver.resolve(containers.back()).getMaterial().refractiveIndex;
 
         break;
     }
@@ -121,14 +124,19 @@ for (const Intersection& current :
     return comps;
 }
 
-Computations prepareComputations(const Intersection& intersection,const Ray& ray) {
+Computations prepareComputations(
+    const Intersection& intersection,
+    const Ray& ray,
+    const clrt::scene::ObjectResolver& resolver
+) {
     Intersections intersections;
     intersections.addIntersection(intersection);
 
     return prepareComputations(
         intersection,
         ray,
-        intersections
+        intersections,
+        resolver
     );
 }
 
@@ -137,7 +145,8 @@ void Computations::print() const {
     std::cout << "--- Computations ---\n";
 
     std::cout << "t: " << t << "\n";
-    std::cout << "object address: " << object << "\n";
+    std::cout << "object ID: " << objectId.value() << "\n";
+    std::cout << "material ID: " << materialId.value() << "\n";
     std::cout << "point: " << point.x << ' ' << point.y << ' ' << point.z << "\n";
     std::cout << "eyev: " << eyev.x << ' ' << eyev.y << ' ' << eyev.z << "\n";
     std::cout << "normalv: " << normalv.x << ' ' << normalv.y << ' ' << normalv.z << "\n";

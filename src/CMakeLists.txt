@@ -22,8 +22,12 @@ set(CLRT_CORE_SOURCES
     scene/canvas.cpp
     scene/Lighting.cpp
     scene/LightShadeVector.cpp
+    scene/MeshAsset.cpp
+    scene/MeshInstance.cpp
     scene/Pattern.cpp
     scene/PointLight.cpp
+    scene/Scene.cpp
+    scene/SceneSnapshot.cpp
     scene/World.cpp
 )
 

@@ -1,50 +1,58 @@
 #ifndef WORLD_H
 #define WORLD_H
 
-#include <vector>  // Added: explicitly include vector
+#include <memory>
+#include <vector>
 #include "geometry/Shape.h"
 #include "scene/Lighting.h"
+#include "scene/ObjectResolver.h"
 #include "geometry/Computations.h"
 
-class World {
+class World : public clrt::scene::ObjectResolver {
 private: 
-    std::vector<Shape*> shapesList; // List holding all shapes
-    Lighting* lighting = nullptr;   // Initialized to nullptr to avoid dangling pointers 
+    std::vector<std::unique_ptr<Shape>> shapesList;
+    std::vector<const Shape*> objectsById;
+    std::vector<const Material*> materialsById;
+    std::vector<std::unique_ptr<Light>> sceneLights;
+    std::vector<std::unique_ptr<Lighting>> lighting;
 
+    void registerShapeTree(Shape& shape);
 
 public: 
-    // Default constructor
     World();
-    World(Lighting& ling) {
-        lighting = &ling; 
-    }
+    explicit World(std::unique_ptr<Light> light);
+    ~World() = default;
 
-    // DESTRUCTOR: Cleans up heap memory allocated for shapes
-    ~World() {
-        for (Shape* shape : shapesList) {
-            delete shape; // Safely deletes each shape object
-        }
-        shapesList.clear(); // Empties the vector container
-
-        // Note: We DO NOT delete 'lighting' here because your addLighting() 
-        // function takes a reference to an object managed outside this class.
-    }
-
-    // Disable Copy Constructor and Copy Assignment to prevent double-deletion crashes
     World(const World&) = delete;
     World& operator=(const World&) = delete;
+    World(World&&) noexcept = default;
+    World& operator=(World&&) noexcept = default;
 
-    void AddShape(Shape* shape) {
-        shapesList.push_back(shape);
+    Shape& AddShape(std::unique_ptr<Shape> shape);
+    void setLight(std::unique_ptr<Light> light);
+    Light& addLight(std::unique_ptr<Light> light);
+    void clearLights() noexcept;
+
+    [[nodiscard]] const std::vector<std::unique_ptr<Shape>>& shapes() const noexcept {
+        return shapesList;
     }
 
-    void setLighting(Lighting& ling) {
-        lighting = &ling; 
+    [[nodiscard]] const Light& getLight() const;
+    [[nodiscard]] const std::vector<std::unique_ptr<Light>>& lights() const noexcept {
+        return sceneLights;
     }
+
+    [[nodiscard]] const Shape& resolve(clrt::scene::ObjectId id) const override;
+    [[nodiscard]] const Material& material(clrt::scene::MaterialId id) const;
+    [[nodiscard]] std::size_t objectCount() const noexcept { return objectsById.size(); }
+    [[nodiscard]] std::size_t materialCount() const noexcept { return materialsById.size(); }
 
     Intersections intersect_world(const Ray& ray); 
 
     bool is_shadowed(const clrt::math::Point3& point);
+    bool is_shadowed(
+        const clrt::math::Point3& point,
+        const Lighting& light);
 
     Color reflected_color(const Computations& comps, int remaining);
     

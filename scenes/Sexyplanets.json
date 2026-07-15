@@ -1,0 +1,185 @@
+{
+  "image": {
+    "width": 200,
+    "height": 100,
+    "file": "scene.ppm",
+    "multithreaded": true
+  },
+  "camera": {
+    "hsize": 200,
+    "vsize": 100,
+    "fov": 1.0472,
+    "from": [
+      0.0,
+      3.0,
+      -10.0
+    ],
+    "to": [
+      0.0,
+      1.0,
+      0.0
+    ],
+    "up": [
+      0.0,
+      1.0,
+      0.0
+    ]
+  },
+  "lights": [
+    {
+      "type": "point",
+      "position": [
+        -6.0,
+        10.0,
+        -6.0
+      ],
+      "color": [
+        1.0,
+        1.0,
+        1.0
+      ]
+    }
+  ],
+  "objects": [
+    {
+      "transform": {
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "rotate": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "translate": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "material": {
+        "color": [
+          1.0,
+          1.0,
+          0.0
+        ],
+        "ambient": 0.2,
+        "diffuse": 0.9,
+        "specular": 0.0,
+        "shininess": 20.0,
+        "reflective": 0.0,
+        "transparency": 0.0,
+        "refractiveIndex": 1.0,
+        "pattern": null
+      },
+      "type": "plane"
+    },
+    {
+      "transform": {
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "rotate": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "translate": [
+          -2.2,
+          1.0,
+          0.0
+        ]
+      },
+      "material": {
+        "color": [
+          0.3,
+          0.6,
+          1.0
+        ],
+        "ambient": 0.05,
+        "diffuse": 0.8,
+        "specular": 1.0,
+        "shininess": 160.0,
+        "reflective": 0.0,
+        "transparency": 0.0,
+        "refractiveIndex": 1.0,
+        "pattern": null
+      },
+      "type": "sphere"
+    },
+    {
+      "transform": {
+        "scale": [
+          1.05,
+          1.05,
+          1.05
+        ],
+        "rotate": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "translate": [
+          0.0,
+          1.1,
+          0.0
+        ]
+      },
+      "material": {
+        "color": [
+          1.0,
+          0.35,
+          0.5
+        ],
+        "ambient": 0.05,
+        "diffuse": 0.85,
+        "specular": 1.0,
+        "shininess": 180.0,
+        "reflective": 0.0,
+        "transparency": 0.0,
+        "refractiveIndex": 1.0,
+        "pattern": null
+      },
+      "type": "sphere"
+    },
+    {
+      "transform": {
+        "scale": [
+          0.95,
+          0.95,
+          0.95
+        ],
+        "rotate": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "translate": [
+          2.2,
+          1.0,
+          0.0
+        ]
+      },
+      "material": {
+        "color": [
+          0.4,
+          1.0,
+          0.6
+        ],
+        "ambient": 0.05,
+        "diffuse": 0.8,
+        "specular": 1.0,
+        "shininess": 150.0,
+        "reflective": 0.0,
+        "transparency": 0.0,
+        "refractiveIndex": 1.0,
+        "pattern": null
+      },
+      "type": "sphere"
+    }
+  ]
+}

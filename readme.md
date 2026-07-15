@@ -1,8 +1,9 @@
 AI Scene Generator
 ------------------
 The Python generator turns a natural-language description into scene JSON that the
-C++ ray tracer can render. It uses OpenAI Structured Outputs and validates every
-response against the renderer's actual limits before writing a file.
+C++ ray tracer can render. Its default fast JSON mode validates every response
+locally against the renderer's actual limits before writing a file; optional
+Structured Outputs validation is available with `--strict-schema`.
 
 ### 1. Build the ray tracer
 
@@ -58,7 +59,7 @@ environment variable lasts only for the current PowerShell session.
 Optionally select the default model for the session:
 
 ```powershell
-$env:OPENAI_SCENE_MODEL = "gpt-5.4-mini"
+$env:OPENAI_SCENE_MODEL = "gpt-5.4-nano"
 ```
 
 ### 4. Generate a scene
@@ -83,8 +84,12 @@ Generator options:
 - `-o` or `--output` is required and must point to a `.json` file.
 - `--force` allows an existing JSON file to be replaced.
 - `--model MODEL_NAME` overrides the default model for one request.
+- `--timeout SECONDS` bounds each API request to 60 seconds by default.
+- `--strict-schema` enables slower server-side Structured Outputs validation.
 - `OPENAI_SCENE_MODEL` changes the default model for the current shell.
-- The default model is `gpt-5.4-mini`.
+- The default model is `gpt-5.4-nano`, configured for no reasoning and low
+  verbosity to minimize generation latency. Use `gpt-5.4-mini` when a more
+  complex scene benefits from higher model quality.
 
 Example using all relevant options:
 
@@ -96,6 +101,9 @@ python tools/generate_scene.py "A simple solar system" `
 ```
 
 Generating a scene makes an OpenAI API request and may incur API usage charges.
+The default fast path uses JSON mode and validates the result locally with Pydantic
+before writing the file. Use `--strict-schema` only when server-side schema
+enforcement is worth the additional latency.
 
 ### 5. Inspect and render the generated JSON
 
@@ -113,9 +121,13 @@ relative to the directory from which `raytracer.exe` is run.
 The generator deliberately supports only features implemented by
 `src/loaders/SceneLoader.cpp`:
 
-- Exactly one point light.
-- Between 1 and 100 sphere objects.
-- Sphere scaling and translation; rotation is not currently loaded from JSON.
+- Between one and four point lights.
+- Between 1 and 100 root objects. Supported types are spheres, planes, cubes,
+  finite cylinders, triangles, and recursive groups.
+- Object and group scaling, XYZ rotation in radians, and translation. Composition
+  order is scale, then X/Y/Z rotation, then translation.
+- Stripe, checkers, gradient, ring, and deterministic perturbed material patterns,
+  each with an optional transform.
 - RGB color components from `0` to `1`.
 - `ambient`, `diffuse`, `specular`, `reflective`, and `transparency` from `0` to `1`.
 - `shininess` from `10` to `200`, inclusive. Other values terminate the C++ renderer.
@@ -126,8 +138,9 @@ The generator deliberately supports only features implemented by
 - A simple `.ppm` output filename without directory components.
 - Non-zero scale values and valid camera vectors.
 
-Floors and walls are approximated using heavily scaled spheres because planes are
-not yet supported by the JSON loader.
+Planes can be used directly for floors and walls. Cylinders support finite minimum
+and maximum Y values plus optional closed caps; triangles require three non-collinear
+local-space points.
 
 ### Troubleshooting
 
@@ -313,7 +326,8 @@ scene file, OBJ-relative MTL paths are preserved, and importing must not silentl
 change handedness, axes, winding, or units. Scene transforms handle deliberate
 orientation and scale changes.
 
-See `docs/objfileformat.txt` for the format notes and planned data flow.
+See `docs/OBJ_MTL_IMPORT_CONTRACT.md` for the locked initial import rules and
+`docs/objfileformat.txt` for introductory format notes and the planned data flow.
 
 ### Phase 0 - Baseline and decisions
 
@@ -338,12 +352,12 @@ reference against which the refactor and GPU renderer can be checked.
 - [x] **Graphics/GPU:** Verify the RTX 5070, driver 610.74, CUDA toolkit 13.3, and
       `sm_120` target by compiling and running the CUDA validation harness. The
       captured result reports zero mismatches. Owner: project contributors.
-- [ ] **Shared:** Lock the initial OBJ/MTL feature subset, coordinate/winding rules,
+- [x] **Shared:** Lock the initial OBJ/MTL feature subset, coordinate/winding rules,
       triangulation behavior, missing-normal policy, and asset path rules described
-      above. Owner: unassigned.
+      above. Owner: Codex. See `docs/OBJ_MTL_IMPORT_CONTRACT.md`.
 - [ ] **Core/CPU:** Save tiny deterministic OBJ fixtures covering triangles, quads,
       negative indices, shared vertices, smooth normals, missing normals, groups,
-      malformed input, and multiple material slots. Owner: unassigned.
+      malformed input, and multiple material slots. Owner: unassigned. (TODO:: WE WILL DO THIS LATER IN BLENDER)
 
 Acceptance criteria:
 
@@ -369,23 +383,27 @@ phase creates fixed-layout engine types without changing rendered results.
       computations, lighting vectors, patterns, shadows, reflection, and refraction
       to fixed-size math. Cache inverse and inverse-transpose transforms on shapes
       and patterns. Owner: Codex.
-- [ ] **Shared:** Define an owned, enumerable `Scene` containing cameras, lights,
-      objects, transforms, and materials. Owner: unassigned.
-- [ ] **Core/CPU:** Replace ambiguous raw ownership in `World` and the JSON loader
-      with RAII ownership. Owner: unassigned. (IMPORTANT)
-- [ ] **Shared:** Give renderable objects and materials stable IDs so intersections
-      and backend data do not depend on host pointers. Owner: unassigned.
-- [ ] **Shared:** Define stable `MeshAssetId` and `MeshInstanceId` values plus an
+- [x] **Shared:** Define an owned, enumerable `Scene` containing cameras, lights,
+      objects, transforms, and materials. Owner: Codex. Implemented by
+      `clrt::scene::Scene` and `clrt::scene::SceneObject`.
+- [x] **Core/CPU:** Replace ambiguous raw ownership in `World` and the JSON loader
+      with RAII ownership. Owner: Codex.
+- [x] **Shared:** Give renderable objects and materials stable IDs so intersections
+      and backend data do not depend on host pointers. Owner: Codex.
+- [x] **Shared:** Define stable `MeshAssetId` and `MeshInstanceId` values plus an
       immutable indexed `MeshAsset` representation containing unified mesh vertices,
       triangle indices, bounds, source metadata, and material-slot ranges. Owner:
-      unassigned.
-- [ ] **Shared:** Represent mesh instances separately from mesh assets so transforms
-      and material overrides do not duplicate vertex data. Owner: unassigned.
-- [ ] **Shared:** Decide how groups are flattened into final world transforms before
-      a scene is handed to a rendering backend. Owner: unassigned.
-- [ ] **Core/CPU:** Extend the JSON loader and its Python schema/prompt together when
+      Codex.
+- [x] **Shared:** Represent mesh instances separately from mesh assets so transforms
+      and material overrides do not duplicate vertex data. Owner: Codex. Implemented
+      by `MeshInstance` and the separate mesh collections in `clrt::scene::Scene`.
+- [x] **Shared:** Decide how groups are flattened into final world transforms before
+      a scene is handed to a rendering backend. Owner: Codex. The shared
+      `buildSceneSnapshot` pass emits flat analytic leaves and mesh instances using
+      `parentWorld * local`; snapshots are rebuilt explicitly after transform changes.
+- [x] **Core/CPU:** Extend the JSON loader and its Python schema/prompt together when
       adding planes, cubes, cylinders, triangles, groups, patterns, or additional
-      lights. Owner: unassigned.
+      lights. Owner: Codex.
 
 Acceptance criteria:
 

@@ -1,0 +1,37 @@
+{
+  "image": {
+    "file": "raii-test.ppm",
+    "multithreaded": true
+  },
+  "camera": {
+    "hsize": 64,
+    "vsize": 32,
+    "fov": 1.0471975512,
+    "from": [0, 1, -5],
+    "to": [0, 0, 0],
+    "up": [0, 1, 0]
+  },
+  "lights": [
+    {
+      "type": "point",
+      "position": [-4, 6, -8],
+      "color": [0.8, 0.9, 1.0]
+    }
+  ],
+  "objects": [
+    {
+      "type": "sphere",
+      "transform": {
+        "scale": [1.5, 1.5, 1.5],
+        "translate": [1, 0, 0]
+      },
+      "material": {
+        "color": [0.2, 0.4, 0.6],
+        "ambient": 0.1,
+        "diffuse": 0.8,
+        "specular": 0.3,
+        "shininess": 100
+      }
+    }
+  ]
+}

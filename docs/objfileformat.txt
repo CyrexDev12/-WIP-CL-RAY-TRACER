@@ -1,4 +1,8 @@
-OBJ (Wavefront)
+OBJ (Wavefront) notes
+
+The locked first-milestone behavior is specified in
+`docs/OBJ_MTL_IMPORT_CONTRACT.md`. That contract, rather than these introductory
+notes, is normative for loader implementation and tests.
 
 
 

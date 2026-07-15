@@ -1,4 +1,5 @@
 #include <iostream>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -16,6 +17,7 @@
 #include "scene/Camera.h"
 #include "scene/LightShadeVector.h"
 #include "scene/Pattern.h"
+#include "scene/World.h"
 
 namespace {
 
@@ -156,12 +158,22 @@ void testMigratedTriangle() {
 }
 
 void testFixedHitComputations() {
-    Sphere sphere;
+    World world;
+    auto sphere = std::make_unique<Sphere>();
+    Shape& registeredSphere = world.AddShape(std::move(sphere));
     const Ray ray{
         clrt::math::Point3{0.0, 0.0, -5.0},
         clrt::math::Vec3{0.0, 0.0, 1.0}
     };
-    const Computations computations = prepareComputations(Intersection{4.0, &sphere}, ray);
+    const Computations computations = prepareComputations(
+        Intersection{4.0, registeredSphere.getObjectId()},
+        ray,
+        world);
+
+    expect(computations.objectId == registeredSphere.getObjectId(),
+           "hit computations retain stable object ID");
+    expect(computations.materialId == registeredSphere.getMaterialId(),
+           "hit computations retain stable material ID");
 
     expect(clrt::math::nearlyEqual(computations.point, clrt::math::Point3{0.0, 0.0, -1.0}),
            "hit point uses fixed Point3");

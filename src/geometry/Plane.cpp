@@ -22,7 +22,7 @@ void Plane::intersect(const Ray& ray, Intersections& intersectionsList) {
 
     // Append to list
 
-    intersectionsList.addIntersection(Intersection(t, this)); 
+    intersectionsList.addIntersection(Intersection(t, getObjectId()));
 
     return; 
 }

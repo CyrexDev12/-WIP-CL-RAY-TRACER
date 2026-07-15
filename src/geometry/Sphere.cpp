@@ -40,10 +40,9 @@ void Sphere::intersect(const Ray& ray, Intersections& intersectionsList) {
         double t1 = (-b - sqrt(discriminant)) / (2.0 * a);
         double t2 = (-b + sqrt(discriminant)) / (2.0 * a);
         
-        // 4. Create modular Intersection items containing the 't' value and 'this' sphere pointer
-        // We pass 'this' because it is a pointer to the current Shape object instance
-        intersectionsList.addIntersection(Intersection(t1, this));
-        intersectionsList.addIntersection(Intersection(t2, this));
+        // Intersections carry the scene-local object ID, never a host pointer.
+        intersectionsList.addIntersection(Intersection(t1, getObjectId()));
+        intersectionsList.addIntersection(Intersection(t2, getObjectId()));
     }
 }
 /* CODE REVIEW */

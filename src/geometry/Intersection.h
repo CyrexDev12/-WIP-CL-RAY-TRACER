@@ -4,23 +4,20 @@
 
 #include <vector>
 #include <iostream>
-
-// Forward declaration of Shape so compiler knows it exists
-class Shape; 
+#include "scene/StableIds.h"
 
 class Intersection {
 private: 
     double t;  
-    const Shape* object; 
+    clrt::scene::ObjectId objectId;
 
 public:
-    Intersection(double t, const Shape* object) : t(t), object(object) {}
+    Intersection(double t, clrt::scene::ObjectId objectId)
+        : t(t), objectId(objectId) {}
 
     double getT() const { return t; }
     void setT(double tVal) {t = tVal; }
-    // Pass pointer variable holding the memory address for shape 
-    const Shape* getObject() const { return object; }
-    void setObj(Shape* obj) {object = obj; }
+    clrt::scene::ObjectId getObjectId() const noexcept { return objectId; }
 
     // Operator overloading to easily sort intersections by distance
     bool operator<(const Intersection& other) const {
@@ -30,7 +27,8 @@ public:
 
     // Overload << operator to easily print a single intersection
     friend std::ostream& operator<<(std::ostream& os, const Intersection& intersection) {
-        os << "Intersection(t: " << intersection.t << ", object address: " << intersection.object << ")";
+        os << "Intersection(t: " << intersection.t
+           << ", object ID: " << intersection.objectId.value() << ")";
         return os;
     }
 
@@ -70,9 +68,6 @@ public:
     // Returns -1.0 if there is no valid hit in front of the ray
     // Update: Returns an intersection obj instead of a double val
     const Intersection* hit() const;
-
-    // Helper to get the actual object pointer of the closest hit
-    const Shape* hitObject() const;
 
     // Sort function to sort the intersection list into ascending order
     void Sort(); 

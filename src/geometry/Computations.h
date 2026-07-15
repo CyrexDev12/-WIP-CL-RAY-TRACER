@@ -5,15 +5,14 @@
 #include "core/math/Vec3.h"
 #include "geometry/Intersection.h"
 #include "geometry/Ray.h"
+#include "scene/ObjectResolver.h"
 
-
-
-class Shape; 
 
 
 struct Computations {
     double t; 
-    const Shape* object; 
+    clrt::scene::ObjectId objectId;
+    clrt::scene::MaterialId materialId;
 
 
     clrt::math::Point3 point;
@@ -33,8 +32,15 @@ struct Computations {
 
 // Returns a value from 0 to 1, this number returned is called the reflectance and represents what fraction of the light is reflected
 double schlick(const Computations& comps);
-Computations prepareComputations(const Intersection& Intersection, const Ray& ray);
-Computations prepareComputations(const Intersection& intersection, const Ray& ray, const Intersections& intersections);
+Computations prepareComputations(
+    const Intersection& intersection,
+    const Ray& ray,
+    const clrt::scene::ObjectResolver& resolver);
+Computations prepareComputations(
+    const Intersection& intersection,
+    const Ray& ray,
+    const Intersections& intersections,
+    const clrt::scene::ObjectResolver& resolver);
 
 
 

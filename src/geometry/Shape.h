@@ -10,6 +10,7 @@
 #include "scene/Material.h" 
 #include "math/Matrix.h" 
 #include "geometry/Intersection.h"
+#include "scene/StableIds.h"
 #include <memory>
 #include "Bound.h" // Include the bound header for bounding box functionality
 
@@ -18,6 +19,7 @@ class Pattern;
 
 class Shape {
 protected:
+    clrt::scene::ObjectId objectId;
     clrt::math::Point3 position;
     clrt::math::Mat4 transformMatrix;
     clrt::math::Mat4 inverseTransform;
@@ -47,6 +49,9 @@ public:
 
     // NEW: Add const Material& to return value, so we are not returning a new copy every time
     const Material& getMaterial() const { return material; }
+    [[nodiscard]] clrt::scene::ObjectId getObjectId() const noexcept { return objectId; }
+    [[nodiscard]] clrt::scene::MaterialId getMaterialId() const noexcept { return material.id; }
+    void assignStableIds(clrt::scene::ObjectId object, clrt::scene::MaterialId materialId);
     Color getMaterialColor() const { return material.color; }
     void setMaterialColor(const Color& color) { material.color = color; }
 

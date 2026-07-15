@@ -1,6 +1,22 @@
 #include "Shape.h"
 #include "math/Operations.h"
 #include "math/LegacyMathAdapters.h"
+#include <stdexcept>
+
+void Shape::assignStableIds(
+    clrt::scene::ObjectId object,
+    clrt::scene::MaterialId materialId
+) {
+    if (!object || !materialId) {
+        throw std::invalid_argument("Shape IDs must be valid");
+    }
+    if (objectId || material.id) {
+        throw std::logic_error("Shape already belongs to an ID registry");
+    }
+
+    objectId = object;
+    material.id = materialId;
+}
 
 void Shape::setTransform(const clrt::math::Mat4& matrix) {
     transformMatrix = matrix;

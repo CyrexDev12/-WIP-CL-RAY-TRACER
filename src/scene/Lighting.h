@@ -6,19 +6,15 @@
 
 class Lighting { 
 private: 
-    // Hold a reference or pointer to the abstract base class
+    // Non-owning reference. The caller must keep the light alive while this
+    // shading helper is in use.
     const Light& sceneLight; 
 
 public: 
-    // Default Constructor 
-    Lighting() = default; 
     // Constructor accepts any light type that inherits from Light
-    Lighting(const Light& lightSource) : sceneLight(lightSource) {}
+    explicit Lighting(const Light& lightSource) : sceneLight(lightSource) {}
 
-    // Destructor 
-    ~Lighting() {
-        delete &sceneLight; 
-    }
+    ~Lighting() = default;
 
     clrt::math::Point3 getPos() const {
         return sceneLight.getPosition(); 

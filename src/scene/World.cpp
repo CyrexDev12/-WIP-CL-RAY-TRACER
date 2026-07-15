@@ -1,18 +1,131 @@
 #include "World.h"
 #include "scene/LightShadeVector.h"
 #include "scene/PointLight.h"
+#include "geometry/Group.h"
 #include <stdexcept>
 #include <cmath>
+#include <memory>
+#include <unordered_set>
+#include <utility>
 
-// Default World constructor 
+namespace {
 
-World::World() {
-    PointLight* ptLight = new PointLight(clrt::math::Point3{-10, 10, -10}, Color{1, 1, 1});
+void inspectUnregisteredTree(
+    const Shape& shape,
+    std::unordered_set<const Shape*>& visited
+) {
+    if (!visited.insert(&shape).second) {
+        throw std::logic_error("Shape trees cannot contain cycles or repeated objects");
+    }
+    if (shape.getObjectId() || shape.getMaterialId()) {
+        throw std::logic_error("Shape already belongs to an object registry");
+    }
 
-    Lighting *ling = new Lighting(*ptLight); 
+    const auto* group = dynamic_cast<const Group*>(&shape);
+    if (group != nullptr) {
+        for (const auto& child : group->get_children()) {
+            inspectUnregisteredTree(*child, visited);
+        }
+    }
+}
 
-    lighting = ling; 
-    
+} // namespace
+
+World::World()
+    : World(std::make_unique<PointLight>(
+          clrt::math::Point3{-10, 10, -10},
+          Color{1, 1, 1})) {}
+
+World::World(std::unique_ptr<Light> light) {
+    setLight(std::move(light));
+}
+
+Shape& World::AddShape(std::unique_ptr<Shape> shape) {
+    if (!shape) {
+        throw std::invalid_argument("World cannot own a null shape");
+    }
+
+    std::unordered_set<const Shape*> shapeTree;
+    inspectUnregisteredTree(*shape, shapeTree);
+    const std::size_t additionalObjects = shapeTree.size();
+    if (additionalObjects > clrt::scene::ObjectId::invalidValue - objectsById.size()
+        || additionalObjects > clrt::scene::MaterialId::invalidValue - materialsById.size()) {
+        throw std::length_error("World stable ID space is exhausted");
+    }
+    objectsById.reserve(objectsById.size() + additionalObjects);
+    materialsById.reserve(materialsById.size() + additionalObjects);
+    shapesList.push_back(std::move(shape));
+    registerShapeTree(*shapesList.back());
+    return *shapesList.back();
+}
+
+void World::registerShapeTree(Shape& shape) {
+    const auto objectValue = static_cast<clrt::scene::ObjectId::Value>(
+        objectsById.size());
+    const auto materialValue = static_cast<clrt::scene::MaterialId::Value>(
+        materialsById.size());
+    shape.assignStableIds(
+        clrt::scene::ObjectId{objectValue},
+        clrt::scene::MaterialId{materialValue});
+    objectsById.push_back(&shape);
+    materialsById.push_back(&shape.getMaterial());
+
+    auto* group = dynamic_cast<Group*>(&shape);
+    if (group != nullptr) {
+        for (const auto& child : group->get_children()) {
+            registerShapeTree(*child);
+        }
+    }
+}
+
+const Shape& World::resolve(clrt::scene::ObjectId id) const {
+    if (!id) {
+        throw std::out_of_range("Cannot resolve an invalid object ID");
+    }
+    return *objectsById.at(id.value());
+}
+
+const Material& World::material(clrt::scene::MaterialId id) const {
+    if (!id) {
+        throw std::out_of_range("Cannot resolve an invalid material ID");
+    }
+    return *materialsById.at(id.value());
+}
+
+void World::setLight(std::unique_ptr<Light> light) {
+    if (!light) {
+        throw std::invalid_argument("World cannot own a null light");
+    }
+    clearLights();
+    addLight(std::move(light));
+}
+
+Light& World::addLight(std::unique_ptr<Light> light) {
+    if (!light) {
+        throw std::invalid_argument("World cannot own a null light");
+    }
+
+    auto newLighting = std::make_unique<Lighting>(*light);
+    sceneLights.push_back(std::move(light));
+    try {
+        lighting.push_back(std::move(newLighting));
+    } catch (...) {
+        sceneLights.pop_back();
+        throw;
+    }
+    return *sceneLights.back();
+}
+
+void World::clearLights() noexcept {
+    lighting.clear();
+    sceneLights.clear();
+}
+
+const Light& World::getLight() const {
+    if (sceneLights.empty()) {
+        throw std::runtime_error("World has no lighting configured.");
+    }
+    return *sceneLights.front();
 }
 
 
@@ -22,7 +135,7 @@ World::World() {
 Intersections World::intersect_world(const Ray& ray) {
     Intersections intersectionList; 
 
-    for (auto& s : shapesList) {
+    for (const auto& s : shapesList) {
         s->intersect(ray, intersectionList); // Call intersect on each shape in the list, and add the intersections to the intersection list
     }
 
@@ -35,7 +148,17 @@ Intersections World::intersect_world(const Ray& ray) {
 // Intersect the World with that Ray
 // Check to see if there was a hit, and if so wether t is less than distance. If so, the hit lies between the point and the light source, and the point is in shadow. 
 bool World::is_shadowed(const clrt::math::Point3& point) {
-    const clrt::math::Vec3 lightOffset = lighting->getPos() - point;
+    if (lighting.empty()) {
+        throw std::runtime_error("World has no lighting configured.");
+    }
+    return is_shadowed(point, *lighting.front());
+}
+
+bool World::is_shadowed(
+    const clrt::math::Point3& point,
+    const Lighting& light
+) {
+    const clrt::math::Vec3 lightOffset = light.getPos() - point;
     const double distance = lightOffset.length();
     const clrt::math::Vec3 direction = lightOffset.normalized();
 
@@ -60,21 +183,22 @@ Color World::reflected_color(const Computations& comps, int remaining) {
         return Color{0, 0, 0}; // Return black 
     }
 
-    if (comps.object->getMaterial().reflective == 0) {
+    const Material& material = this->material(comps.materialId);
+    if (material.reflective == 0) {
         return Color{0, 0, 0}; 
     }
 
     Ray reflect_ray(comps.overPt, comps.reflectv); 
     Color color = Color_at(reflect_ray, remaining - 1); 
 
-    return color * comps.object->getMaterial().reflective; 
+    return color * material.reflective;
 }
 
 /*CODE REVIEW; refracted_color() calculates the color contribution from light passing through a transparent object */
 
 // NEW: calculate the color contributed by a ray passing through a transparent object
 Color World::refracted_color(const Computations& comps,int remaining) {
-    const Material& material = comps.object->getMaterial();
+    const Material& material = this->material(comps.materialId);
 
     // stop recursion or skip completely opaque materials
     if (remaining <= 0 || material.transparency <= 0.0) {
@@ -117,7 +241,7 @@ Color World::refracted_color(const Computations& comps,int remaining) {
 //Implementing shading... We check if pt is a shadow or not, then pass it to process lighting
 // NEW CODE REVIEW: we are adding the refracted color contribution
 Color World::shade_hit(const Computations& comps, int remaining) {
-    if (lighting == nullptr) {
+    if (lighting.empty()) {
         throw std::runtime_error("World has no lighting configured."); // Commented out, as lighting starts of null to get configured 
      }
 
@@ -126,15 +250,19 @@ Color World::shade_hit(const Computations& comps, int remaining) {
     lsv.N = comps.normalv;
 
 
-   Color surface = lighting->ProcessLighting(
-    comps.object,
-    comps.object->getMaterial(),
-    lsv,
-    comps.point, 
-    is_shadowed(comps.overPt)
-);
+   const Shape& object = resolve(comps.objectId);
+   const Material& material = this->material(comps.materialId);
+   Color surface{0.0, 0.0, 0.0};
+   for (const auto& light : lighting) {
+       surface = surface + light->ProcessLighting(
+           &object,
+           material,
+           lsv,
+           comps.point,
+           is_shadowed(comps.overPt, *light));
+   }
 
-    Material mat = comps.object->getMaterial();
+    const Material& mat = material;
 
     Color reflected = reflected_color(comps, remaining); 
     Color refracted = refracted_color(comps, remaining);
@@ -164,29 +292,8 @@ Color World::Color_at(const Ray& ray, int remaining) {
         return Color{0, 0, 0};
     }
 
-    /*
-    // --- CRITICAL SURGICAL DEBUG PRINT ---
-    // If intersection->object is an invalid pointer, this print will trigger the crash,
-    // telling you exactly where your tracking pipeline broke.
-    if (intersection->getObject() == nullptr) {
-        std::cout << "[DEBUG CRASH] Critical Error: Intersection exists but object pointer is null!" << std::endl;
-    } else {
-        std::cout << "[DEBUG HIT] Hit detected on shape address: " << intersection->getObject() << std::endl;
-        
-        // Let's verify the material and pattern address inside the shape safely
-        const Material& mat = intersection-> getObject() ->getMaterial();
-        std::cout << "[DEBUG MAT] Material read successfully. Pattern address: " << mat.pattern.get() << std::endl;
-        
-        if (mat.pattern != nullptr) {
-            std::cout << "[DEBUG PATTERN] Executing pattern pipeline..." << std::endl;
-        }
-    }
-        */ 
-
-    
-    
     // the complete intersection list is what allows your nested-object code to calculate the correct n1 and n2
-    Computations comp = prepareComputations(*intersection, ray, intersections);
+    Computations comp = prepareComputations(*intersection, ray, intersections, *this);
 
     return shade_hit(comp, remaining);
 }

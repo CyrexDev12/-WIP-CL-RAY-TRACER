@@ -1,0 +1,16 @@
+{
+  "objects": [
+    {
+      "type": "sphere",
+      "material": {
+        "color": [1, 0, 0]
+      }
+    },
+    {
+      "type": "sphere",
+      "material": {
+        "ambient": 2.0
+      }
+    }
+  ]
+}

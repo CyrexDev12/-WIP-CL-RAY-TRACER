@@ -1,0 +1,109 @@
+{
+  "image": {
+    "width": 80,
+    "height": 40,
+    "file": "extended.ppm",
+    "multithreaded": false
+  },
+  "camera": {
+    "hsize": 80,
+    "vsize": 40,
+    "fov": 1.0471975512,
+    "from": [0, 3, -8],
+    "to": [0, 1, 0],
+    "up": [0, 1, 0]
+  },
+  "lights": [
+    {"type": "point", "position": [-6, 8, -6], "color": [1, 0.9, 0.8]},
+    {"type": "point", "position": [5, 4, -2], "color": [0.3, 0.4, 1]}
+  ],
+  "objects": [
+    {
+      "type": "plane",
+      "material": {
+        "color": [1, 1, 1],
+        "specular": 0,
+        "pattern": {
+          "type": "checkers",
+          "colorA": [0.8, 0.8, 0.8],
+          "colorB": [0.2, 0.2, 0.2],
+          "transform": {"scale": [0.5, 0.5, 0.5]}
+        }
+      }
+    },
+    {
+      "type": "cube",
+      "transform": {
+        "scale": [0.75, 0.75, 0.75],
+        "rotate": [0, 0.35, 0],
+        "translate": [-2, 0.75, 0]
+      },
+      "material": {
+        "color": [0.8, 0.2, 0.2],
+        "pattern": {
+          "type": "stripe",
+          "colorA": [0.9, 0.1, 0.1],
+          "colorB": [0.4, 0.02, 0.02]
+        }
+      }
+    },
+    {
+      "type": "cylinder",
+      "minimum": 0,
+      "maximum": 2,
+      "closed": true,
+      "transform": {"translate": [0, 0, 0]},
+      "material": {
+        "color": [0.2, 0.7, 0.3],
+        "pattern": {
+          "type": "ring",
+          "colorA": [0.1, 0.8, 0.2],
+          "colorB": [0.02, 0.2, 0.05]
+        }
+      }
+    },
+    {
+      "type": "triangle",
+      "p1": [0, 1, 0],
+      "p2": [-1, 0, 0],
+      "p3": [1, 0, 0],
+      "transform": {"translate": [2, 0.5, 0]},
+      "material": {
+        "color": [0.2, 0.4, 0.9],
+        "pattern": {
+          "type": "gradient",
+          "colorA": [0.1, 0.2, 0.8],
+          "colorB": [0.8, 0.9, 1]
+        }
+      }
+    },
+    {
+      "type": "group",
+      "transform": {"translate": [0, 0, 2]},
+      "children": [
+        {
+          "type": "sphere",
+          "transform": {"scale": [0.6, 0.6, 0.6], "translate": [-0.8, 0.6, 0]},
+          "material": {
+            "color": [0.9, 0.8, 0.2],
+            "pattern": {
+              "type": "perturbed",
+              "distortionScale": 0.1,
+              "noiseFrequency": 3,
+              "base": {
+                "type": "stripe",
+                "colorA": [1, 0.8, 0.1],
+                "colorB": [0.2, 0.05, 0.01]
+              }
+            }
+          }
+        },
+        {
+          "type": "cube",
+          "transform": {"scale": [0.5, 0.5, 0.5], "translate": [0.8, 0.5, 0]},
+          "material": {"color": [0.7, 0.2, 0.8], "pattern": null}
+        }
+      ]
+    }
+  ]
+}

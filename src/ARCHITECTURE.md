@@ -54,9 +54,89 @@ Rules for new code:
 6. Tests live under `tests`, never inside the application executable.
 
 The existing `math`, `geometry`, and `scene` folders form the legacy `CLRT::Core`
-implementation for now. They will migrate onto `core/math` before the owned scene
-model is introduced. Keeping both representations temporarily preserves the current
-CPU output as a baseline.
+implementation for now. The fixed-size math migration is complete, and
+`scene/Scene` now supplies the move-only ownership and enumeration boundary while
+it temporarily owns legacy polymorphic `Shape` and `Light` implementations. Keeping
+that bridge preserves the current CPU output as stable IDs and backend snapshots
+are introduced.
+
+## Owned scene boundary
+
+`clrt::scene::Scene` owns cameras by value and polymorphic lights and shapes through
+`std::unique_ptr`. Its collections are read-only to consumers but fully enumerable.
+Each `SceneObject` exposes the owned shape together with its transform and material;
+those properties remain stored on `Shape` during migration so there is no duplicate
+state to drift out of sync.
+
+The active JSON/`World` CPU path still predates this boundary, but its resource
+ownership is now explicit: `World` uniquely owns every shape and its light, while
+`Lighting` only borrows that light for shading. The JSON loader constructs a
+temporary RAII-owned world and commits it only after the entire document validates.
+Moving that data directly into `Scene` remains a later integration step.
+
+## Stable scene identities
+
+`ObjectId`, `MaterialId`, `MeshAssetId`, and `MeshInstanceId` are distinct,
+trivially-copyable 32-bit types. Their maximum value is reserved as an invalid
+sentinel. `World` and `Scene` assign object and material IDs deterministically in
+root insertion order and depth-first preorder for group descendants. IDs survive
+container growth and moves because they are values rather than addresses.
+
+`Intersection` and `Computations` contain object/material IDs only. CPU code uses
+the `ObjectResolver` interface to look up a shape when it needs virtual geometry or
+material behavior. The resolver may maintain internal pointers to owned CPU objects,
+but intersection records and data copied to OpenGL or CUDA must never contain those
+host pointers.
+
+`MeshAsset` is the immutable shared representation for imported geometry. It owns a
+unified vertex buffer, triangle index buffer, calculated bounds, named material
+slots and index-aligned slot ranges, plus original/normalized source metadata.
+Construction rejects invalid IDs, non-finite or non-normalized vertices, incomplete
+triangles, out-of-range indices, and invalid material ranges. A later asset cache
+will assign `MeshAssetId`; instances will refer to it using `MeshInstanceId` and
+will not duplicate these buffers.
+
+`MeshInstance` is the separate per-scene placement record. It contains only its
+`MeshInstanceId`, referenced `MeshAssetId`, transform with cached inverse and
+inverse-transpose, and optional material-slot-to-`MaterialId` overrides. It never
+contains vertex or index buffers. `Scene` stores immutable mesh assets and mesh
+instances in separate enumerable collections; multiple instances can therefore
+share the same asset allocation while using different transforms and overrides.
+Instance creation rejects unknown assets, invalid material slots, duplicate slot
+overrides, invalid IDs, and non-invertible transforms.
+
+## Renderer scene snapshots
+
+The authoring scene retains its group hierarchy, but renderers receive a flat
+`SceneSnapshot`. The shared `buildSceneSnapshot` pass walks analytic roots in
+insertion order and group children in preorder. It composes column-vector
+transforms as `parentWorld * local`, omits non-renderable group nodes, and emits one
+`FlattenedObject` per analytic leaf. Mesh instances are emitted separately in
+instance-ID order; an instance may name a parent group by `ObjectId` and receives
+that group's accumulated world transform.
+
+Each flattened record contains stable IDs, final world transform, cached inverse,
+cached inverse-transpose, and a negative-determinant orientation flag. Flattened
+mesh records additionally retain their asset ID and material overrides, but never
+copy asset geometry. This makes transform order and normal/winding behavior
+identical for CPU, OpenGL, and CUDA consumers.
+
+Snapshots are immutable derived data. The initial policy is explicit whole-snapshot
+rebuilding after any group or local transform change. Rebuilding recalculates only
+compact instance/object records; it does not reload OBJ files or recreate vertex and
+index buffers. Dirty-subtree caching may replace the whole rebuild later without
+changing the renderer-facing snapshot format.
+
+## Generated JSON scene contract
+
+The JSON loader, `tools/scene_schema.py`, and `tools/scene_prompt.py` form one feature
+boundary and must change together. They currently support spheres, planes, cubes,
+finite cylinders, triangles, recursive groups, transformed basic/perturbed
+patterns, and one to four point lights. Object and pattern transforms compose as
+translation, Z/Y/X rotation, then scale, which applies scale first, then X/Y/Z
+rotation, then translation to column vectors. Loader construction is recursive and
+transactional: a malformed child, pattern, transform, or material rejects the whole
+load without modifying the caller's existing scene state.
 
 ## Transitional math boundary
 

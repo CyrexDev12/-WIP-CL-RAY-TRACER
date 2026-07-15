@@ -37,8 +37,8 @@ void Cube::intersect(const Ray& ray, Intersections& intersectionsList) {
 
     if (tmin > tmax) return;
 
-    intersectionsList.addIntersection(Intersection(tmin, this));
-    intersectionsList.addIntersection(Intersection(tmax, this));
+    intersectionsList.addIntersection(Intersection(tmin, getObjectId()));
+    intersectionsList.addIntersection(Intersection(tmax, getObjectId()));
 }
 
 

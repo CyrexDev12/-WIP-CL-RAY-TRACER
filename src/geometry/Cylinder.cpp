@@ -40,12 +40,12 @@ void Cylinder::intersect(const Ray& ray, Intersections& intersectionsList) {
 
     double y0 = localRay.origin[1] + t0 * localRay.direction[1];
     if (min < y0 && y0 < max) {
-        intersectionsList.addIntersection(Intersection(t0, this));
+        intersectionsList.addIntersection(Intersection(t0, getObjectId()));
     }
 
     double y1 = localRay.origin[1] + t1 * localRay.direction[1];
     if (min < y1 && y1 < max) {
-        intersectionsList.addIntersection(Intersection(t1, this));
+        intersectionsList.addIntersection(Intersection(t1, getObjectId()));
     }
 
     intersect_caps(localRay, intersectionsList);
@@ -65,13 +65,13 @@ void Cylinder::intersect_caps(const Ray& ray, Intersections& xs) const {
     // bottom
     double t = (min - ray.origin[1]) / ray.direction[1];
     if (check_cap(ray, t)) {
-        xs.addIntersection(Intersection(t, this));
+        xs.addIntersection(Intersection(t, getObjectId()));
     }
 
     // top
     t = (max - ray.origin[1]) / ray.direction[1];
     if (check_cap(ray, t)) {
-        xs.addIntersection(Intersection(t, this));
+        xs.addIntersection(Intersection(t, getObjectId()));
     }
 }
 
