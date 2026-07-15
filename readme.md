@@ -86,6 +86,8 @@ Generator options:
 - `--model MODEL_NAME` overrides the default model for one request.
 - `--reasoning-effort LEVEL` accepts `auto`, `none`, `low`, `medium`, `high`, or
   `xhigh` for GPT-5.4 models.
+- `--quality PRESET` accepts `auto`, `preview`, `standard`, `high`, or `ultra`.
+  Auto recognizes quality language in the scene description.
 - `--timeout SECONDS` bounds each API request to 60 seconds by default.
 - `--strict-schema` enables slower server-side Structured Outputs validation.
 - `OPENAI_SCENE_MODEL` changes the default model for the current shell.
@@ -106,6 +108,11 @@ Generating a scene makes an OpenAI API request and may incur API usage charges.
 The default fast path uses JSON mode and validates the result locally with Pydantic
 before writing the file. Use `--strict-schema` only when server-side schema
 enforcement is worth the additional latency.
+
+The CPU renderer currently traces one ray per pixel, so resolution is its concrete
+render-quality control. In auto mode, "high quality" and "final render" produce at
+least an 800-pixel long edge; ultra/maximum quality produces 1600. Explicit
+dimensions such as `1200x600` take precedence over quality words.
 
 ### 5. Inspect and render the generated JSON
 

@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import os
 from pathlib import Path
+import re
 import sys
 from time import perf_counter
 from typing import Any
@@ -17,6 +18,71 @@ try:
 except ImportError:
     from scene_prompt import SYSTEM_PROMPT
     from scene_schema import Scene
+
+
+QUALITY_LONG_EDGES = {
+    "preview": 200,
+    "standard": 400,
+    "high": 800,
+    "ultra": 1600,
+}
+
+EXPLICIT_RESOLUTION = re.compile(
+    r"\b(\d{2,4})\s*(?:x|by)\s*(\d{2,4})\b", re.I
+)
+ULTRA_QUALITY = re.compile(
+    r"\b(?:ultra(?:[- ]high)?[- ]quality|maximum[- ]quality|ultra[- ]resolution)\b",
+    re.I,
+)
+HIGH_QUALITY = re.compile(
+    r"\b(?:high[- ]quality|high[- ]resolution|final[- ]quality|"
+    r"production[- ]quality|final[- ]render)\b",
+    re.I,
+)
+
+
+def apply_quality_preset(
+    scene: Scene, description: str, requested_quality: str = "auto"
+) -> str | None:
+    quality = requested_quality
+    if quality == "auto":
+        explicit_resolution = EXPLICIT_RESOLUTION.search(description)
+        if explicit_resolution:
+            width, height = map(int, explicit_resolution.groups())
+            if width > 4096 or height > 4096:
+                raise ValueError("explicit resolution must not exceed 4096x4096")
+            scene.image.width = width
+            scene.image.height = height
+            scene.camera.hsize = width
+            scene.camera.vsize = height
+            return "custom"
+        if ULTRA_QUALITY.search(description):
+            quality = "ultra"
+        elif HIGH_QUALITY.search(description):
+            quality = "high"
+        else:
+            return None
+
+    target_long_edge = QUALITY_LONG_EDGES[quality]
+    width = scene.image.width
+    height = scene.image.height
+    current_long_edge = max(width, height)
+
+    if requested_quality == "auto" and current_long_edge >= target_long_edge:
+        return quality
+
+    if width >= height:
+        new_width = target_long_edge
+        new_height = max(1, round(target_long_edge * height / width))
+    else:
+        new_height = target_long_edge
+        new_width = max(1, round(target_long_edge * width / height))
+
+    scene.image.width = new_width
+    scene.image.height = new_height
+    scene.camera.hsize = new_width
+    scene.camera.vsize = new_height
+    return quality
 
 
 def build_request_options(
@@ -66,6 +132,12 @@ def parse_args() -> argparse.Namespace:
         choices=("auto", "none", "low", "medium", "high", "xhigh"),
         default=os.environ.get("OPENAI_SCENE_REASONING", "auto"),
         help="reasoning effort for GPT-5.4 models (default: auto)",
+    )
+    parser.add_argument(
+        "--quality",
+        choices=("auto", "preview", "standard", "high", "ultra"),
+        default="auto",
+        help="output resolution preset inferred from the prompt by default",
     )
     parser.add_argument(
         "--timeout",
@@ -125,6 +197,9 @@ def main() -> int:
         else:
             response = client.responses.create(**request_options)
             scene = Scene.model_validate_json(response.output_text)
+        applied_quality = apply_quality_preset(
+            scene, " ".join(args.description), args.quality
+        )
         # Validate once more before touching the filesystem.
         scene = Scene.model_validate(scene.model_dump(by_alias=True))
     except (ValidationError, RuntimeError, ValueError) as exc:
@@ -142,6 +217,11 @@ def main() -> int:
         encoding="utf-8",
     )
     elapsed = perf_counter() - started_at
+    if applied_quality is not None:
+        print(
+            f"Applied {applied_quality} quality resolution: "
+            f"{scene.image.width}x{scene.image.height}"
+        )
     print(f"Created validated scene in {elapsed:.1f}s: {output}")
     print(f"Render with: ./raytracer.exe --scene {output}")
     return 0

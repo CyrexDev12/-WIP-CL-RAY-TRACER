@@ -4,10 +4,39 @@ import unittest
 import httpx
 from openai import BadRequestError, OpenAI
 
-from tools.generate_scene import build_request_options
+from tools.generate_scene import apply_quality_preset, build_request_options
+from tools.scene_schema import Scene
 
 
 class GenerateSceneRequestTests(unittest.TestCase):
+    def make_preview_scene(self) -> Scene:
+        return Scene.model_validate(
+            {
+                "image": {
+                    "width": 200,
+                    "height": 100,
+                    "file": "quality.ppm",
+                    "multithreaded": True,
+                },
+                "camera": {
+                    "hsize": 200,
+                    "vsize": 100,
+                    "fov": 1.0472,
+                    "from": [0, 2, -5],
+                    "to": [0, 1, 0],
+                    "up": [0, 1, 0],
+                },
+                "lights": [
+                    {
+                        "type": "point",
+                        "position": [-5, 8, -5],
+                        "color": [1, 1, 1],
+                    }
+                ],
+                "objects": [{"type": "sphere"}],
+            }
+        )
+
     def capture_request(
         self,
         *,
@@ -70,6 +99,34 @@ class GenerateSceneRequestTests(unittest.TestCase):
         )
 
         self.assertEqual(captured["reasoning"]["effort"], "medium")
+
+    def test_high_quality_prompt_upscales_image_and_camera(self) -> None:
+        scene = self.make_preview_scene()
+
+        applied = apply_quality_preset(scene, "make a high quality render")
+
+        self.assertEqual(applied, "high")
+        self.assertEqual((scene.image.width, scene.image.height), (800, 400))
+        self.assertEqual((scene.camera.hsize, scene.camera.vsize), (800, 400))
+
+    def test_explicit_resolution_wins_over_quality_words(self) -> None:
+        scene = self.make_preview_scene()
+
+        applied = apply_quality_preset(
+            scene, "make a high quality render at 1200x600"
+        )
+
+        self.assertEqual(applied, "custom")
+        self.assertEqual((scene.image.width, scene.image.height), (1200, 600))
+        self.assertEqual((scene.camera.hsize, scene.camera.vsize), (1200, 600))
+
+    def test_explicit_quality_option_overrides_generated_resolution(self) -> None:
+        scene = self.make_preview_scene()
+
+        applied = apply_quality_preset(scene, "a quick draft", "ultra")
+
+        self.assertEqual(applied, "ultra")
+        self.assertEqual((scene.image.width, scene.image.height), (1600, 800))
 
     def test_strict_mode_keeps_schema_and_nested_verbosity(self) -> None:
         captured = self.capture_request(strict_schema=True)

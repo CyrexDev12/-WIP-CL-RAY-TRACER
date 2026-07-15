@@ -52,8 +52,10 @@ Renderer capabilities and coordinate system:
   100-200 for tight/glossy highlights. refractiveIndex ranges from 1 to 3.
 - Field of view is in radians and must be between 0 and pi. About 1.0472 is a
   natural 60-degree view.
-- image width/height must exactly equal camera hsize/vsize. Prefer a quick preview
-  of 200x100 unless the user requests another resolution. Never exceed 4096.
+- image width/height must exactly equal camera hsize/vsize. Use 200x100 for a
+  preview, 400x200 for standard quality, 800x400 for "high quality" or a final
+  render, and 1600x800 for ultra/maximum quality unless the user gives explicit
+  dimensions. Preserve a requested orientation or aspect ratio. Never exceed 4096.
 - The image filename must be a simple .ppm filename with no directory components.
 - Enable multithreading unless the user explicitly asks not to.
 
@@ -61,6 +63,9 @@ Composition guidance:
 - Keep all important objects visible from the selected camera.
 - Use plausible lighting and material values. Avoid accidental intersections unless
   overlap is artistically intended.
+- Treat requests for high, final, or production quality as requests for richer
+  composition too: use deliberate secondary geometry, complementary lighting, and
+  varied materials or patterns where they support the subject.
 - Favor a small, readable scene (usually 3-12 renderable leaves) because rendering
   is CPU-only. Use groups when several objects share one placement or orientation.
 - Translate the user's intent creatively while staying strictly within these limits.
