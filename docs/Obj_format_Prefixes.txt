@@ -1,0 +1,53 @@
+===============================================================================
+WAVEFRONT OBJ FILE SPECIFICATION: ALL VALID PREFIXES
+===============================================================================
+
+-------------------------------------------------------------------------------
+1. GEOMETRIC PRIMITIVES (RAW CPU DATA)
+-------------------------------------------------------------------------------
+v   [x] [y] [z] [w]      - Vertex position. 'w' is optional for weight (defaults to 1.0).
+vt  [u] [v] [w]          - Vertex texture coordinate. 'v' and 'w' are optional (default to 0.0).
+vn  [i] [j] [k]          - Vertex normal vector. Does not have to be normalized.
+vp  [u] [v]              - Parameter space vertices. Used for curves and surfaces.
+
+-------------------------------------------------------------------------------
+2. ELEMENTS & TOPOLOGY (RENDERING CONNECTIONS)
+-------------------------------------------------------------------------------
+f   [v/vt/vn] ...        - Polygonal face connecting vertices, texture coordinates, and normals.
+l   [v1/vt1] [v2/vt2]... - Line element connecting two or more vertices.
+p   [v1] [v2] [v3] ...   - Point element defining independent point cloud positions.
+
+-------------------------------------------------------------------------------
+3. GROUPING, HIERARCHY, AND SMOOTHING
+-------------------------------------------------------------------------------
+o   [object_name]        - User-defined object name identifier.
+g   [group_name] ...     - Group name identifier. Can belong to multiple groups.
+s   [group_number/off]   - Smoothing group assignment. Automatically computes vertex normals.
+mg  [group_number]       - Merging group identifier for free-form surface patching.
+
+-------------------------------------------------------------------------------
+4. MATERIALS & SHADING PIPELINES
+-------------------------------------------------------------------------------
+mtllib [file_name.mtl]   - Material Template Library path referencing external shaders/textures.
+usemtl [material_name]   - Material state assignment applying to all subsequent faces.
+shadow_obj [file_name]   - Custom shadow proxy mesh designation.
+trace_obj [file_name]    - Custom ray-tracing occlusion proxy designation.
+lod [level_number]       - Level of Detail threshold flag.
+
+-------------------------------------------------------------------------------
+5. FREE-FORM CURVES AND SURFACES (ADVANCED TOPOLOGY)
+-------------------------------------------------------------------------------
+cstype [type]            - Curve or surface type matrix definition (e.g., bspline, bez, taylor).
+deg    [deg_u] [deg_v]   - Polynomial degree specification for curves/surfaces.
+step   [step_u] [step_v] - Step size specifier for evaluating curve/surface divisions.
+parm   [u/v] [knots...]  - Parameter values explicitly defining knot vectors.
+curv   [u1] [u2] [v...]  - Free-form curve description utilizing control points.
+curv2  [v...]            - 2D parameter space curve descriptor.
+surf   [s1] [s2] [u...]  - Free-form surface geometric layout.
+con    [s1] [c1] [s2]... - Surface connectivity linkage flags.
+
+-------------------------------------------------------------------------------
+6. SPECIAL SYSTEM CHARACTERS
+-------------------------------------------------------------------------------
+#   [comment_text]       - Comment designator. Ignored entirely by standard parsers.
+===============================================================================
