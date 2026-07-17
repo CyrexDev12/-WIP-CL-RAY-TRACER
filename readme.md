@@ -170,6 +170,10 @@ Review the generated file before rendering, then run:
 The rendered PPM is written to the filename in `image.file`. That filename is
 relative to the directory from which `raytracer.exe` is run.
 
+
+To easily convert your PPM file to a PNG run "python tools/PPMConverter.py <PPMFILENAME>.ppm ./Renders/<NAMEOFIMAGE>.png"
+
+
 ### Current generated-scene limits
 
 The generator deliberately supports only features implemented by
