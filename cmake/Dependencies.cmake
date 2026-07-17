@@ -1,4 +1,32 @@
 find_package(Threads REQUIRED)
+if(CLRT_BUILD_OPENGL)
+    find_package(OpenGL REQUIRED)
+    find_package(glfw3 CONFIG REQUIRED)
+
+    if(WIN32 AND NOT DEFINED Python_EXECUTABLE)
+        set(Python_FIND_REGISTRY LAST)
+    endif()
+
+    find_package(Python REQUIRED COMPONENTS Interpreter)
+    include(FetchContent)
+
+    FetchContent_Declare(
+        glad
+        GIT_REPOSITORY https://github.com/Dav1dde/glad.git
+        GIT_TAG v2.0.8
+        GIT_SHALLOW TRUE
+        SOURCE_SUBDIR cmake
+    )
+
+    FetchContent_MakeAvailable(glad)
+
+    glad_add_library(
+        clrt_glad
+        STATIC
+        REPRODUCIBLE
+        API gl:core=3.3
+    )
+endif()
 
 find_package(nlohmann_json CONFIG QUIET)
 
