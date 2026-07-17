@@ -26,7 +26,9 @@ void testExtendedScene(const std::string& path) {
     Camera camera;
     std::string imageFile;
     bool multithreaded = true;
-    expect(LoadSceneFromJson(path, camera, world, imageFile, multithreaded),
+    BloomSettings bloom;
+    expect(LoadSceneFromJson(path, camera, world, imageFile, multithreaded,
+                             nullptr, &bloom),
            "extended scene loads successfully");
 
     expect(world.lights().size() == 2, "loader retains multiple point lights");
@@ -54,6 +56,13 @@ void testExtendedScene(const std::string& path) {
         expect(dynamic_cast<PertubedPattern*>(
                    group->get_child(0)->getMaterial().pattern.get()) != nullptr,
                "loader creates nested perturbed patterns");
+        const Material& emissiveMaterial = group->get_child(0)->getMaterial();
+        expect(clrt::math::nearlyEqual(
+                   emissiveMaterial.emissiveColor,
+                   Color{0.2, 0.6, 1.0})
+                   && clrt::math::nearlyEqual(
+                       emissiveMaterial.emissiveStrength, 4.0),
+               "loader retains HDR emissive material settings");
     }
 
     expect(dynamic_cast<CheckersPattern*>(
@@ -78,6 +87,11 @@ void testExtendedScene(const std::string& path) {
            "loader applies scale, XYZ rotation, then translation");
     expect(imageFile == "extended.ppm" && !multithreaded,
            "loader retains extended scene output settings");
+    expect(bloom.enabled
+               && clrt::math::nearlyEqual(bloom.intensity, 0.4)
+               && clrt::math::nearlyEqual(bloom.threshold, 1.0)
+               && bloom.radius == 5,
+           "loader retains bloom post-processing settings");
 }
 
 } // namespace

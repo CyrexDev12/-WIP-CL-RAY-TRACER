@@ -112,5 +112,8 @@ void Shape::setEmissiveColor(const Color& color) {
 }
 
 void Shape::setEmissiveStrength(double strength) {
+    if (strength < 0.0) {
+        throw std::invalid_argument("Emissive strength must be non-negative");
+    }
     material.emissiveStrength = strength;
 }

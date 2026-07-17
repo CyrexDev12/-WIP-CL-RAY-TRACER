@@ -9,7 +9,8 @@ Use this compact JSON shape as the contract. Fields shown on image, camera, and
 lights are required. Object transforms and materials may omit values that should
 use their defaults:
 {
-  "image": {"width": 200, "height": 100, "file": "scene.ppm", "multithreaded": true},
+  "image": {"width": 200, "height": 100, "file": "scene.ppm", "multithreaded": true,
+            "bloom": false},
   "camera": {"hsize": 200, "vsize": 100, "fov": 1.0472,
              "from": [0, 3, -8], "to": [0, 1, 0], "up": [0, 1, 0]},
   "lights": [{"type": "point", "position": [-5, 8, -5], "color": [1, 1, 1]}],
@@ -46,6 +47,12 @@ Renderer capabilities and coordinate system:
   Two-color patterns use `colorA` and `colorB`; a perturbed pattern wraps another
   pattern in `base`. Pattern transforms use the same scale/rotate/translate order.
 - Colors are linear RGB values from 0 to 1.
+- For a self-lit or glowing surface, set `emissiveColor` to a 0-to-1 RGB color
+  and `emissiveStrength` from 0 to 20. Strength may exceed 1 and creates the HDR
+  contribution; do not put values above 1 in ordinary `color`. Enable image
+  `bloom` for a visible halo, normally using `bloomIntensity` 0.2-0.7,
+  `bloomThreshold` 1, and `bloomRadius` 4-12. Emissive surfaces do not illuminate
+  nearby objects, so add a similarly colored point light when that effect is needed.
 - ambient, diffuse, specular, reflective, and transparency range from 0 to 1.
 - shininess must be between 10 and 200, inclusive. Values outside that range make
   the C++ renderer terminate. Use roughly 10-50 for broad/dull highlights and

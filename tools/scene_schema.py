@@ -23,6 +23,10 @@ class ImageSettings(StrictModel):
     height: int = Field(ge=1, le=4096)
     file: str = Field(pattern=r"^[^/\\]+\.ppm$")
     multithreaded: bool = True
+    bloom: bool = False
+    bloomIntensity: float = Field(default=0.35, ge=0.0, le=2.0)
+    bloomThreshold: float = Field(default=1.0, ge=0.0, le=10.0)
+    bloomRadius: int = Field(default=6, ge=1, le=32)
 
 
 class CameraSettings(StrictModel):
@@ -108,6 +112,8 @@ class Material(StrictModel):
     reflective: float = Field(default=0.0, ge=0.0, le=1.0)
     transparency: float = Field(default=0.0, ge=0.0, le=1.0)
     refractiveIndex: float = Field(default=1.0, ge=1.0, le=3.0)
+    emissiveColor: Color3 = Field(default_factory=lambda: [0.0, 0.0, 0.0])
+    emissiveStrength: float = Field(default=0.0, ge=0.0, le=20.0)
     pattern: Pattern | None = None
 
 

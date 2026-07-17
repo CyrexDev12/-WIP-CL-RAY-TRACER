@@ -37,7 +37,8 @@ static std::unique_ptr<Shape> jsonToShape(const json& object);
 
 bool LoadSceneFromJson(const std::string& path, Camera& outCam, World& outWorld,
                        std::string& outImageFile, bool& outMultiThreaded,
-                       std::string* outError) {
+                       std::string* outError,
+                       BloomSettings* outBloomSettings) {
     const auto fail = [outError](const std::string& message) {
         if (outError != nullptr) {
             *outError = message;
@@ -58,6 +59,7 @@ bool LoadSceneFromJson(const std::string& path, Camera& outCam, World& outWorld,
     World loadedWorld;
     std::string loadedImageFile = outImageFile;
     bool loadedMultiThreaded = false;
+    BloomSettings loadedBloomSettings;
 
     try {
         // Image
@@ -68,6 +70,15 @@ bool LoadSceneFromJson(const std::string& path, Camera& outCam, World& outWorld,
             }
             if (img.contains("multithreaded")) {
                 loadedMultiThreaded = img["multithreaded"].get<bool>();
+            }
+            loadedBloomSettings.enabled = img.value("bloom", false);
+            loadedBloomSettings.intensity = img.value("bloomIntensity", 0.35);
+            loadedBloomSettings.threshold = img.value("bloomThreshold", 1.0);
+            loadedBloomSettings.radius = img.value("bloomRadius", 6);
+            if (loadedBloomSettings.intensity < 0.0
+                || loadedBloomSettings.threshold < 0.0
+                || loadedBloomSettings.radius < 1) {
+                throw std::invalid_argument("Bloom settings must be non-negative and radius must be at least 1");
             }
         }
 
@@ -127,6 +138,9 @@ bool LoadSceneFromJson(const std::string& path, Camera& outCam, World& outWorld,
     outWorld = std::move(loadedWorld);
     outImageFile = std::move(loadedImageFile);
     outMultiThreaded = loadedMultiThreaded;
+    if (outBloomSettings != nullptr) {
+        *outBloomSettings = loadedBloomSettings;
+    }
 
     return true;
 }
@@ -191,6 +205,8 @@ static void applyMaterial(Shape& shape, const json& material) {
     if (material.contains("reflective")) shape.setReflective(material["reflective"].get<double>());
     if (material.contains("transparency")) shape.setTransparency(material["transparency"].get<double>());
     if (material.contains("refractiveIndex")) shape.setRefractiveIndex(material["refractiveIndex"].get<double>());
+    if (material.contains("emissiveColor")) shape.setEmissiveColor(jsonToColor(material["emissiveColor"]));
+    if (material.contains("emissiveStrength")) shape.setEmissiveStrength(material["emissiveStrength"].get<double>());
     if (material.contains("pattern") && !material["pattern"].is_null()) {
         shape.setMaterialPattern(jsonToPattern(material["pattern"]));
     }

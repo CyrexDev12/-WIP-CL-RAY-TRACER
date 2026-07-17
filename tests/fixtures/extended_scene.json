@@ -3,7 +3,11 @@
     "width": 80,
     "height": 40,
     "file": "extended.ppm",
-    "multithreaded": false
+    "multithreaded": false,
+    "bloom": true,
+    "bloomIntensity": 0.4,
+    "bloomThreshold": 1.0,
+    "bloomRadius": 5
   },
   "camera": {
     "hsize": 80,
@@ -86,6 +90,8 @@
           "transform": {"scale": [0.6, 0.6, 0.6], "translate": [-0.8, 0.6, 0]},
           "material": {
             "color": [0.9, 0.8, 0.2],
+            "emissiveColor": [0.2, 0.6, 1.0],
+            "emissiveStrength": 4.0,
             "pattern": {
               "type": "perturbed",
               "distortionScale": 0.1,

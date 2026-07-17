@@ -35,8 +35,10 @@ int main(int argc, char** argv) {
       std::string outFile = "out.ppm";
       std::string loadError;
       bool multiThreaded = false;
+      BloomSettings bloomSettings;
       bool ok = LoadSceneFromJson(
-         scenePath, cam, world, outFile, multiThreaded, &loadError);
+         scenePath, cam, world, outFile, multiThreaded, &loadError,
+         &bloomSettings);
       if (!ok) {
          std::cerr << "Failed to load scene: " << scenePath;
          if (!loadError.empty()) {
@@ -46,6 +48,10 @@ int main(int argc, char** argv) {
          return 1;
       }
       Canvas cnv = renderCpu(cam, world, multiThreaded);
+      cnv.bloomEnabled = bloomSettings.enabled;
+      cnv.bloomIntensity = bloomSettings.intensity;
+      cnv.bloomThreshold = bloomSettings.threshold;
+      cnv.bloomRadius = bloomSettings.radius;
       writeCanvasToFile(cnv, outFile);
       std::cout << "Rendered scene to " << outFile << std::endl;
       return 0;

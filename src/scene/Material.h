@@ -6,7 +6,8 @@
 
 // MATERIAL STRUCT 
 // INCLUDE AMBIENT, DIFFUSE, SPECULAR, SHININESS
-// MUST BE UNSIGNED NEGATIVE FLOATING POINTS BETWEEN 0-1, SHININESS VALUES 10-200
+// Reflectance values remain between 0-1. Emissive strength is an HDR multiplier
+// and may exceed 1; emissive color remains a normalized linear RGB color.
 
 class Pattern; // Forward decleration 
 

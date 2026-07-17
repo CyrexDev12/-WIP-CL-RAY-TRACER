@@ -24,9 +24,28 @@ class SceneSchemaTests(unittest.TestCase):
         )
         scene = Scene.model_validate(data)
         self.assertEqual(len(scene.lights), 2)
+        self.assertTrue(scene.image.bloom)
         self.assertEqual([obj.type for obj in scene.objects], [
             "plane", "cube", "cylinder", "triangle", "group"
         ])
+        emissive = scene.objects[4].children[0].material
+        self.assertEqual(emissive.emissiveColor, [0.2, 0.6, 1.0])
+        self.assertEqual(emissive.emissiveStrength, 4.0)
+
+    def test_emission_uses_hdr_strength_not_over_range_albedo(self) -> None:
+        data = json.loads(
+            (ROOT / "tests" / "fixtures" / "extended_scene.json").read_text()
+        )
+        sphere = data["objects"][4]["children"][0]
+        sphere["material"]["emissiveStrength"] = 12.0
+        scene = Scene.model_validate(data)
+        self.assertEqual(
+            scene.objects[4].children[0].material.emissiveStrength, 12.0
+        )
+
+        sphere["material"]["color"] = [2.0, 0.5, 0.5]
+        with self.assertRaises(ValidationError):
+            Scene.model_validate(data)
 
     def test_rejects_more_than_four_lights(self) -> None:
         data = json.loads(

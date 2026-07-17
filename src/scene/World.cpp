@@ -252,6 +252,7 @@ Color World::shade_hit(const Computations& comps, int remaining) {
 
    const Shape& object = resolve(comps.objectId);
    const Material& material = this->material(comps.materialId);
+   const Color emitted = material.emissiveColor * material.emissiveStrength;
    Color surface{0.0, 0.0, 0.0};
    for (const auto& light : lighting) {
        surface = surface + light->ProcessLighting(
@@ -269,11 +270,11 @@ Color World::shade_hit(const Computations& comps, int remaining) {
 
     if (mat.reflective > 0 && mat.transparency > 0) {
         double reflectance = schlick(comps); 
-        return surface + reflected * reflectance + refracted * (1 - reflectance); 
+        return emitted + surface + reflected * reflectance + refracted * (1 - reflectance);
     }
 
     // added the refracted 
-    return surface + reflected + refracted; 
+    return emitted + surface + reflected + refracted;
 }
 
 

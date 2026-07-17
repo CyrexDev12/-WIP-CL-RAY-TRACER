@@ -18,6 +18,7 @@
 #include "scene/LightShadeVector.h"
 #include "scene/Pattern.h"
 #include "scene/World.h"
+#include "scene/canvas.h"
 
 namespace {
 
@@ -201,6 +202,37 @@ void testFixedPatternAndLightVectors() {
            "lighting reflection uses fixed Vec3");
 }
 
+void testEmissiveMaterialContributesHdrColor() {
+    World world;
+    auto sphere = std::make_unique<Sphere>();
+    sphere->setAmbient(0.0);
+    sphere->setDiffuse(0.0);
+    sphere->setSpecular(0.0);
+    sphere->setEmissiveColor(Color{0.25, 0.5, 1.0});
+    sphere->setEmissiveStrength(4.0);
+    world.AddShape(std::move(sphere));
+
+    const Color color = world.Color_at(Ray{
+        clrt::math::Point3{0.0, 0.0, -5.0},
+        clrt::math::Vec3{0.0, 0.0, 1.0}
+    });
+    expect(clrt::math::nearlyEqual(color, Color{1.0, 2.0, 4.0}),
+           "emissive material contributes unclamped HDR color");
+}
+
+void testBloomIsAppliedDuringPpmConversion() {
+    Canvas canvas{3, 1};
+    canvas.writePixel(1, 0, Color{1.2, 0.0, 0.0});
+    canvas.bloomEnabled = true;
+    canvas.bloomIntensity = 0.3;
+    canvas.bloomThreshold = 1.0;
+    canvas.bloomRadius = 1;
+
+    const std::string ppm = canvas.convertToPpm();
+    expect(ppm.find("46 0 0 255 0 0 46 0 0") != std::string::npos,
+           "PPM conversion applies bloom to neighboring pixels before clamping");
+}
+
 } // namespace
 
 int main() {
@@ -213,6 +245,8 @@ int main() {
     testMigratedTriangle();
     testFixedHitComputations();
     testFixedPatternAndLightVectors();
+    testEmissiveMaterialContributesHdrColor();
+    testBloomIsAppliedDuringPpmConversion();
 
     if (failures != 0) {
         std::cerr << failures << " migration test(s) failed\n";

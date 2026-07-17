@@ -70,8 +70,8 @@ python tools/generate_scene.py `
   --output scenes/planets.json
 ```
 
-Descriptions can include composition, colors, materials, camera position, output
-resolution, and multithreading. For example:
+Descriptions can include composition, colors, materials, emission and bloom,
+camera position, output resolution, and multithreading. For example:
 
 ```powershell
 python tools/generate_scene.py `
@@ -138,6 +138,11 @@ The generator deliberately supports only features implemented by
 - Stripe, checkers, gradient, ring, and deterministic perturbed material patterns,
   each with an optional transform.
 - RGB color components from `0` to `1`.
+- Self-lit materials using normalized `emissiveColor` plus `emissiveStrength` from
+  `0` to `20`. Strength may exceed `1` and is kept as HDR data until output.
+- Optional image bloom using `bloom`, `bloomIntensity`, `bloomThreshold`, and
+  `bloomRadius`. Emissive surfaces do not cast light onto other geometry; add a
+  point light when the emitter must also illuminate its surroundings.
 - `ambient`, `diffuse`, `specular`, `reflective`, and `transparency` from `0` to `1`.
 - `shininess` from `10` to `200`, inclusive. Other values terminate the C++ renderer.
 - `refractiveIndex` from `1` to `3`.
@@ -760,7 +765,8 @@ JSON Scene Format (Quick Reference)
 This project supports loading scenes described in JSON. The loader understands a compact schema that covers the common elements needed to build a scene: image output settings, a camera, lights, and objects (spheres supported currently).
 
 Top-level keys
-- `image` (optional): `{ "width": int, "height": int, "file": string }` — output image settings.
+- `image` (optional): output image settings including `width`, `height`, `file`,
+  `multithreaded`, `bloom`, `bloomIntensity`, `bloomThreshold`, and `bloomRadius`.
 - `camera` (optional): `{ "hsize": int, "vsize": int, "fov": float, "from": [x,y,z], "to": [x,y,z], "up": [x,y,z] }` — camera and view transform.
 - `lights` (optional): an array of lights. Supported light object example:
     - `{ "type": "point", "position": [x,y,z], "color": [r,g,b] }`
@@ -768,7 +774,7 @@ Top-level keys
     - Sphere:
         - `type`: "sphere"
         - `transform`: optional object with `scale` and/or `translate` arrays: `{ "scale": [sx,sy,sz], "translate": [tx,ty,tz] }`
-        - `material`: optional object with properties like `color` (`[r,g,b]`), `ambient`, `diffuse`, `specular`, `shininess`, `reflective`, `transparency`, `refractiveIndex`.
+        - `material`: optional object with properties like `color` (`[r,g,b]`), `ambient`, `diffuse`, `specular`, `shininess`, `reflective`, `transparency`, `refractiveIndex`, `emissiveColor`, and `emissiveStrength`.
 
     - `image.multithreaded` (optional): boolean to request a multithreaded render. Example: `{ "image": { "file": "out.ppm", "multithreaded": true } }`.
 
