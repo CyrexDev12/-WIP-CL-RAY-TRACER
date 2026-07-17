@@ -7,11 +7,12 @@
 void Plane::intersect(Ray ray, Intersections& intersectionsList) {
 
     const double EPSILON = 1e-5; // Small epsilon product to protect against floating pt issues 
-    double local_ray_originY = ray.origin[1];
-    double local_ray_directionY = ray.direction[1]; 
+    Ray localRay = ray.transform(this->getTransform().inverse());
+    double local_ray_originY = localRay.origin[1];
+    double local_ray_directionY = localRay.direction[1];
 
     // If the ray is moving parallel to the XZ plane, it misses
-    if (abs(ray.direction[1]) < EPSILON) {
+    if (abs(local_ray_directionY) < EPSILON) {
         return; // We return nothing no intersection exists 
     }
 
@@ -23,6 +24,11 @@ void Plane::intersect(Ray ray, Intersections& intersectionsList) {
     intersectionsList.addIntersection(Intersection(t, this)); 
 
     return; 
+}
+
+vector<double> Plane::normal_at(const vector<double>& worldPoint) const {
+    (void)worldPoint;
+    return this->normal_to_world({0, 1, 0, 0});
 }
 
 

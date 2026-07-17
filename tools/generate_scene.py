@@ -5,12 +5,113 @@ from __future__ import annotations
 import argparse
 import os
 from pathlib import Path
+import re
 import sys
+from time import perf_counter
+from typing import Any
 
 from pydantic import ValidationError
 
-from scene_prompt import SYSTEM_PROMPT
-from scene_schema import Scene
+try:
+    from .scene_prompt import SYSTEM_PROMPT
+    from .scene_schema import Scene
+except ImportError:
+    from scene_prompt import SYSTEM_PROMPT
+    from scene_schema import Scene
+
+
+QUALITY_LONG_EDGES = {
+    "preview": 200,
+    "standard": 400,
+    "high": 800,
+    "ultra": 1600,
+}
+
+EXPLICIT_RESOLUTION = re.compile(
+    r"\b(\d{2,4})\s*(?:x|by)\s*(\d{2,4})\b", re.I
+)
+ULTRA_QUALITY = re.compile(
+    r"\b(?:ultra(?:[- ]high)?[- ]quality|maximum[- ]quality|ultra[- ]resolution)\b",
+    re.I,
+)
+HIGH_QUALITY = re.compile(
+    r"\b(?:high[- ]quality|high[- ]resolution|final[- ]quality|"
+    r"production[- ]quality|final[- ]render)\b",
+    re.I,
+)
+
+
+def apply_quality_preset(
+    scene: Scene, description: str, requested_quality: str = "auto"
+) -> str | None:
+    quality = requested_quality
+    if quality == "auto":
+        explicit_resolution = EXPLICIT_RESOLUTION.search(description)
+        if explicit_resolution:
+            width, height = map(int, explicit_resolution.groups())
+            if width > 4096 or height > 4096:
+                raise ValueError("explicit resolution must not exceed 4096x4096")
+            scene.image.width = width
+            scene.image.height = height
+            scene.camera.hsize = width
+            scene.camera.vsize = height
+            return "custom"
+        if ULTRA_QUALITY.search(description):
+            quality = "ultra"
+        elif HIGH_QUALITY.search(description):
+            quality = "high"
+        else:
+            return None
+
+    target_long_edge = QUALITY_LONG_EDGES[quality]
+    width = scene.image.width
+    height = scene.image.height
+    current_long_edge = max(width, height)
+
+    if requested_quality == "auto" and current_long_edge >= target_long_edge:
+        return quality
+
+    if width >= height:
+        new_width = target_long_edge
+        new_height = max(1, round(target_long_edge * height / width))
+    else:
+        new_height = target_long_edge
+        new_width = max(1, round(target_long_edge * width / height))
+
+    scene.image.width = new_width
+    scene.image.height = new_height
+    scene.camera.hsize = new_width
+    scene.camera.vsize = new_height
+    return quality
+
+
+def build_request_options(
+    model: str,
+    description: str,
+    *,
+    strict_schema: bool = False,
+    reasoning_effort: str = "auto",
+) -> dict[str, Any]:
+    options: dict[str, Any] = {
+        "model": model,
+        "input": [
+            {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "user", "content": description},
+        ],
+    }
+    if strict_schema:
+        options["text_format"] = Scene
+    else:
+        options["text"] = {"format": {"type": "json_object"}}
+
+    if model.startswith("gpt-5.4-"):
+        if reasoning_effort == "auto":
+            reasoning_effort = "low" if "mini" in model else "none"
+        options["reasoning"] = {"effort": reasoning_effort}
+        options.setdefault("text", {})["verbosity"] = (
+            "medium" if "mini" in model else "low"
+        )
+    return options
 
 
 def parse_args() -> argparse.Namespace:
@@ -26,6 +127,29 @@ def parse_args() -> argparse.Namespace:
         default=os.environ.get("OPENAI_SCENE_MODEL", "gpt-5.4-mini"),
         help="OpenAI model (default: gpt-5.4-mini)",
     )
+    parser.add_argument(
+        "--reasoning-effort",
+        choices=("auto", "none", "low", "medium", "high", "xhigh"),
+        default=os.environ.get("OPENAI_SCENE_REASONING", "auto"),
+        help="reasoning effort for GPT-5.4 models (default: auto)",
+    )
+    parser.add_argument(
+        "--quality",
+        choices=("auto", "preview", "standard", "high", "ultra"),
+        default="auto",
+        help="output resolution preset inferred from the prompt by default",
+    )
+    parser.add_argument(
+        "--timeout",
+        type=float,
+        default=60.0,
+        help="maximum seconds to wait for the API request (default: 60)",
+    )
+    parser.add_argument(
+        "--strict-schema",
+        action="store_true",
+        help="use slower server-side Structured Outputs validation",
+    )
     parser.add_argument("--force", action="store_true", help="Overwrite output")
     return parser.parse_args()
 
@@ -40,6 +164,9 @@ def main() -> int:
     if output.exists() and not args.force:
         print(f"error: {output} already exists; pass --force to replace it", file=sys.stderr)
         return 2
+    if args.timeout <= 0:
+        print("error: --timeout must be greater than zero", file=sys.stderr)
+        return 2
     if not os.environ.get("OPENAI_API_KEY"):
         print(
             "error: OPENAI_API_KEY is not set. Set it in your environment; "
@@ -48,33 +175,53 @@ def main() -> int:
         )
         return 2
 
+    started_at = perf_counter()
+    mode = "strict schema" if args.strict_schema else "fast JSON"
+    print(f"Generating scene with {args.model} ({mode} mode)...", flush=True)
+
     try:
         from openai import OpenAI
 
-        client = OpenAI()
-        response = client.responses.parse(
-            model=args.model,
-            input=[
-                {"role": "system", "content": SYSTEM_PROMPT},
-                {"role": "user", "content": " ".join(args.description)},
-            ],
-            text_format=Scene,
+        client = OpenAI(timeout=args.timeout, max_retries=0)
+        description = " ".join(args.description)
+        request_options = build_request_options(
+            args.model,
+            description,
+            strict_schema=args.strict_schema,
+            reasoning_effort=args.reasoning_effort,
         )
-        scene = response.output_parsed
-        if scene is None:
-            raise RuntimeError("the model returned no parsed scene")
+        if args.strict_schema:
+            response = client.responses.parse(**request_options)
+            scene = response.output_parsed
+            if scene is None:
+                raise RuntimeError("the model returned no parsed scene")
+        else:
+            response = client.responses.create(**request_options)
+            scene = Scene.model_validate_json(response.output_text)
+        applied_quality = apply_quality_preset(scene, description, args.quality)
         # Validate once more before touching the filesystem.
         scene = Scene.model_validate(scene.model_dump(by_alias=True))
     except (ValidationError, RuntimeError, ValueError) as exc:
-        print(f"error: scene generation failed: {exc}", file=sys.stderr)
+        elapsed = perf_counter() - started_at
+        print(f"error: scene generation failed after {elapsed:.1f}s: {exc}", file=sys.stderr)
         return 1
     except Exception as exc:
-        print(f"error: OpenAI request failed: {exc}", file=sys.stderr)
+        elapsed = perf_counter() - started_at
+        print(f"error: OpenAI request failed after {elapsed:.1f}s: {exc}", file=sys.stderr)
         return 1
 
     output.parent.mkdir(parents=True, exist_ok=True)
-    output.write_text(scene.model_dump_json(by_alias=True, indent=2) + "\n", encoding="utf-8")
-    print(f"Created validated scene: {output}")
+    output.write_text(
+        scene.model_dump_json(by_alias=True, exclude_none=True, indent=2) + "\n",
+        encoding="utf-8",
+    )
+    elapsed = perf_counter() - started_at
+    if applied_quality is not None:
+        print(
+            f"Applied {applied_quality} quality resolution: "
+            f"{scene.image.width}x{scene.image.height}"
+        )
+    print(f"Created validated scene in {elapsed:.1f}s: {output}")
     print(f"Render with: ./raytracer.exe --scene {output}")
     return 0
 

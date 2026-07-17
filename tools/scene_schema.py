@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Annotated, Literal
+from typing import Annotated, Literal, Union
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
@@ -23,6 +23,10 @@ class ImageSettings(StrictModel):
     height: int = Field(ge=1, le=4096)
     file: str = Field(pattern=r"^[^/\\]+\.ppm$")
     multithreaded: bool = True
+    bloom: bool = False
+    bloomIntensity: float = Field(default=0.35, ge=0.0, le=2.0)
+    bloomThreshold: float = Field(default=1.0, ge=0.0, le=10.0)
+    bloomRadius: int = Field(default=6, ge=1, le=32)
 
 
 class CameraSettings(StrictModel):
@@ -50,6 +54,7 @@ class PointLight(StrictModel):
 
 class Transform(StrictModel):
     scale: Vector3 = Field(default_factory=lambda: [1.0, 1.0, 1.0])
+    rotate: Vector3 = Field(default_factory=lambda: [0.0, 0.0, 0.0])
     translate: Vector3 = Field(default_factory=lambda: [0.0, 0.0, 0.0])
 
     @model_validator(mode="after")
@@ -59,8 +64,47 @@ class Transform(StrictModel):
         return self
 
 
+class TwoColorPattern(StrictModel):
+    colorA: Color3
+    colorB: Color3
+    transform: Transform = Field(default_factory=Transform)
+
+
+class StripePattern(TwoColorPattern):
+    type: Literal["stripe"] = "stripe"
+
+
+class CheckersPattern(TwoColorPattern):
+    type: Literal["checkers"] = "checkers"
+
+
+class GradientPattern(TwoColorPattern):
+    type: Literal["gradient"] = "gradient"
+
+
+class RingPattern(TwoColorPattern):
+    type: Literal["ring"] = "ring"
+
+
+class PerturbedPattern(StrictModel):
+    type: Literal["perturbed"] = "perturbed"
+    base: "Pattern"
+    distortionScale: float = Field(default=0.2, ge=0.0, le=2.0)
+    noiseFrequency: float = Field(default=2.0, gt=0.0, le=100.0)
+    transform: Transform = Field(default_factory=Transform)
+
+
+Pattern = Union[
+    StripePattern,
+    CheckersPattern,
+    GradientPattern,
+    RingPattern,
+    PerturbedPattern,
+]
+
+
 class Material(StrictModel):
-    color: Color3
+    color: Color3 = Field(default_factory=lambda: [1.0, 1.0, 1.0])
     ambient: float = Field(default=0.1, ge=0.0, le=1.0)
     diffuse: float = Field(default=0.9, ge=0.0, le=1.0)
     specular: float = Field(default=0.9, ge=0.0, le=1.0)
@@ -68,19 +112,75 @@ class Material(StrictModel):
     reflective: float = Field(default=0.0, ge=0.0, le=1.0)
     transparency: float = Field(default=0.0, ge=0.0, le=1.0)
     refractiveIndex: float = Field(default=1.0, ge=1.0, le=3.0)
+    emissiveColor: Color3 = Field(default_factory=lambda: [0.0, 0.0, 0.0])
+    emissiveStrength: float = Field(default=0.0, ge=0.0, le=20.0)
+    pattern: Pattern | None = None
 
 
-class Sphere(StrictModel):
-    type: Literal["sphere"] = "sphere"
+class Renderable(StrictModel):
     transform: Transform = Field(default_factory=Transform)
-    material: Material
+    material: Material = Field(default_factory=Material)
+
+
+class Sphere(Renderable):
+    type: Literal["sphere"] = "sphere"
+
+
+class Plane(Renderable):
+    type: Literal["plane"] = "plane"
+
+
+class Cube(Renderable):
+    type: Literal["cube"] = "cube"
+
+
+class Cylinder(Renderable):
+    type: Literal["cylinder"] = "cylinder"
+    minimum: float = -1.0
+    maximum: float = 1.0
+    closed: bool = False
+
+    @model_validator(mode="after")
+    def validate_limits(self) -> "Cylinder":
+        if self.minimum >= self.maximum:
+            raise ValueError("cylinder minimum must be less than maximum")
+        return self
+
+
+class Triangle(Renderable):
+    type: Literal["triangle"] = "triangle"
+    p1: Vector3
+    p2: Vector3
+    p3: Vector3
+
+    @model_validator(mode="after")
+    def validate_points(self) -> "Triangle":
+        edge1 = [self.p2[i] - self.p1[i] for i in range(3)]
+        edge2 = [self.p3[i] - self.p1[i] for i in range(3)]
+        cross = [
+            edge1[1] * edge2[2] - edge1[2] * edge2[1],
+            edge1[2] * edge2[0] - edge1[0] * edge2[2],
+            edge1[0] * edge2[1] - edge1[1] * edge2[0],
+        ]
+        if all(component == 0 for component in cross):
+            raise ValueError("triangle points must not be collinear")
+        return self
+
+
+class Group(StrictModel):
+    type: Literal["group"] = "group"
+    transform: Transform = Field(default_factory=Transform)
+    children: list["SceneObject"] = Field(min_length=1, max_length=100)
+
+
+SceneObject = Union[Sphere, Plane, Cube, Cylinder, Triangle, Group]
 
 
 class Scene(StrictModel):
     image: ImageSettings
     camera: CameraSettings
     lights: list[PointLight] = Field(min_length=1, max_length=1)
-    objects: list[Sphere] = Field(min_length=1, max_length=100)
+    objects: list[SceneObject] = Field(min_length=1, max_length=100)
 
     @model_validator(mode="after")
     def synchronize_dimensions(self) -> "Scene":
@@ -90,3 +190,7 @@ class Scene(StrictModel):
         ):
             raise ValueError("image dimensions must match camera hsize/vsize")
         return self
+
+
+PerturbedPattern.model_rebuild()
+Group.model_rebuild()

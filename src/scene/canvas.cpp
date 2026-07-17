@@ -131,6 +131,12 @@ Canvas Canvas::applyBloom() const {
 // PPM Conversion
 // ---------------------------------------------------------
 string Canvas::convertToPpm() {
+    if (bloomEnabled) {
+        Canvas outputCanvas = applyBloom();
+        outputCanvas.bloomEnabled = false;
+        return outputCanvas.convertToPpm();
+    }
+
     string identifier = "P3";
     string widthStr = to_string(width);
     string heightStr = to_string(height);

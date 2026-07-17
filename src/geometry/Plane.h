@@ -17,9 +17,7 @@ class Plane : public Shape {
     Plane() = default; 
 
     void intersect(Ray ray, Intersections& intersectionsList) override; 
-    vector<double> normal_at(const vector<double>& worldPoint) const override { // Keep as a function to be consistent 
-        return {0, 1, 0, 0}; // NORMAL AT PT {0, 1, 0}
-    }
+    vector<double> normal_at(const vector<double>& worldPoint) const override;
 
     bound local_bounds() const override; 
 

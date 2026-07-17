@@ -1,8 +1,9 @@
 AI Scene Generator
 ------------------
 The Python generator turns a natural-language description into scene JSON that the
-C++ ray tracer can render. It uses OpenAI Structured Outputs and validates every
-response against the renderer's actual limits before writing a file.
+C++ ray tracer can render. It uses the OpenAI Responses API and validates every
+response against the renderer's actual limits before writing a file. Fast JSON mode
+is the default; optional Structured Outputs mode performs server-side schema checks.
 
 ### 1. Build the ray tracer
 
@@ -57,20 +58,88 @@ python tools/generate_scene.py `
 ```
 
 Descriptions can include composition, colors, materials, camera position, output
-resolution, and multithreading. For example:
+resolution/quality, glow, bloom, and multithreading. For example:
 
 ```powershell
 python tools/generate_scene.py `
-  "A blue glass planet between two small red moons, viewed from slightly above. Use 300 by 150 resolution." `
-  -o scenes/glass_planet.json
+  "A glowing blue planet between two small red moons, viewed from slightly above. Use bloom and 300 by 150 resolution." `
+  -o scenes/glowing_planet.json
 ```
+
+Emissive materials use `emissiveColor` plus `emissiveStrength`. Ask for glow or
+bloom in the description and the generator will also enable the image bloom fields.
+Emission makes a surface self-lit but does not cast light onto nearby objects, so
+the generator may use the single point light to suggest that illumination.
+
+### Generated object types
+
+AI-generated scenes can use spheres, infinite planes, cubes, finite cylinders,
+triangles, and recursive groups. Object and group transforms support `scale`,
+`rotate` (XYZ radians), and `translate`, in that order. For example:
+
+```powershell
+python tools/generate_scene.py `
+  "A patterned floor with a glass sphere, a rotated gold cube, two closed marble columns, and a grouped triangular sculpture" `
+  -o scenes/gallery.json
+```
+
+Use planes for floors and walls. Cylinder `minimum` and `maximum` values bound its
+local Y axis, while `closed` adds end caps. Triangle points are local coordinates.
+Groups contain one or more child objects and share a parent transform; groups do not
+have their own material. Keep infinite planes at the top level because group bounds
+are intended for finite objects.
+
+### Generated material patterns
+
+The AI generator and JSON loader support `stripe`, `checkers`, `gradient`, `ring`,
+and recursive `perturbed` patterns. Ask for them directly in the description:
+
+```powershell
+python tools/generate_scene.py `
+  "A ball with a red-to-blue gradient beside a ball with perturbed green and gold rings" `
+  -o scenes/patterned_balls.json
+```
+
+Two-color patterns contain `colorA` and `colorB`. A perturbed pattern wraps another
+pattern in `base` and can tune `distortionScale` and `noiseFrequency`. Pattern
+transforms independently support `scale`, `rotate`, and `translate`. Generated JSON
+uses the correct spelling `perturbed`; the loader also accepts the legacy spelling
+`pertubed`.
+
+### Quality presets
+
+Choose a deterministic output size with `--quality`:
+
+```powershell
+python tools/generate_scene.py "A neon solar system with bloom" `
+  -o scenes/neon_system.json `
+  --quality high
+```
+
+The presets set the longest image edge while preserving the generated aspect ratio:
+
+- `preview`: 200 pixels
+- `standard`: 400 pixels
+- `high`: 800 pixels
+- `ultra`: 1600 pixels
+- `auto` (default): honor an explicit `WIDTHxHEIGHT` or `WIDTH by HEIGHT` in the
+  description, infer `high`/`ultra` from phrases such as "final render" or
+  "maximum quality", otherwise keep the model's validated dimensions.
+
+An explicit `--quality` option takes priority over a resolution written in the
+description. Image and camera dimensions are always updated together.
 
 Generator options:
 
 - `-o` or `--output` is required and must point to a `.json` file.
 - `--force` allows an existing JSON file to be replaced.
 - `--model MODEL_NAME` overrides the default model for one request.
+- `--quality {auto,preview,standard,high,ultra}` controls output resolution.
+- `--reasoning-effort {auto,none,low,medium,high,xhigh}` controls GPT-5.4 reasoning.
+- `--timeout SECONDS` changes the 60-second API timeout.
+- `--strict-schema` enables server-side Structured Outputs instead of fast JSON mode.
 - `OPENAI_SCENE_MODEL` changes the default model for the current shell.
+- `OPENAI_SCENE_REASONING` changes the default reasoning effort for the current shell.
 - The default model is `gpt-5.4-mini`.
 
 Example using all relevant options:
@@ -79,6 +148,10 @@ Example using all relevant options:
 python tools/generate_scene.py "A simple solar system" `
   -o scenes/planets.json `
   --model gpt-5.4-mini `
+  --quality ultra `
+  --reasoning-effort low `
+  --timeout 120 `
+  --strict-schema `
   --force
 ```
 
@@ -101,9 +174,17 @@ The generator deliberately supports only features implemented by
 `src/SceneLoader.cpp`:
 
 - Exactly one point light.
-- Between 1 and 100 sphere objects.
-- Sphere scaling and translation; rotation is not currently loaded from JSON.
+- Between 1 and 100 top-level objects: sphere, plane, cube, finite cylinder,
+  triangle, or recursive group.
+- Object, group, and pattern scaling, XYZ rotation in radians, and translation.
+- Finite cylinder bounds and optional closed end caps; non-collinear triangle points.
 - RGB color components from `0` to `1`.
+- Optional `emissiveColor` components from `0` to `1` and `emissiveStrength` from
+  `0` to `20`. Emission is self-lighting and does not illuminate other objects.
+- Optional bloom post-processing with intensity from `0` to `2`, threshold from
+  `0` to `10`, and radius from `1` to `32`.
+- Material patterns: `stripe`, `checkers`, `gradient`, `ring`, and recursively
+  nested `perturbed`, each with independent transforms.
 - `ambient`, `diffuse`, `specular`, `reflective`, and `transparency` from `0` to `1`.
 - `shininess` from `10` to `200`, inclusive. Other values terminate the C++ renderer.
 - `refractiveIndex` from `1` to `3`.
@@ -112,9 +193,7 @@ The generator deliberately supports only features implemented by
   `camera.hsize/vsize`.
 - A simple `.ppm` output filename without directory components.
 - Non-zero scale values and valid camera vectors.
-
-Floors and walls are approximated using heavily scaled spheres because planes are
-not yet supported by the JSON loader.
+- Infinite planes should remain top-level rather than inside finite-bounds groups.
 
 ### Troubleshooting
 
@@ -134,6 +213,10 @@ Scene validation failure
 `Must be a value between 10-200!`
 : A hand-edited or older scene contains an invalid `material.shininess`. Change it to
   a value from `10` through `200`. Newly generated scenes enforce this automatically.
+
+API request timeout
+: Increase the limit with `--timeout 120` (or another positive number), especially
+  for strict schema mode or higher reasoning effort.
 
 The schema and boundary checks live in `tools/scene_schema.py`. The renderer-specific
 AI instructions live in `tools/scene_prompt.py`. Update both whenever the C++ scene
@@ -268,20 +351,27 @@ Usage:
 
 JSON Scene Format (Quick Reference)
 ----------------------------------
-This project supports loading scenes described in JSON. The loader understands a compact schema that covers the common elements needed to build a scene: image output settings, a camera, lights, and objects (spheres supported currently).
+This project supports loading scenes described in JSON. The loader understands image output settings, a camera, one point light, materials, patterns, and recursive scene objects.
 
 Top-level keys
-- `image` (optional): `{ "width": int, "height": int, "file": string }` — output image settings.
+- `image` (optional): `{ "width": int, "height": int, "file": string, "multithreaded": bool, "bloom": bool, "bloomIntensity": float, "bloomThreshold": float, "bloomRadius": int }` — output image settings.
 - `camera` (optional): `{ "hsize": int, "vsize": int, "fov": float, "from": [x,y,z], "to": [x,y,z], "up": [x,y,z] }` — camera and view transform.
 - `lights` (optional): an array of lights. Supported light object example:
     - `{ "type": "point", "position": [x,y,z], "color": [r,g,b] }`
-- `objects` (optional): an array of scene objects. Currently supported:
-    - Sphere:
-        - `type`: "sphere"
-        - `transform`: optional object with `scale` and/or `translate` arrays: `{ "scale": [sx,sy,sz], "translate": [tx,ty,tz] }`
-        - `material`: optional object with properties like `color` (`[r,g,b]`), `ambient`, `diffuse`, `specular`, `shininess`, `reflective`, `transparency`, `refractiveIndex`.
+- `objects` (required): one or more scene objects:
+    - Sphere: `{ "type": "sphere", "transform": {...}, "material": {...} }`.
+    - Plane: `{ "type": "plane", "transform": {...}, "material": {...} }`; local plane is infinite at `y=0`.
+    - Cube: `{ "type": "cube", "transform": {...}, "material": {...} }`; local bounds are `-1` through `1`.
+    - Cylinder: `{ "type": "cylinder", "minimum": -1, "maximum": 1, "closed": false, "transform": {...}, "material": {...} }`.
+    - Triangle: `{ "type": "triangle", "p1": [x,y,z], "p2": [x,y,z], "p3": [x,y,z], "transform": {...}, "material": {...} }`.
+    - Group: `{ "type": "group", "transform": {...}, "children": [ ...objects... ] }`; groups have no material.
+    - Transform: `{ "scale": [sx,sy,sz], "rotate": [rx,ry,rz], "translate": [tx,ty,tz] }`; rotations use radians.
+    - Material properties include `color`, `ambient`, `diffuse`, `specular`, `shininess`, `reflective`, `transparency`, `refractiveIndex`, `emissiveColor`, `emissiveStrength`, and `pattern`.
+    - Two-color pattern: `{ "type": "gradient", "colorA": [r,g,b], "colorB": [r,g,b], "transform": {...} }`; types are `stripe`, `checkers`, `gradient`, or `ring`.
+    - Perturbed pattern: `{ "type": "perturbed", "base": { ...another pattern... }, "distortionScale": number, "noiseFrequency": number, "transform": {...} }`.
 
     - `image.multithreaded` (optional): boolean to request a multithreaded render. Example: `{ "image": { "file": "out.ppm", "multithreaded": true } }`.
+    - `image.bloom` (optional): enables a halo around HDR emissive pixels. Tune it with `bloomIntensity`, `bloomThreshold`, and `bloomRadius`.
 
 Notes about tuples
 - This codebase uses 4D tuples internally `(x, y, z, w)`. The JSON format uses 3-element arrays for positions and vectors; the loader converts them to the expected 4D tuples internally (points get `w=1`, direction vectors get `w=0`).
@@ -336,7 +426,7 @@ Where to look in the code
 
 Next steps
 ----------
-- Add more object types (planes, cubes, triangles) and patterns to the JSON schema.
+- Add imported mesh and CSG objects to the JSON schema when loaders are implemented.
 - Add automated validation tests for JSON scenes and unit tests for the loader.
 
 

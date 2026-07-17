@@ -35,16 +35,19 @@ int main(int argc, char** argv) {
       std::string scenePath = argv[2];
       Camera cam;
       World world;
-      std::string outFile = "out.ppm";
-      bool multiThreaded = false;
-      bool ok = LoadSceneFromJson(scenePath, cam, world, outFile, multiThreaded);
+      SceneRenderSettings settings;
+      bool ok = LoadSceneFromJson(scenePath, cam, world, settings);
       if (!ok) {
          std::cerr << "Failed to load scene: " << scenePath << std::endl;
          return 1;
       }
-      Canvas cnv = render(cam, world, multiThreaded);
-      writeCanvasToFile(cnv, outFile);
-      std::cout << "Rendered scene to " << outFile << std::endl;
+      Canvas cnv = render(cam, world, settings.multithreaded);
+      cnv.bloomEnabled = settings.bloom;
+      cnv.bloomIntensity = settings.bloomIntensity;
+      cnv.bloomThreshold = settings.bloomThreshold;
+      cnv.bloomRadius = settings.bloomRadius;
+      writeCanvasToFile(cnv, settings.imageFile);
+      std::cout << "Rendered scene to " << settings.imageFile << std::endl;
       return 0;
    }
 

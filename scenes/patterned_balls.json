@@ -1,0 +1,221 @@
+{
+  "image": {
+    "width": 200,
+    "height": 100,
+    "file": "scene.ppm",
+    "multithreaded": true,
+    "bloom": false,
+    "bloomIntensity": 0.35,
+    "bloomThreshold": 1.0,
+    "bloomRadius": 6
+  },
+  "camera": {
+    "hsize": 200,
+    "vsize": 100,
+    "fov": 1.0472,
+    "from": [
+      0.0,
+      2.5,
+      -7.0
+    ],
+    "to": [
+      0.0,
+      1.0,
+      0.0
+    ],
+    "up": [
+      0.0,
+      1.0,
+      0.0
+    ]
+  },
+  "lights": [
+    {
+      "type": "point",
+      "position": [
+        -5.0,
+        8.0,
+        -5.0
+      ],
+      "color": [
+        1.0,
+        1.0,
+        1.0
+      ]
+    }
+  ],
+  "objects": [
+    {
+      "type": "sphere",
+      "transform": {
+        "scale": [
+          10.0,
+          0.1,
+          10.0
+        ],
+        "translate": [
+          0.0,
+          -0.1,
+          0.0
+        ]
+      },
+      "material": {
+        "color": [
+          0.85,
+          0.85,
+          0.85
+        ],
+        "ambient": 0.1,
+        "diffuse": 0.9,
+        "specular": 0.9,
+        "shininess": 200.0,
+        "reflective": 0.0,
+        "transparency": 0.0,
+        "refractiveIndex": 1.0,
+        "emissiveColor": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "emissiveStrength": 0.0
+      }
+    },
+    {
+      "type": "sphere",
+      "transform": {
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "translate": [
+          -1.6,
+          1.0,
+          0.0
+        ]
+      },
+      "material": {
+        "color": [
+          0.9,
+          0.1,
+          0.1
+        ],
+        "ambient": 0.1,
+        "diffuse": 0.9,
+        "specular": 0.9,
+        "shininess": 200.0,
+        "reflective": 0.0,
+        "transparency": 0.0,
+        "refractiveIndex": 1.0,
+        "emissiveColor": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "emissiveStrength": 0.0,
+        "pattern": {
+          "colorA": [
+            1.0,
+            0.1,
+            0.1
+          ],
+          "colorB": [
+            0.1,
+            0.1,
+            1.0
+          ],
+          "transform": {
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ],
+            "translate": [
+              0.0,
+              0.0,
+              0.0
+            ]
+          },
+          "type": "gradient"
+        }
+      }
+    },
+    {
+      "type": "sphere",
+      "transform": {
+        "scale": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "translate": [
+          1.6,
+          1.0,
+          0.0
+        ]
+      },
+      "material": {
+        "color": [
+          0.95,
+          0.85,
+          0.2
+        ],
+        "ambient": 0.1,
+        "diffuse": 0.9,
+        "specular": 0.9,
+        "shininess": 200.0,
+        "reflective": 0.0,
+        "transparency": 0.0,
+        "refractiveIndex": 1.0,
+        "emissiveColor": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "emissiveStrength": 0.0,
+        "pattern": {
+          "type": "perturbed",
+          "base": {
+            "colorA": [
+              0.1,
+              0.7,
+              0.2
+            ],
+            "colorB": [
+              0.92,
+              0.78,
+              0.18
+            ],
+            "transform": {
+              "scale": [
+                1.0,
+                1.0,
+                1.0
+              ],
+              "translate": [
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            "type": "ring"
+          },
+          "distortionScale": 0.35,
+          "noiseFrequency": 6.0,
+          "transform": {
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ],
+            "translate": [
+              0.0,
+              0.0,
+              0.0
+            ]
+          }
+        }
+      }
+    }
+  ]
+}
