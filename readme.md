@@ -1,4 +1,4 @@
-AI Scene Generator
+Ray Tracer AI Prompt Scene Generator
 <img width="1600" height="800" alt="image" src="https://github.com/user-attachments/assets/42437b10-24d4-4001-89ee-978d9f4e693f" />
 
 ------------------
