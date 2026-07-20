@@ -1,0 +1,5 @@
+# Invalid vertex coordinate
+v 0.0 0.0
+
+# Invalid face reference (index out of bounds)
+f 999 1000 1001

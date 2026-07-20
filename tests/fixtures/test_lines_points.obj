@@ -1,0 +1,18 @@
+# Test line and point elements
+v 0.0 0.0 0.0
+v 1.0 0.0 0.0
+v 0.0 1.0 0.0
+v 1.0 1.0 0.0
+
+vt 0.0 0.0
+vt 1.0 0.0
+vt 0.0 1.0
+vt 1.0 1.0
+
+# Lines
+l 1/1 2/2
+l 3/3 4/4 2/2
+
+# Points
+p 1 2 3
+p 4

@@ -1,0 +1,16 @@
+# Test free-form surface definitions
+cstype bspline
+deg 3 3
+step 0.5 0.5
+
+v 0.0 0.0 0.0
+v 1.0 0.0 0.0
+v 2.0 0.0 0.0
+v 0.0 1.0 0.0
+v 1.0 1.0 0.0
+v 2.0 1.0 0.0
+
+parm u 0.0 0.0 0.0 1.0 1.0 1.0
+parm v 0.0 0.0 0.0 1.0 1.0 1.0
+
+surf 0.0 1.0 0.0 1.0 1 2 3 4 5 6

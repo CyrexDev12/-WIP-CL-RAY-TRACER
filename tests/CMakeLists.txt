@@ -23,6 +23,9 @@ if(CLRT_BUILD_TESTS)
     add_executable(clrt_extended_loader_tests core/ExtendedSceneLoaderTests.cpp)
     target_link_libraries(clrt_extended_loader_tests PRIVATE CLRT::Loaders)
 
+    add_executable(clrt_obj_parser_tests core/OBJParserTests.cpp)
+    target_link_libraries(clrt_obj_parser_tests PRIVATE CLRT::Loaders)
+
     if(MSVC)
         target_compile_options(clrt_math_tests PRIVATE /W4 /permissive-)
         target_compile_options(clrt_migration_tests PRIVATE /W4 /permissive-)
@@ -32,6 +35,7 @@ if(CLRT_BUILD_TESTS)
         target_compile_options(clrt_mesh_instance_tests PRIVATE /W4 /permissive-)
         target_compile_options(clrt_scene_snapshot_tests PRIVATE /W4 /permissive-)
         target_compile_options(clrt_extended_loader_tests PRIVATE /W4 /permissive-)
+        target_compile_options(clrt_obj_parser_tests PRIVATE /W4 /permissive-)
     else()
         target_compile_options(clrt_math_tests PRIVATE -Wall -Wextra -Wpedantic)
         target_compile_options(clrt_migration_tests PRIVATE -Wall -Wextra -Wpedantic)
@@ -41,6 +45,7 @@ if(CLRT_BUILD_TESTS)
         target_compile_options(clrt_mesh_instance_tests PRIVATE -Wall -Wextra -Wpedantic)
         target_compile_options(clrt_scene_snapshot_tests PRIVATE -Wall -Wextra -Wpedantic)
         target_compile_options(clrt_extended_loader_tests PRIVATE -Wall -Wextra -Wpedantic)
+        target_compile_options(clrt_obj_parser_tests PRIVATE -Wall -Wextra -Wpedantic)
     endif()
 
     add_test(NAME core.fixed_math COMMAND clrt_math_tests)
@@ -55,10 +60,13 @@ if(CLRT_BUILD_TESTS)
     add_test(NAME core.mesh_asset COMMAND clrt_mesh_asset_tests)
     add_test(NAME core.mesh_instance COMMAND clrt_mesh_instance_tests)
     add_test(NAME core.scene_snapshot COMMAND clrt_scene_snapshot_tests)
-    add_test(
-        NAME core.extended_scene_loader
+    add_test(NAME core.extended_scene_loader
         COMMAND clrt_extended_loader_tests
             "${CMAKE_CURRENT_SOURCE_DIR}/fixtures/extended_scene.json"
+    )
+    add_test(NAME core.obj_parser
+        COMMAND clrt_obj_parser_tests
+            "${CMAKE_CURRENT_SOURCE_DIR}/fixtures"
     )
 
     add_test(

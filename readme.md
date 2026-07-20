@@ -1,3 +1,16 @@
+DELETE LATER 
+
+Current Branch Notes 
+
+cmake --preset mingw-debug
+
+
+Notes: 
+- Fix Make files
+- Fix testing and test the obj parser implementation 
+
+
+
 AI Scene Generator
 ------------------
 The Python generator turns a natural-language description into scene JSON that the

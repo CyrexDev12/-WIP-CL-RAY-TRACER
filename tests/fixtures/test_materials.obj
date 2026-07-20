@@ -1,0 +1,18 @@
+# Test material loading
+mtllib materials.mtl
+
+o Sphere1
+v 0.0 0.0 0.0
+v 1.0 0.0 0.0
+v 0.0 1.0 0.0
+
+usemtl RedMaterial
+f 1 2 3
+
+o Cube1
+v 0.0 0.0 1.0
+v 1.0 0.0 1.0
+v 0.0 1.0 1.0
+
+usemtl BlueMaterial
+f 4 5 6
