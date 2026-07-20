@@ -6,8 +6,9 @@ cmake --preset mingw-debug
 
 
 Notes: 
-- Fix Make files
+- Fix Make file
 - Fix testing and test the obj parser implementation 
+- Write logic for createMeshAssetFromParsedData()
 
 
 

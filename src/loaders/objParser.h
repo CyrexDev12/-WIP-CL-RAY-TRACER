@@ -221,4 +221,8 @@ private:
     // Internal line tokenization processing
     void processLine(const std::string& line, size_t lineNum);
     void logError(std::error_code ec, size_t lineNum, const std::string& msg);
+
+    // Once the OBJ is parsed, this function creates a MeshAsset from the parsed data
+    //TODO 
+    clrt::scene::MeshAsset createMeshAssetFromParsedData(const std::string& sourceFilePath);
 };
