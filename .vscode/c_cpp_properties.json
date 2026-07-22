@@ -1,0 +1,17 @@
+{
+  "configurations": [
+    {
+      "name": "GCC",
+      "includePath": [
+        "${workspaceFolder}/src",
+        "${workspaceFolder}/src/geometry",
+        "${workspaceFolder}/src/math",
+        "${workspaceFolder}/src/scene"
+      ],
+      "compilerPath": "g++",
+      "cppStandard": "c++17",
+      "intelliSenseMode": "windows-gcc-x64"
+    }
+  ],
+  "version": 4
+}
