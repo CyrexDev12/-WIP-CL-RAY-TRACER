@@ -7,6 +7,7 @@ import os
 from pathlib import Path
 import re
 import sys
+import subprocess
 from time import perf_counter
 from typing import Any
 
@@ -154,7 +155,50 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
+def convert_images_step() -> None:
+    """Executes the internal logic of PPMConverter."""
+    print("\nStarting PPM converter sequence...", flush=True)
+    try:
+        from PIL import Image
+    except ImportError:
+        print("error: Pillow library not found. Run 'pip install Pillow' to convert files.", file=sys.stderr)
+        return
+
+    # Use configuration settings match your folder layout
+    INPUT_DIR = Path("./Inputs")
+    OUTPUT_DIR = Path("./Renders")
+
+    INPUT_DIR.mkdir(parents=True, exist_ok=True)
+    ppm_files = list(INPUT_DIR.glob("*.ppm"))
+
+    if not ppm_files:
+        print(f"No .ppm files found in {INPUT_DIR}")
+    else:
+        for input_file in ppm_files:
+            try:
+                output_file = OUTPUT_DIR / f"{input_file.stem}.png"
+                with Image.open(input_file) as image:
+                    image.save(output_file, "PNG")
+                print(f"Converted {input_file.name} -> {output_file.name}")
+                
+                input_file.unlink()
+                print(f"Deleted source file: {input_file.name}")
+            except Exception as e:
+                print(f"Error processing {input_file.name}: {e}")
+
+    try:
+        INPUT_DIR.rmdir()
+        print(f"Removed temporary directory: {INPUT_DIR}")
+    except Exception as e:
+        print(f"Could not remove directory (it might not be empty): {e}")
+
+
 def main() -> int:
+    ## If ./raytracer.exe is not found, print an error message and exit
+    if not Path("./raytracer.exe").exists():
+        print("error: raytracer.exe not found in the current directory.", file=sys.stderr)
+        return 2
+
     args = parse_args()
     output: Path = args.output
 
@@ -222,7 +266,13 @@ def main() -> int:
             f"{scene.image.width}x{scene.image.height}"
         )
     print(f"Created validated scene in {elapsed:.1f}s: {output}")
-    print(f"Render with: ./raytracer.exe --scene {output}")
+
+    command = f"./raytracer.exe --scene {output}"
+    subprocess.run(command, shell=True)
+    
+    # Locks in PPM Converter functionality immediately after the raytracer run finishes
+    convert_images_step()
+    
     return 0
 
 
