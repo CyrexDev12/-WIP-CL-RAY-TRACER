@@ -3,12 +3,13 @@
 from __future__ import annotations
 
 import argparse
+from dataclasses import dataclass
 import os
 from pathlib import Path
 import re
 import sys
 from time import perf_counter
-from typing import Any
+from typing import Any, Callable
 
 from pydantic import ValidationError
 
@@ -26,6 +27,19 @@ QUALITY_LONG_EDGES = {
     "high": 800,
     "ultra": 1600,
 }
+
+DEFAULT_MODEL = "gpt-5.4-mini"
+DEFAULT_API_TIMEOUT = 180.0
+
+
+@dataclass(frozen=True)
+class SceneGenerationResult:
+    """Result returned by the reusable scene-generation API."""
+
+    scene: Scene
+    output: Path
+    elapsed_seconds: float
+    applied_quality: str | None
 
 EXPLICIT_RESOLUTION = re.compile(
     r"\b(\d{2,4})\s*(?:x|by)\s*(\d{2,4})\b", re.I
@@ -114,6 +128,84 @@ def build_request_options(
     return options
 
 
+def generate_scene_file(
+    description: str,
+    output: Path,
+    *,
+    api_key: str | None = None,
+    model: str = DEFAULT_MODEL,
+    reasoning_effort: str = "auto",
+    quality: str = "auto",
+    timeout: float = DEFAULT_API_TIMEOUT,
+    strict_schema: bool = False,
+    force: bool = False,
+    multithreaded: bool | None = None,
+    image_file: str | None = None,
+    progress_callback: Callable[[str], None] | None = None,
+) -> SceneGenerationResult:
+    """Generate, validate, and save a scene for CLI or GUI callers."""
+
+    description = description.strip()
+    output = Path(output)
+    if not description:
+        raise ValueError("the scene description must not be empty")
+    if output.suffix.lower() != ".json":
+        raise ValueError("output must end in .json")
+    if output.exists() and not force:
+        raise FileExistsError(f"{output} already exists; pass force=True to replace it")
+    if timeout <= 0:
+        raise ValueError("timeout must be greater than zero")
+    if quality not in ("auto", *QUALITY_LONG_EDGES):
+        raise ValueError(f"unsupported quality preset: {quality}")
+    if reasoning_effort not in ("auto", "none", "low", "medium", "high", "xhigh"):
+        raise ValueError(f"unsupported reasoning effort: {reasoning_effort}")
+
+    resolved_api_key = api_key or os.environ.get("OPENAI_API_KEY")
+    if not resolved_api_key:
+        raise ValueError("OPENAI_API_KEY is not set")
+
+    notify = progress_callback or (lambda _message: None)
+    started_at = perf_counter()
+    mode = "strict schema" if strict_schema else "fast JSON"
+    notify(f"Generating scene with {model} ({mode} mode)...")
+
+    from openai import OpenAI
+
+    client = OpenAI(api_key=resolved_api_key, timeout=timeout, max_retries=0)
+    request_options = build_request_options(
+        model,
+        description,
+        strict_schema=strict_schema,
+        reasoning_effort=reasoning_effort,
+    )
+    if strict_schema:
+        response = client.responses.parse(**request_options)
+        scene = response.output_parsed
+        if scene is None:
+            raise RuntimeError("the model returned no parsed scene")
+    else:
+        response = client.responses.create(**request_options)
+        scene = Scene.model_validate_json(response.output_text)
+
+    notify("Validating generated scene...")
+    applied_quality = apply_quality_preset(scene, description, quality)
+    if multithreaded is not None:
+        scene.image.multithreaded = multithreaded
+    if image_file is not None:
+        scene.image.file = image_file
+
+    # Validate once more after deterministic UI/CLI overrides.
+    scene = Scene.model_validate(scene.model_dump(by_alias=True))
+    output.parent.mkdir(parents=True, exist_ok=True)
+    output.write_text(
+        scene.model_dump_json(by_alias=True, exclude_none=True, indent=2) + "\n",
+        encoding="utf-8",
+    )
+    elapsed = perf_counter() - started_at
+    notify(f"Created validated scene in {elapsed:.1f}s")
+    return SceneGenerationResult(scene, output, elapsed, applied_quality)
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Turn a natural-language description into a ray-tracer scene."
@@ -124,7 +216,7 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--model",
-        default=os.environ.get("OPENAI_SCENE_MODEL", "gpt-5.4-mini"),
+        default=os.environ.get("OPENAI_SCENE_MODEL", DEFAULT_MODEL),
         help="OpenAI model (default: gpt-5.4-mini)",
     )
     parser.add_argument(
@@ -142,8 +234,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--timeout",
         type=float,
-        default=60.0,
-        help="maximum seconds to wait for the API request (default: 60)",
+        default=DEFAULT_API_TIMEOUT,
+        help="maximum seconds to wait for the API request (default: 180)",
     )
     parser.add_argument(
         "--strict-schema",
@@ -158,50 +250,21 @@ def main() -> int:
     args = parse_args()
     output: Path = args.output
 
-    if output.suffix.lower() != ".json":
-        print("error: --output must end in .json", file=sys.stderr)
-        return 2
-    if output.exists() and not args.force:
-        print(f"error: {output} already exists; pass --force to replace it", file=sys.stderr)
-        return 2
-    if args.timeout <= 0:
-        print("error: --timeout must be greater than zero", file=sys.stderr)
-        return 2
-    if not os.environ.get("OPENAI_API_KEY"):
-        print(
-            "error: OPENAI_API_KEY is not set. Set it in your environment; "
-            "do not put API keys in source files.",
-            file=sys.stderr,
-        )
-        return 2
-
     started_at = perf_counter()
-    mode = "strict schema" if args.strict_schema else "fast JSON"
-    print(f"Generating scene with {args.model} ({mode} mode)...", flush=True)
-
     try:
-        from openai import OpenAI
-
-        client = OpenAI(timeout=args.timeout, max_retries=0)
         description = " ".join(args.description)
-        request_options = build_request_options(
-            args.model,
+        result = generate_scene_file(
             description,
-            strict_schema=args.strict_schema,
+            output,
+            model=args.model,
             reasoning_effort=args.reasoning_effort,
+            quality=args.quality,
+            timeout=args.timeout,
+            strict_schema=args.strict_schema,
+            force=args.force,
+            progress_callback=lambda message: print(message, flush=True),
         )
-        if args.strict_schema:
-            response = client.responses.parse(**request_options)
-            scene = response.output_parsed
-            if scene is None:
-                raise RuntimeError("the model returned no parsed scene")
-        else:
-            response = client.responses.create(**request_options)
-            scene = Scene.model_validate_json(response.output_text)
-        applied_quality = apply_quality_preset(scene, description, args.quality)
-        # Validate once more before touching the filesystem.
-        scene = Scene.model_validate(scene.model_dump(by_alias=True))
-    except (ValidationError, RuntimeError, ValueError) as exc:
+    except (ValidationError, RuntimeError, ValueError, FileExistsError) as exc:
         elapsed = perf_counter() - started_at
         print(f"error: scene generation failed after {elapsed:.1f}s: {exc}", file=sys.stderr)
         return 1
@@ -210,18 +273,11 @@ def main() -> int:
         print(f"error: OpenAI request failed after {elapsed:.1f}s: {exc}", file=sys.stderr)
         return 1
 
-    output.parent.mkdir(parents=True, exist_ok=True)
-    output.write_text(
-        scene.model_dump_json(by_alias=True, exclude_none=True, indent=2) + "\n",
-        encoding="utf-8",
-    )
-    elapsed = perf_counter() - started_at
-    if applied_quality is not None:
+    if result.applied_quality is not None:
         print(
-            f"Applied {applied_quality} quality resolution: "
-            f"{scene.image.width}x{scene.image.height}"
+            f"Applied {result.applied_quality} quality resolution: "
+            f"{result.scene.image.width}x{result.scene.image.height}"
         )
-    print(f"Created validated scene in {elapsed:.1f}s: {output}")
     print(f"Render with: ./raytracer.exe --scene {output}")
     return 0
 

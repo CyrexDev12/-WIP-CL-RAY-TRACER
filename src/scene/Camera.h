@@ -1,5 +1,6 @@
 #ifndef CAMERA_H
 #define CAMERA_H
+#include <functional>
 #include "math/Matrix.h"
 #include "geometry/Ray.h"
 #include "scene/World.h"
@@ -66,7 +67,13 @@ class Camera {
 Ray ray_for_pixel(Camera cam, double x, double y); 
 
 // Returns rendered canvas 
-Canvas render(Camera cam, World& world,  bool multiThreaded); 
+using RenderProgressCallback = std::function<void(int)>;
+Canvas render(
+    Camera cam,
+    World& world,
+    bool multiThreaded = false,
+    RenderProgressCallback progressCallback = {}
+);
 
 
 
