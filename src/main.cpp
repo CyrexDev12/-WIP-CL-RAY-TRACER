@@ -33,6 +33,12 @@ int main(int argc, char** argv) {
    // If a scene JSON is provided, load and render it
    if (argc >= 3 && std::string(argv[1]) == "--scene") {
       std::string scenePath = argv[2];
+      bool machineProgress = false;
+      for (int i = 3; i < argc; ++i) {
+         if (std::string(argv[i]) == "--machine-progress") {
+            machineProgress = true;
+         }
+      }
       Camera cam;
       World world;
       SceneRenderSettings settings;
@@ -41,7 +47,14 @@ int main(int argc, char** argv) {
          std::cerr << "Failed to load scene: " << scenePath << std::endl;
          return 1;
       }
-      Canvas cnv = render(cam, world, settings.multithreaded);
+      RenderProgressCallback progressCallback;
+      if (machineProgress) {
+         progressCallback = [](int percent) {
+            std::cout << "{\"event\":\"render_progress\",\"percent\":"
+                      << percent << "}" << std::endl;
+         };
+      }
+      Canvas cnv = render(cam, world, settings.multithreaded, progressCallback);
       cnv.bloomEnabled = settings.bloom;
       cnv.bloomIntensity = settings.bloomIntensity;
       cnv.bloomThreshold = settings.bloomThreshold;

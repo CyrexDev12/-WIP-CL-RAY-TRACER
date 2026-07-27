@@ -11,3 +11,6 @@ __pycache__/
 *.py[cod]
 .venv/
 .env
+
+# Desktop app generated scene definitions
+scenes/generated/

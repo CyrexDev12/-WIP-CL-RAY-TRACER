@@ -100,10 +100,19 @@ std::string GreenHashes(int count) {
 }
 static std::mutex progressMutex;
 
-void updateProgress(int completedSlots) {
+void updateProgress(
+    int completedSlots,
+    const RenderProgressCallback& progressCallback = {}
+) {
     const int maxSlots = 20;
 
     double percentage = (static_cast<double>(completedSlots) / maxSlots) * 100.0;
+
+    std::lock_guard<std::mutex> lg(progressMutex);
+    if (progressCallback) {
+        progressCallback(static_cast<int>(percentage));
+        return;
+    }
 
     // Build a fixed-width progress bar string so updates overwrite cleanly
     std::string bar = std::string(completedSlots, '#') + std::string(maxSlots - completedSlots, '-');
@@ -113,12 +122,16 @@ void updateProgress(int completedSlots) {
     const size_t padWidth = 64;
     if (out.size() < padWidth) out += std::string(padWidth - out.size(), ' ');
 
-    std::lock_guard<std::mutex> lg(progressMutex);
     std::cout << "\r" << out << std::flush;
 }
 
 // Params: camera, world, and whether to render with multiple threads.
-Canvas render(Camera cam, World& world, bool multiThreaded) {
+Canvas render(
+    Camera cam,
+    World& world,
+    bool multiThreaded,
+    RenderProgressCallback progressCallback
+) {
     if (!multiThreaded) {
         // ---------------------------------------------------------
         // Standard single-threaded render
@@ -149,7 +162,7 @@ Canvas render(Camera cam, World& world, bool multiThreaded) {
                 int completedSlots = (pixCount * maxSlots) / totalPixels;
 
                 if (completedSlots != lastSlots) {
-                    updateProgress(completedSlots);
+                    updateProgress(completedSlots, progressCallback);
                     lastSlots = completedSlots;
                 }
             }
@@ -209,7 +222,7 @@ Canvas render(Camera cam, World& world, bool multiThreaded) {
 
             if (completedSlots != previousSlots) {
                 if (lastSlots.compare_exchange_strong(previousSlots, completedSlots)) {
-                    updateProgress(completedSlots);
+                    updateProgress(completedSlots, progressCallback);
                 }
             }
         }
@@ -239,7 +252,6 @@ Canvas render(Camera cam, World& world, bool multiThreaded) {
         t.join();
     }
 
-    updateProgress(20);
     std::cout << std::endl;
 
     auto end = std::chrono::high_resolution_clock::now();

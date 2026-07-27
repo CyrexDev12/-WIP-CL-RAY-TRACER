@@ -1,4 +1,7 @@
-Ray Tracer AI Prompt Scene Generator
+# Ray Tracer AI Prompt Scene Generator
+
+**Current release: Version 1.0**
+
 <img width="1600" height="800" alt="image" src="https://github.com/user-attachments/assets/42437b10-24d4-4001-89ee-978d9f4e693f" />
 
 ------------------
@@ -44,6 +47,32 @@ $env:OPENAI_API_KEY = "your-api-key"
 
 Do not paste a real key into Python, JSON, `.env`, or any committed file. This
 environment variable lasts only for the current PowerShell session.
+
+### Desktop interface
+
+After building the renderer and installing the Python requirements, launch the app
+from the project root:
+
+```powershell
+python tools/app.py
+```
+
+The app contains three tabs:
+
+- **Main** accepts the scene prompt, quality preset, reasoning effort, and
+  multithreading preference.
+- **Settings** saves the OpenAI API key in the operating system's secure credential
+  store. The key is not written into the repository or passed to the renderer.
+- **Generation** shows the current stage, render percentage, elapsed time, and an
+  approximate remaining time. When rendering finishes, it displays the PNG and
+  reports its saved path.
+
+Completed PNG files are saved automatically under `Renders`. Generated scene JSON
+files are placed under `scenes/generated`, and temporary PPM data is kept under
+`build/jobs` only when a job fails and diagnostics may be useful.
+
+The `OPENAI_API_KEY` environment variable is still supported and takes priority over
+a key saved through the desktop interface.
 
 Optionally select the default model for the session:
 
@@ -138,7 +167,7 @@ Generator options:
 - `--model MODEL_NAME` overrides the default model for one request.
 - `--quality {auto,preview,standard,high,ultra}` controls output resolution.
 - `--reasoning-effort {auto,none,low,medium,high,xhigh}` controls GPT-5.4 reasoning.
-- `--timeout SECONDS` changes the 60-second API timeout.
+- `--timeout SECONDS` changes the 180-second API timeout.
 - `--strict-schema` enables server-side Structured Outputs instead of fast JSON mode.
 - `OPENAI_SCENE_MODEL` changes the default model for the current shell.
 - `OPENAI_SCENE_REASONING` changes the default reasoning effort for the current shell.
@@ -221,7 +250,7 @@ Scene validation failure
   a value from `10` through `200`. Newly generated scenes enforce this automatically.
 
 API request timeout
-: Increase the limit with `--timeout 120` (or another positive number), especially
+: Increase the limit with `--timeout 300` (or another positive number), especially
   for strict schema mode or higher reasoning effort.
 
 The schema and boundary checks live in `tools/scene_schema.py`. The renderer-specific
