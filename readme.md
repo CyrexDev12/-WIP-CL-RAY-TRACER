@@ -68,8 +68,10 @@ The app contains three tabs:
   reports its saved path.
 
 Completed PNG files are saved automatically under `Renders`. Generated scene JSON
-files are placed under `scenes/generated`, and temporary PPM data is kept under
-`build/jobs` only when a job fails and diagnostics may be useful.
+files and their `.audit.json` quality reports are placed under `scenes/generated`.
+The audit records test settings, object inventory, frame coverage, visibility and
+material warnings, and whether the camera was corrected. Temporary PPM data is kept
+under `build/jobs` only when a job fails and diagnostics may be useful.
 
 The `OPENAI_API_KEY` environment variable is still supported and takes priority over
 a key saved through the desktop interface.
@@ -101,6 +103,13 @@ Emissive materials use `emissiveColor` plus `emissiveStrength`. Ask for glow or
 bloom in the description and the generator will also enable the image bloom fields.
 Emission makes a surface self-lit but does not cast light onto nearby objects, so
 the generator may use the single point light to suggest that illumination.
+Tone mapping and display gamma are enabled by default so HDR emission and bloom
+retain color instead of clipping directly to white.
+
+After schema validation, the generator audits finite object bounds and their camera
+projections. Scenes with clipping, unreadably small content, or unsafe framing are
+recentered and fitted automatically while preserving the generated view direction.
+Use `--no-auto-frame` only when intentional cropping is part of the composition.
 
 ### Generated object types
 
@@ -137,6 +146,10 @@ transforms independently support `scale`, `rotate`, and `translate`. Generated J
 uses the correct spelling `perturbed`; the loader also accepts the legacy spelling
 `pertubed`.
 
+Patterns use object-space mapping by default. Set `mapping` to `spherical` for
+surface-aligned patterns on spheres; a pattern scale around `[0.125, 0.25, 1]`
+produces approximately eight columns by four rows in normalized UV space.
+
 ### Quality presets
 
 Choose a deterministic output size with `--quality`:
@@ -169,6 +182,8 @@ Generator options:
 - `--reasoning-effort {auto,none,low,medium,high,xhigh}` controls GPT-5.4 reasoning.
 - `--timeout SECONDS` changes the 180-second API timeout.
 - `--strict-schema` enables server-side Structured Outputs instead of fast JSON mode.
+- `--no-auto-frame` disables deterministic camera correction for intentionally
+  cropped scenes.
 - `OPENAI_SCENE_MODEL` changes the default model for the current shell.
 - `OPENAI_SCENE_REASONING` changes the default reasoning effort for the current shell.
 - The default model is `gpt-5.4-mini`.
@@ -187,6 +202,29 @@ python tools/generate_scene.py "A simple solar system" `
 ```
 
 Generating a scene makes an OpenAI API request and may incur API usage charges.
+
+### Controlled quality benchmark
+
+The Version 1.1 benchmark runner uses the six prompts from the current SOP and locks
+every request to High quality (800-pixel long edge), Medium reasoning, and
+multithreaded rendering. Save an API key in the desktop app's **Settings** tab, then
+run Iteration 2 from the project root:
+
+```powershell
+.\.venv\Scripts\python.exe tools/run_benchmark.py --iteration 2
+```
+
+The runner executes scenes sequentially to avoid competing API and CPU workloads,
+continues after an individual failure, and saves a manifest with timing and outcome
+data. PNGs, scene JSON, and audit JSON evidence are retained under
+`TestDocs/Test Renders/Iter2` as `One` through `Six`. It refuses to replace existing
+iteration evidence unless `--force` is supplied intentionally.
+If an individual response fails validation or rendering, retry only the failed
+records without replacing successful evidence:
+
+```powershell
+.\.venv\Scripts\python.exe tools/run_benchmark.py --iteration 2 --retry-failed
+```
 
 ### 5. Inspect and render the generated JSON
 
@@ -487,7 +525,7 @@ A pattern is a function that accepts a point in space and returns a color.
 
 
 To create better Render
-- Update resolution usually (800, 400) is high resolution, (200, 100) is low resolution for the camera 
+- Update resolution usually (800, 400) is high resolution, (200, 100) is low resolution for the camera
 
 
 Pattern Design choice using Shared_Ptr vs Raw Pointers

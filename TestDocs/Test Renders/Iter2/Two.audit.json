@@ -1,0 +1,118 @@
+{
+  "software_version": "1.1-dev",
+  "generated_at_utc": "2026-07-27T23:07:59.898583+00:00",
+  "scene": "C:\\Users\\Luke\\Desktop\\Programming\\-WIP-CL-RAY-TRACER\\scenes\\generated\\render-20260727-160722-17836d.json",
+  "prompt": "Create a cinematic miniature solar system floating over a dark reflective plane. Place one large glowing orange sun slightly off center with strong emissive color and bloom. Surround it with five planets of different sizes and colors, including a blue glass planet, a striped gas giant, and a small reflective red moon. Arrange the planets at different depths rather than in a straight line. Use a wide three-quarter camera angle, a subtle point light near the sun, a nearly black environment, vivid rim highlights, and strong but controlled bloom. Remember that emission is visually self-lit but does not illuminate nearby objects, so the requested point light helps sell the effect.",
+  "camera_adjusted": true,
+  "repairs": {
+    "material_adjustments": 1,
+    "emission_adjustments": 0,
+    "objects_repositioned": 1,
+    "camera_adjusted": false
+  },
+  "initial_summary": "6 finite objects, 0 errors, 3 warnings, 19% frame coverage",
+  "generation_settings": {
+    "model": "gpt-5.4-mini",
+    "reasoning_effort": "medium",
+    "requested_quality": "high",
+    "applied_quality": "high",
+    "width": 800,
+    "height": 400,
+    "multithreaded": true,
+    "auto_frame": true
+  },
+  "final": {
+    "inventory": {
+      "sphere": 6
+    },
+    "projections": [
+      {
+        "path": "objects/1:sphere",
+        "object_type": "sphere",
+        "ndc_bounds": [
+          -0.28729079792569173,
+          0.1232684737306279,
+          -0.38260572714054353,
+          0.36179919267513794
+        ],
+        "screen_area": 0.07640558542422679,
+        "center_depth": 18.491531924968285,
+        "backdrop": false
+      },
+      {
+        "path": "objects/2:sphere",
+        "object_type": "sphere",
+        "ndc_bounds": [
+          0.2751071597032032,
+          0.45789365367209955,
+          -0.3518569350682178,
+          -0.002662977299519951
+        ],
+        "screen_area": 0.015956984813915782,
+        "center_depth": 17.472094164356392,
+        "backdrop": false
+      },
+      {
+        "path": "objects/3:sphere",
+        "object_type": "sphere",
+        "ndc_bounds": [
+          -0.5113537422961747,
+          -0.22196357215590476,
+          -0.3428391195214649,
+          0.17569696151559924
+        ],
+        "screen_area": 0.037514811178796195,
+        "center_depth": 18.324052864296334,
+        "backdrop": false
+      },
+      {
+        "path": "objects/4:sphere",
+        "object_type": "sphere",
+        "ndc_bounds": [
+          -0.4334215971800428,
+          -0.33631533384644136,
+          -0.5115890362445353,
+          -0.32228114830848004
+        ],
+        "screen_area": 0.004595745404261625,
+        "center_depth": 15.714604269913739,
+        "backdrop": false
+      },
+      {
+        "path": "objects/5:sphere",
+        "object_type": "sphere",
+        "ndc_bounds": [
+          -0.18293703116732563,
+          -0.028553789042044316,
+          -0.5563539152167314,
+          -0.24311007045823715
+        ],
+        "screen_area": 0.012089900082401161,
+        "center_depth": 14.900614425343527,
+        "backdrop": false
+      },
+      {
+        "path": "objects/6:sphere",
+        "object_type": "sphere",
+        "ndc_bounds": [
+          0.15697153888929305,
+          0.24491605755800208,
+          -0.11927017779303785,
+          0.04394809692409542
+        ],
+        "screen_area": 0.0035885381519838513,
+        "center_depth": 21.99402880249915,
+        "backdrop": false
+      }
+    ],
+    "issues": [
+      {
+        "code": "too_small",
+        "severity": "warning",
+        "message": "Object occupies too little of the frame to read reliably.",
+        "object_path": "objects/6:sphere"
+      }
+    ],
+    "scene_fill": 0.22247937723109307
+  }
+}

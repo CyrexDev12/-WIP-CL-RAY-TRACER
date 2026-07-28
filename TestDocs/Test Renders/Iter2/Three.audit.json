@@ -1,0 +1,177 @@
+{
+  "software_version": "1.1-dev",
+  "generated_at_utc": "2026-07-28T01:33:24.535501+00:00",
+  "scene": "C:\\Users\\Luke\\Desktop\\Programming\\-WIP-CL-RAY-TRACER\\scenes\\generated\\render-20260727-183220-b32eef.json",
+  "prompt": "Design a sophisticated material-gallery scene with five spheres displayed on individual matte pedestals above a neutral plane. Give the spheres these materials: black-and-white stripes, blue-to-gold gradient, red-and-cream rings, green-and-black checkers, and a perturbed purple-and-cyan pattern. Apply different scales and rotations to the patterns so their transformations are obvious. Use a centered gallery camera, one soft white point light above and to the left, balanced shadows, a charcoal background, and enough spacing that every sphere is clearly visible.",
+  "camera_adjusted": false,
+  "repairs": {
+    "material_adjustments": 0,
+    "emission_adjustments": 0,
+    "objects_repositioned": 0,
+    "camera_adjusted": false
+  },
+  "initial_summary": "11 finite objects, 0 errors, 0 warnings, 20% frame coverage",
+  "generation_settings": {
+    "model": "gpt-5.4-mini",
+    "reasoning_effort": "medium",
+    "requested_quality": "high",
+    "applied_quality": "high",
+    "width": 800,
+    "height": 400,
+    "multithreaded": true,
+    "auto_frame": true
+  },
+  "final": {
+    "inventory": {
+      "cube": 6,
+      "sphere": 5
+    },
+    "projections": [
+      {
+        "path": "objects/0:cube",
+        "object_type": "cube",
+        "ndc_bounds": [
+          -1.0828429179093313,
+          1.0828429179093313,
+          0.09982973544509843,
+          1.6263341877675672
+        ],
+        "screen_area": 0.4500851322774508,
+        "center_depth": 24.338475208996257,
+        "backdrop": true
+      },
+      {
+        "path": "objects/2:cube",
+        "object_type": "cube",
+        "ndc_bounds": [
+          0.41407544076985753,
+          0.6143788930017613,
+          -0.2994855646863859,
+          -0.02504257048192428
+        ],
+        "screen_area": 0.013742969795003505,
+        "center_depth": 14.961416167891617,
+        "backdrop": false
+      },
+      {
+        "path": "objects/3:sphere",
+        "object_type": "sphere",
+        "ndc_bounds": [
+          0.41182066221838476,
+          0.6346786541923204,
+          -0.09091262340845929,
+          0.28797967404263075
+        ],
+        "screen_area": 0.021109794146085263,
+        "center_depth": 14.739759068256049,
+        "backdrop": false
+      },
+      {
+        "path": "objects/4:cube",
+        "object_type": "cube",
+        "ndc_bounds": [
+          0.17498234158508408,
+          0.3552996018144206,
+          -0.323410166797299,
+          -0.04101529531527729
+        ],
+        "screen_area": 0.012730167382113437,
+        "center_depth": 14.617979080709233,
+        "backdrop": false
+      },
+      {
+        "path": "objects/5:sphere",
+        "object_type": "sphere",
+        "ndc_bounds": [
+          0.17072208846386944,
+          0.37002640859646724,
+          -0.11004772140313565,
+          0.27896273359537666
+        ],
+        "screen_area": 0.019382866064487754,
+        "center_depth": 14.396321981073667,
+        "backdrop": false
+      },
+      {
+        "path": "objects/6:cube",
+        "object_type": "cube",
+        "ndc_bounds": [
+          -0.08278734440584623,
+          0.08278734440584623,
+          -0.34486664746907114,
+          -0.0552932549891079
+        ],
+        "screen_area": 0.011986506087003999,
+        "center_depth": 14.323604434552909,
+        "backdrop": false
+      },
+      {
+        "path": "objects/7:sphere",
+        "object_type": "sphere",
+        "ndc_bounds": [
+          -0.09129655951234499,
+          0.09129655951234499,
+          -0.127221269476834,
+          0.27089753081955953
+        ],
+        "screen_area": 0.01817343837212154,
+        "center_depth": 14.101947334917343,
+        "backdrop": false
+      },
+      {
+        "path": "objects/8:cube",
+        "object_type": "cube",
+        "ndc_bounds": [
+          -0.3552996018144206,
+          -0.17498234158508408,
+          -0.323410166797299,
+          -0.04101529531527729
+        ],
+        "screen_area": 0.012730167382113437,
+        "center_depth": 14.617979080709233,
+        "backdrop": false
+      },
+      {
+        "path": "objects/9:sphere",
+        "object_type": "sphere",
+        "ndc_bounds": [
+          -0.37002640859646724,
+          -0.17072208846386944,
+          -0.11004772140313565,
+          0.27896273359537666
+        ],
+        "screen_area": 0.019382866064487754,
+        "center_depth": 14.396321981073667,
+        "backdrop": false
+      },
+      {
+        "path": "objects/10:cube",
+        "object_type": "cube",
+        "ndc_bounds": [
+          -0.6143788930017613,
+          -0.41407544076985753,
+          -0.2994855646863859,
+          -0.02504257048192428
+        ],
+        "screen_area": 0.013742969795003505,
+        "center_depth": 14.961416167891617,
+        "backdrop": false
+      },
+      {
+        "path": "objects/11:sphere",
+        "object_type": "sphere",
+        "ndc_bounds": [
+          -0.6346786541923204,
+          -0.41182066221838476,
+          -0.09091262340845929,
+          0.28797967404263075
+        ],
+        "screen_area": 0.021109794146085263,
+        "center_depth": 14.739759068256049,
+        "backdrop": false
+      }
+    ],
+    "issues": [],
+    "scene_fill": 0.20082702582380374
+  }
+}

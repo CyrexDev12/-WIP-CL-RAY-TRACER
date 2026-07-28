@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import argparse
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
+from datetime import datetime, timezone
+import json
 import os
 from pathlib import Path
 import re
@@ -15,9 +17,11 @@ from pydantic import ValidationError
 
 try:
     from .scene_prompt import SYSTEM_PROMPT
+    from .scene_quality import SceneAuditReport, audit_scene, repair_scene
     from .scene_schema import Scene
 except ImportError:
     from scene_prompt import SYSTEM_PROMPT
+    from scene_quality import SceneAuditReport, audit_scene, repair_scene
     from scene_schema import Scene
 
 
@@ -30,6 +34,8 @@ QUALITY_LONG_EDGES = {
 
 DEFAULT_MODEL = "gpt-5.4-mini"
 DEFAULT_API_TIMEOUT = 180.0
+SOFTWARE_VERSION = "1.1-dev"
+PATTERN_TYPES = {"stripe", "checkers", "gradient", "ring", "perturbed", "pertubed"}
 
 
 @dataclass(frozen=True)
@@ -40,10 +46,43 @@ class SceneGenerationResult:
     output: Path
     elapsed_seconds: float
     applied_quality: str | None
+    audit: SceneAuditReport
+    audit_path: Path
+    camera_adjusted: bool
 
 EXPLICIT_RESOLUTION = re.compile(
     r"\b(\d{2,4})\s*(?:x|by)\s*(\d{2,4})\b", re.I
 )
+
+
+def normalize_generated_scene_data(value: Any) -> Any:
+    """Normalize safe, common JSON variations before strict schema validation."""
+
+    if isinstance(value, list):
+        return [normalize_generated_scene_data(item) for item in value]
+    if not isinstance(value, dict):
+        return value
+
+    normalized = {
+        key: normalize_generated_scene_data(item) for key, item in value.items()
+    }
+    pattern_type = normalized.get("type")
+    if pattern_type == "pertubed":
+        normalized["type"] = "perturbed"
+        pattern_type = "perturbed"
+    if pattern_type in PATTERN_TYPES:
+        direct_transform = {
+            key: normalized.pop(key)
+            for key in ("scale", "rotate", "translate")
+            if key in normalized
+        }
+        if direct_transform:
+            transform = normalized.get("transform")
+            transform = dict(transform) if isinstance(transform, dict) else {}
+            for key, item in direct_transform.items():
+                transform.setdefault(key, item)
+            normalized["transform"] = transform
+    return normalized
 ULTRA_QUALITY = re.compile(
     r"\b(?:ultra(?:[- ]high)?[- ]quality|maximum[- ]quality|ultra[- ]resolution)\b",
     re.I,
@@ -141,6 +180,7 @@ def generate_scene_file(
     force: bool = False,
     multithreaded: bool | None = None,
     image_file: str | None = None,
+    auto_frame: bool = True,
     progress_callback: Callable[[str], None] | None = None,
 ) -> SceneGenerationResult:
     """Generate, validate, and save a scene for CLI or GUI callers."""
@@ -185,7 +225,8 @@ def generate_scene_file(
             raise RuntimeError("the model returned no parsed scene")
     else:
         response = client.responses.create(**request_options)
-        scene = Scene.model_validate_json(response.output_text)
+        generated_data = json.loads(response.output_text)
+        scene = Scene.model_validate(normalize_generated_scene_data(generated_data))
 
     notify("Validating generated scene...")
     applied_quality = apply_quality_preset(scene, description, quality)
@@ -196,14 +237,62 @@ def generate_scene_file(
 
     # Validate once more after deterministic UI/CLI overrides.
     scene = Scene.model_validate(scene.model_dump(by_alias=True))
+    notify("Auditing scene composition...")
+    initial_audit = audit_scene(scene)
+    repair = repair_scene(scene, adjust_layout=auto_frame)
+    camera_adjusted = repair.camera_adjusted or repair.objects_repositioned > 0
+    if repair.changed:
+        notify(
+            "Applied deterministic quality repairs: "
+            f"{repair.material_adjustments} material, "
+            f"{repair.emission_adjustments} emission, "
+            f"{repair.objects_repositioned} placement."
+        )
+    audit = audit_scene(scene)
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(
         scene.model_dump_json(by_alias=True, exclude_none=True, indent=2) + "\n",
         encoding="utf-8",
     )
+    audit_path = output.with_suffix(".audit.json")
+    audit_path.write_text(
+        json.dumps(
+            {
+                "software_version": SOFTWARE_VERSION,
+                "generated_at_utc": datetime.now(timezone.utc).isoformat(),
+                "scene": str(output),
+                "prompt": description,
+                "camera_adjusted": camera_adjusted,
+                "repairs": asdict(repair),
+                "initial_summary": initial_audit.summary,
+                "generation_settings": {
+                    "model": model,
+                    "reasoning_effort": reasoning_effort,
+                    "requested_quality": quality,
+                    "applied_quality": applied_quality,
+                    "width": scene.image.width,
+                    "height": scene.image.height,
+                    "multithreaded": scene.image.multithreaded,
+                    "auto_frame": auto_frame,
+                },
+                "final": audit.to_dict(),
+            },
+            indent=2,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
     elapsed = perf_counter() - started_at
-    notify(f"Created validated scene in {elapsed:.1f}s")
-    return SceneGenerationResult(scene, output, elapsed, applied_quality)
+    notify(f"Created validated scene in {elapsed:.1f}s ({audit.summary})")
+    return SceneGenerationResult(
+        scene,
+        output,
+        elapsed,
+        applied_quality,
+        audit,
+        audit_path,
+        camera_adjusted,
+    )
 
 
 def parse_args() -> argparse.Namespace:
@@ -242,6 +331,11 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="use slower server-side Structured Outputs validation",
     )
+    parser.add_argument(
+        "--no-auto-frame",
+        action="store_true",
+        help="preserve the generated camera even when the composition audit flags it",
+    )
     parser.add_argument("--force", action="store_true", help="Overwrite output")
     return parser.parse_args()
 
@@ -262,6 +356,7 @@ def main() -> int:
             timeout=args.timeout,
             strict_schema=args.strict_schema,
             force=args.force,
+            auto_frame=not args.no_auto_frame,
             progress_callback=lambda message: print(message, flush=True),
         )
     except (ValidationError, RuntimeError, ValueError, FileExistsError) as exc:
@@ -278,6 +373,8 @@ def main() -> int:
             f"Applied {result.applied_quality} quality resolution: "
             f"{result.scene.image.width}x{result.scene.image.height}"
         )
+    print(f"Scene audit: {result.audit.summary}")
+    print(f"Audit report: {result.audit_path}")
     print(f"Render with: ./raytracer.exe --scene {output}")
     return 0
 

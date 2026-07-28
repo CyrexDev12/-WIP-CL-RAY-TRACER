@@ -3,18 +3,45 @@
 #include <cmath> 
 #include <random>
 #include <algorithm>
+#include <stdexcept>
 
 // Step 1: Convert World Point to Object Space
 Color Pattern::PatternAtShape(const Shape* shape, const std::vector<double>& world_point) {
     if (!shape) return Color{0, 0, 0}; 
-    std::vector<double> object_point = shape->getTransform().inverse().multiplyTuple(world_point);
+    std::vector<double> object_point = shape->world_to_object(world_point);
     return PatternAtPoint(object_point);
 }
 
 // Step 2: Convert Object Space to Pattern Local Space
 Color Pattern::PatternAtPoint(const std::vector<double>& object_point) {
-    std::vector<double> pattern_point = this->transform.inverse().multiplyTuple(object_point);
+    std::vector<double> mapped_point = object_point;
+    if (mapping == Mapping::Spherical) {
+        double radius = std::sqrt(
+            object_point[0] * object_point[0]
+            + object_point[1] * object_point[1]
+            + object_point[2] * object_point[2]
+        );
+        if (radius > 1e-9) {
+            constexpr double pi = 3.14159265358979323846;
+            double u = 0.5 + std::atan2(object_point[0], object_point[2]) / (2.0 * pi);
+            u -= std::floor(u);
+            double normalizedY = std::clamp(object_point[1] / radius, -1.0, 1.0);
+            double v = std::acos(normalizedY) / pi;
+            mapped_point = {u, v, 0.0, 1.0};
+        }
+    }
+    std::vector<double> pattern_point = this->transform.inverse().multiplyTuple(mapped_point);
     return LocalPatternAt(pattern_point);
+}
+
+void Pattern::setMapping(const std::string& value) {
+    if (value == "object") {
+        mapping = Mapping::Object;
+    } else if (value == "spherical") {
+        mapping = Mapping::Spherical;
+    } else {
+        throw std::invalid_argument("Unsupported pattern mapping: " + value);
+    }
 }
 
 // Stripe Pattern

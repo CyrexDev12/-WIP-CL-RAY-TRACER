@@ -1,0 +1,372 @@
+{
+  "software_version": "1.1-dev",
+  "generated_at_utc": "2026-07-27T23:15:15.962559+00:00",
+  "scene": "C:\\Users\\Luke\\Desktop\\Programming\\-WIP-CL-RAY-TRACER\\scenes\\generated\\render-20260727-161333-d78ed6.json",
+  "prompt": "Create an abstract floating sculpture made from three nested groups. Each group should contain a central reflective sphere, two rotated cubes, and three thin triangular fins. Scale and rotate each group differently so the full structure twists upward like a spiral. Use silver, deep blue, and copper materials. Suspend it above a matte plane with a soft circular-looking shadow. Use a three-quarter camera angle, a single bright point light from above, a dark navy background, and subtle blue emissive accents with restrained bloom.",
+  "camera_adjusted": true,
+  "repairs": {
+    "material_adjustments": 0,
+    "emission_adjustments": 0,
+    "objects_repositioned": 0,
+    "camera_adjusted": true
+  },
+  "initial_summary": "18 finite objects, 0 errors, 22 warnings, 8% frame coverage",
+  "generation_settings": {
+    "model": "gpt-5.4-mini",
+    "reasoning_effort": "medium",
+    "requested_quality": "high",
+    "applied_quality": "high",
+    "width": 800,
+    "height": 400,
+    "multithreaded": true,
+    "auto_frame": true
+  },
+  "final": {
+    "inventory": {
+      "sphere": 3,
+      "cube": 6,
+      "triangle": 9
+    },
+    "projections": [
+      {
+        "path": "objects/2:group/0:sphere",
+        "object_type": "sphere",
+        "ndc_bounds": [
+          -0.2492760703758154,
+          0.26223455483396624,
+          -0.744935225233418,
+          0.1346939072589883
+        ],
+        "screen_area": 0.11248491187848216,
+        "center_depth": 8.27515564268629,
+        "backdrop": false
+      },
+      {
+        "path": "objects/2:group/1:cube",
+        "object_type": "cube",
+        "ndc_bounds": [
+          -0.18974332392222068,
+          0.07071546114934703,
+          -0.7994336170779224,
+          -0.1026116773464732
+        ],
+        "screen_area": 0.04537334895841661,
+        "center_depth": 7.574265247725578,
+        "backdrop": false
+      },
+      {
+        "path": "objects/2:group/2:cube",
+        "object_type": "cube",
+        "ndc_bounds": [
+          -0.05846777748740875,
+          0.08976167093764793,
+          -0.4643671236211162,
+          -0.009720936839227406
+        ],
+        "screen_area": 0.01684798837380867,
+        "center_depth": 9.051341844284405,
+        "backdrop": false
+      },
+      {
+        "path": "objects/2:group/3:triangle",
+        "object_type": "triangle",
+        "ndc_bounds": [
+          -0.23553528352620787,
+          -0.11818565986447636,
+          -0.12364898673059366,
+          0.09192174565780764
+        ],
+        "screen_area": 0.0063242860795656814,
+        "center_depth": 8.385310966449879,
+        "backdrop": false
+      },
+      {
+        "path": "objects/2:group/4:triangle",
+        "object_type": "triangle",
+        "ndc_bounds": [
+          -0.021647331036657214,
+          0.007230947316167839,
+          -0.195173830231921,
+          0.04655921224163099
+        ],
+        "screen_area": 0.0017452085219066289,
+        "center_depth": 8.788454179317998,
+        "backdrop": false
+      },
+      {
+        "path": "objects/2:group/5:triangle",
+        "object_type": "triangle",
+        "ndc_bounds": [
+          0.015115330421861502,
+          0.14841363456901643,
+          -0.3951050249477202,
+          -0.1933896208480252
+        ],
+        "screen_area": 0.0067220803217118525,
+        "center_depth": 7.311950152301767,
+        "backdrop": false
+      },
+      {
+        "path": "objects/2:group/6:group/0:sphere",
+        "object_type": "sphere",
+        "ndc_bounds": [
+          -0.24262466137040922,
+          0.13312200417699643,
+          -0.17825335082869795,
+          0.37717249418572374
+        ],
+        "screen_area": 0.05217485230575477,
+        "center_depth": 7.949061038270553,
+        "backdrop": false
+      },
+      {
+        "path": "objects/2:group/6:group/1:cube",
+        "object_type": "cube",
+        "ndc_bounds": [
+          -0.04051418982344252,
+          0.18500853090916874,
+          -0.10902082853488397,
+          0.3465151087483738
+        ],
+        "screen_area": 0.025683425991900117,
+        "center_depth": 7.843921197526256,
+        "backdrop": false
+      },
+      {
+        "path": "objects/2:group/6:group/2:cube",
+        "object_type": "cube",
+        "ndc_bounds": [
+          -0.24282520441977173,
+          -0.11095696607164306,
+          -0.11062029641603434,
+          0.3110562264372049
+        ],
+        "screen_area": 0.013901435055355267,
+        "center_depth": 7.835645561508603,
+        "backdrop": false
+      },
+      {
+        "path": "objects/2:group/6:group/3:triangle",
+        "object_type": "triangle",
+        "ndc_bounds": [
+          -0.1451583242970468,
+          -0.06824474161834437,
+          0.21508987996219078,
+          0.4138306335708427
+        ],
+        "screen_area": 0.0038214658460766697,
+        "center_depth": 7.293611980757895,
+        "backdrop": false
+      },
+      {
+        "path": "objects/2:group/6:group/4:triangle",
+        "object_type": "triangle",
+        "ndc_bounds": [
+          -0.1776061752253388,
+          -0.15259428004758094,
+          0.10095313835498311,
+          0.3020149078288473
+        ],
+        "screen_area": 0.0012572339755837023,
+        "center_depth": 7.872225717747008,
+        "backdrop": false
+      },
+      {
+        "path": "objects/2:group/6:group/5:triangle",
+        "object_type": "triangle",
+        "ndc_bounds": [
+          0.036616305222307174,
+          0.12718338046429206,
+          0.19090070703640974,
+          0.3028951557466418
+        ],
+        "screen_area": 0.0025357524157560507,
+        "center_depth": 8.231151501629126,
+        "backdrop": false
+      },
+      {
+        "path": "objects/2:group/6:group/6:group/0:sphere",
+        "object_type": "sphere",
+        "ndc_bounds": [
+          -0.19192075006281814,
+          0.008802767579698811,
+          0.29894049777640636,
+          0.5855133370543973
+        ],
+        "screen_area": 0.014380477090170499,
+        "center_depth": 7.771416372764561,
+        "backdrop": false
+      },
+      {
+        "path": "objects/2:group/6:group/6:group/1:cube",
+        "object_type": "cube",
+        "ndc_bounds": [
+          -0.20607510029654708,
+          -0.10007601820216762,
+          0.3180668339040342,
+          0.5675428432654428
+        ],
+        "screen_area": 0.006611056999219532,
+        "center_depth": 7.947801884620036,
+        "backdrop": false
+      },
+      {
+        "path": "objects/2:group/6:group/6:group/2:cube",
+        "object_type": "cube",
+        "ndc_bounds": [
+          -0.09543363036193019,
+          0.0030923901570696693,
+          0.2723235873345637,
+          0.5302862652673052
+        ],
+        "screen_area": 0.0063540090247843585,
+        "center_depth": 7.565965179010242,
+        "backdrop": false
+      },
+      {
+        "path": "objects/2:group/6:group/6:group/3:triangle",
+        "object_type": "triangle",
+        "ndc_bounds": [
+          -0.07023631175430799,
+          -0.030047775791403927,
+          0.5325133887361169,
+          0.6417319079409305
+        ],
+        "screen_area": 0.001097333096719445,
+        "center_depth": 8.006517953120326,
+        "backdrop": false
+      },
+      {
+        "path": "objects/2:group/6:group/6:group/4:triangle",
+        "object_type": "triangle",
+        "ndc_bounds": [
+          -0.033964438108019704,
+          -0.020247918670977198,
+          0.42884936987899736,
+          0.5564579609421477
+        ],
+        "screen_area": 0.0004375864299128277,
+        "center_depth": 7.719842134602194,
+        "backdrop": false
+      },
+      {
+        "path": "objects/2:group/6:group/6:group/5:triangle",
+        "object_type": "triangle",
+        "ndc_bounds": [
+          -0.22069696779648756,
+          -0.1550865211334539,
+          0.467071415583249,
+          0.5348659121296158
+        ],
+        "screen_area": 0.0011120067999256544,
+        "center_depth": 7.660863245357802,
+        "backdrop": false
+      }
+    ],
+    "issues": [
+      {
+        "code": "too_small",
+        "severity": "warning",
+        "message": "Object occupies too little of the frame to read reliably.",
+        "object_path": "objects/2:group/4:triangle"
+      },
+      {
+        "code": "too_small",
+        "severity": "warning",
+        "message": "Object occupies too little of the frame to read reliably.",
+        "object_path": "objects/2:group/6:group/3:triangle"
+      },
+      {
+        "code": "too_small",
+        "severity": "warning",
+        "message": "Object occupies too little of the frame to read reliably.",
+        "object_path": "objects/2:group/6:group/4:triangle"
+      },
+      {
+        "code": "too_small",
+        "severity": "warning",
+        "message": "Object occupies too little of the frame to read reliably.",
+        "object_path": "objects/2:group/6:group/5:triangle"
+      },
+      {
+        "code": "too_small",
+        "severity": "warning",
+        "message": "Object occupies too little of the frame to read reliably.",
+        "object_path": "objects/2:group/6:group/6:group/3:triangle"
+      },
+      {
+        "code": "too_small",
+        "severity": "warning",
+        "message": "Object occupies too little of the frame to read reliably.",
+        "object_path": "objects/2:group/6:group/6:group/4:triangle"
+      },
+      {
+        "code": "too_small",
+        "severity": "warning",
+        "message": "Object occupies too little of the frame to read reliably.",
+        "object_path": "objects/2:group/6:group/6:group/5:triangle"
+      },
+      {
+        "code": "possible_occlusion",
+        "severity": "warning",
+        "message": "Object may be substantially hidden behind objects/2:group/0:sphere.",
+        "object_path": "objects/2:group/2:cube"
+      },
+      {
+        "code": "possible_occlusion",
+        "severity": "warning",
+        "message": "Object may be substantially hidden behind objects/2:group/0:sphere.",
+        "object_path": "objects/2:group/3:triangle"
+      },
+      {
+        "code": "possible_occlusion",
+        "severity": "warning",
+        "message": "Object may be substantially hidden behind objects/2:group/0:sphere.",
+        "object_path": "objects/2:group/4:triangle"
+      },
+      {
+        "code": "possible_occlusion",
+        "severity": "warning",
+        "message": "Object may be substantially hidden behind objects/2:group/6:group/0:sphere.",
+        "object_path": "objects/2:group/3:triangle"
+      },
+      {
+        "code": "possible_occlusion",
+        "severity": "warning",
+        "message": "Object may be substantially hidden behind objects/2:group/6:group/2:cube.",
+        "object_path": "objects/2:group/3:triangle"
+      },
+      {
+        "code": "possible_occlusion",
+        "severity": "warning",
+        "message": "Object may be substantially hidden behind objects/2:group/6:group/0:sphere.",
+        "object_path": "objects/2:group/4:triangle"
+      },
+      {
+        "code": "possible_occlusion",
+        "severity": "warning",
+        "message": "Object may be substantially hidden behind objects/2:group/6:group/0:sphere.",
+        "object_path": "objects/2:group/6:group/5:triangle"
+      },
+      {
+        "code": "possible_occlusion",
+        "severity": "warning",
+        "message": "Object may be substantially hidden behind objects/2:group/6:group/1:cube.",
+        "object_path": "objects/2:group/6:group/5:triangle"
+      },
+      {
+        "code": "possible_occlusion",
+        "severity": "warning",
+        "message": "Object may be substantially hidden behind objects/2:group/6:group/2:cube.",
+        "object_path": "objects/2:group/6:group/4:triangle"
+      },
+      {
+        "code": "possible_occlusion",
+        "severity": "warning",
+        "message": "Object may be substantially hidden behind objects/2:group/6:group/6:group/0:sphere.",
+        "object_path": "objects/2:group/6:group/6:group/1:cube"
+      }
+    ],
+    "scene_fill": 0.18429286968329417
+  }
+}

@@ -28,6 +28,7 @@ class GenerationRequest:
     reasoning_effort: str = "auto"
     multithreaded: bool = True
     model: str = DEFAULT_MODEL
+    timeout: float = 180.0
 
 
 @dataclass(frozen=True)
@@ -44,6 +45,7 @@ class GenerationResult:
     png_path: Path
     scene_path: Path
     elapsed_seconds: float
+    audit_path: Path | None = None
 
 
 class GenerationServiceError(RuntimeError):
@@ -139,6 +141,7 @@ class GenerationService:
             model=request.model,
             reasoning_effort=request.reasoning_effort,
             quality=request.quality,
+            timeout=request.timeout,
             force=False,
             multithreaded=request.multithreaded,
             image_file="scene.ppm",
@@ -229,4 +232,9 @@ class GenerationService:
 
         elapsed = perf_counter() - started_at
         emit("complete", f"Saved render to {png_path}", 100, 0.0)
-        return GenerationResult(png_path, scene_path, elapsed)
+        return GenerationResult(
+            png_path,
+            scene_path,
+            elapsed,
+            getattr(generation, "audit_path", None),
+        )

@@ -1,0 +1,100 @@
+{
+  "software_version": "1.1-dev",
+  "generated_at_utc": "2026-07-27T23:04:58.299904+00:00",
+  "scene": "C:\\Users\\Luke\\Desktop\\Programming\\-WIP-CL-RAY-TRACER\\scenes\\generated\\render-20260727-160416-5d96fb.json",
+  "prompt": "Create a dramatic studio still life on an infinite black-and-white checkered floor. Place a large transparent glass sphere in the center with high transparency and a realistic refractive index. Put a highly reflective dark chrome cube to its left and a polished gold closed cylinder to its right. Add two smaller colored spheres behind them. Use a low camera angle, strong perspective, one bright white point light above and to the left, deep shadows, crisp highlights, and a dark background. Keep the composition clean and cinematic.",
+  "camera_adjusted": true,
+  "repairs": {
+    "material_adjustments": 1,
+    "emission_adjustments": 0,
+    "objects_repositioned": 2,
+    "camera_adjusted": false
+  },
+  "initial_summary": "5 finite objects, 0 errors, 5 warnings, 73% frame coverage",
+  "generation_settings": {
+    "model": "gpt-5.4-mini",
+    "reasoning_effort": "medium",
+    "requested_quality": "high",
+    "applied_quality": "high",
+    "width": 800,
+    "height": 400,
+    "multithreaded": true,
+    "auto_frame": true
+  },
+  "final": {
+    "inventory": {
+      "sphere": 3,
+      "cube": 1,
+      "cylinder": 1
+    },
+    "projections": [
+      {
+        "path": "objects/1:sphere",
+        "object_type": "sphere",
+        "ndc_bounds": [
+          -0.20766282771681444,
+          0.19383184595835232,
+          -0.4150784829030245,
+          0.3852475998792938
+        ],
+        "screen_area": 0.08033166486010285,
+        "center_depth": 14.437261699397466,
+        "backdrop": false
+      },
+      {
+        "path": "objects/2:cube",
+        "object_type": "cube",
+        "ndc_bounds": [
+          0.22313798034472682,
+          0.5233412832884413,
+          -0.41124492525372086,
+          0.11720173867005228
+        ],
+        "screen_area": 0.03966035848487594,
+        "center_depth": 14.04988273641432,
+        "backdrop": false
+      },
+      {
+        "path": "objects/3:cylinder",
+        "object_type": "cylinder",
+        "ndc_bounds": [
+          -0.4856604278578714,
+          -0.24327984581522888,
+          -0.38088205382634593,
+          0.16512661851361415
+        ],
+        "screen_area": 0.033085474950522505,
+        "center_depth": 14.747164869783985,
+        "backdrop": false
+      },
+      {
+        "path": "objects/4:sphere",
+        "object_type": "sphere",
+        "ndc_bounds": [
+          0.5520851525931654,
+          0.694021979052917,
+          -0.31590933622250766,
+          -0.09163555846191052
+        ],
+        "screen_area": 0.007958177068369694,
+        "center_depth": 16.66156671265554,
+        "backdrop": false
+      },
+      {
+        "path": "objects/5:sphere",
+        "object_type": "sphere",
+        "ndc_bounds": [
+          -0.6700076254628025,
+          -0.5289733794672965,
+          -0.3019889982191199,
+          -0.07766180035807285
+        ],
+        "screen_area": 0.007909454301654361,
+        "center_depth": 17.260879456677213,
+        "backdrop": false
+      }
+    ],
+    "issues": [],
+    "scene_fill": 0.27291711754529513
+  }
+}

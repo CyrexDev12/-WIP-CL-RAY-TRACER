@@ -36,8 +36,12 @@ Canvas Canvas::extractBrightPixels(double threshold) const {
         for (int x = 0; x < width; ++x) {
             Color c = at(x, y);
 
-            if (brightness(c) > threshold) {
-                bright.writePixel(x, y, c);
+            double peak = brightness(c);
+            if (peak > threshold) {
+                // Bloom only the HDR energy above the threshold. Copying the entire
+                // bright pixel creates an oversized, washed-out halo.
+                double excessRatio = (peak - threshold) / peak;
+                bright.writePixel(x, y, c * excessRatio);
             } else {
                 bright.writePixel(x, y, Color{0.0, 0.0, 0.0});
             }
@@ -49,6 +53,9 @@ Canvas Canvas::extractBrightPixels(double threshold) const {
 
 Canvas Canvas::horizontalBlur(int radius) const {
     Canvas result(width, height);
+    result.toneMappingEnabled = toneMappingEnabled;
+    result.exposure = exposure;
+    result.gamma = gamma;
 
     if (radius <= 0) {
         return *this;
@@ -156,18 +163,31 @@ std::string Canvas::constructPixelData() {
         for (int x = 0; x < width; ++x) {
             const Color& c = at(x, y);
 
-            // Clamp only at final PPM output.
-            // This allows HDR-ish values to exist before bloom.
-            auto clampAndScale = [](double v) -> int {
-                if (v < 0.0) {
-                    v = 0.0;
+            // Keep HDR values through bloom, then compress the peak and scale all
+            // channels together. Joint scaling preserves orange/cyan hue instead of
+            // independently pushing every bright channel toward white.
+            Color encoded = c;
+            if (toneMappingEnabled) {
+                double peak = std::max({c.r, c.g, c.b, 0.0});
+                if (peak > 0.0) {
+                    double exposedPeak = peak * exposure;
+                    double numerator = exposedPeak * (2.51 * exposedPeak + 0.03);
+                    double denominator =
+                        exposedPeak * (2.43 * exposedPeak + 0.59) + 0.14;
+                    double mappedPeak =
+                        denominator > 0.0 ? numerator / denominator : 0.0;
+                    mappedPeak = std::clamp(mappedPeak, 0.0, 1.0);
+                    double scale = mappedPeak / peak;
+                    encoded = Color{c.r * scale, c.g * scale, c.b * scale};
                 }
+            }
 
-                if (v > 1.0) {
-                    v = 1.0;
+            auto encodeAndScale = [this](double value) -> int {
+                value = std::clamp(value, 0.0, 1.0);
+                if (toneMappingEnabled) {
+                    value = std::pow(value, 1.0 / gamma);
                 }
-
-                return static_cast<int>(std::round(v * 255.0));
+                return static_cast<int>(std::round(value * 255.0));
             };
 
             auto writeComponent = [&](int value) {
@@ -188,9 +208,9 @@ std::string Canvas::constructPixelData() {
                 lineLength += static_cast<int>(s.size());
             };
 
-            writeComponent(clampAndScale(c.r));
-            writeComponent(clampAndScale(c.g));
-            writeComponent(clampAndScale(c.b));
+            writeComponent(encodeAndScale(encoded.r));
+            writeComponent(encodeAndScale(encoded.g));
+            writeComponent(encodeAndScale(encoded.b));
         }
 
         oss << "\n";

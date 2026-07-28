@@ -50,7 +50,10 @@ Renderer capabilities and coordinate system:
 - Materials may use stripe, checkers, gradient, ring, or perturbed patterns.
   Stripe and gradient patterns vary along local X; rings vary across local X/Z;
   checkers alternate through local X/Y/Z. Two-color patterns use `colorA` and
-  `colorB`. A perturbed pattern wraps any other pattern in `base` and may set
+  `colorB`. Patterns use `mapping: "object"` by default. For a checker or striped
+  sphere that should follow the surface, use `mapping: "spherical"`; its normalized
+  UV coordinates normally need a pattern scale near [0.125, 0.25, 1] for roughly
+  eight columns by four rows. A perturbed pattern wraps any other pattern in `base` and may set
   `distortionScale` from 0 to 2 and `noiseFrequency` above 0 through 100. Always
   spell the generated JSON type `perturbed` even though the C++ class has a legacy
   misspelling. Pattern transforms support `scale`, `rotate`, and `translate` in the
@@ -62,6 +65,9 @@ Renderer capabilities and coordinate system:
   `bloom` for a visible halo, normally using `bloomIntensity` 0.2-0.7,
   `bloomThreshold` 1, and `bloomRadius` 4-12. Emissive surfaces do not illuminate
   nearby objects, so use the similarly colored point light when that effect matters.
+- Keep image `toneMapping` enabled for normal renders. Use exposure near 1.0 and
+  gamma 2.2. Lower exposure toward 0.7 for unusually emissive scenes rather than
+  allowing large areas to clip to white.
 - ambient, diffuse, specular, reflective, and transparency range from 0 to 1.
 - shininess must be between 10 and 200, inclusive. Values outside that range make
   the C++ renderer terminate. Use roughly 10-50 for broad/dull highlights and
@@ -76,9 +82,29 @@ Renderer capabilities and coordinate system:
 - Enable multithreading unless the user explicitly asks not to.
 
 Composition guidance:
-- Keep all important objects visible from the selected camera.
+- Before composing the JSON, inventory every object and feature explicitly requested
+  by the user. Include each one exactly once unless the description gives another
+  count, and give every required object a visually distinct placement.
+- Keep every required object fully visible with roughly 10 percent empty safe-frame
+  space at every image edge. Do not put a smaller required object directly behind a
+  larger object. Separate silhouettes in screen space and stagger depth deliberately.
+- Aim for the complete finite subject to occupy about 45-80 percent of the frame.
+  Avoid both tiny subjects surrounded by empty background and oversized objects that
+  are accidentally cropped.
+- Account for the cumulative scale and translation of every parent group. Nested
+  group transforms must leave their smallest required children large enough to read.
+- Use infinite planes for floors and the natural black canvas for distant darkness.
+  Do not construct a background from an enormous flattened cube because its bounds
+  can overwhelm the subject and its reflections can create visual artifacts.
 - Use plausible lighting and material values. Avoid accidental intersections unless
   overlap is artistically intended.
+- Dark objects need readable contrast: use ambient around 0.15-0.25 or place the
+  point light to create a clear rim/highlight. A requested emissive object normally
+  needs emissiveStrength 2-6; use higher values only when deliberate clipping is
+  requested. Keep bloom controlled and preserve surface color in the bright object.
+- Keep transparent and highly reflective focal objects separated from bright
+  emissive objects and high-contrast floor patterns so reflections do not erase their
+  silhouettes.
 - Treat requests for high, final, or production quality as requests for richer
   composition too: use deliberate secondary geometry, complementary lighting, and
   varied materials where they support the subject.

@@ -1,0 +1,159 @@
+{
+  "software_version": "1.1-dev",
+  "generated_at_utc": "2026-07-27T23:17:23.313311+00:00",
+  "scene": "C:\\Users\\Luke\\Desktop\\Programming\\-WIP-CL-RAY-TRACER\\scenes\\generated\\render-20260727-161627-f6fa59.json",
+  "prompt": "Create a surreal landscape on an infinite red-and-black checkered plane. Place three enormous glossy spheres receding toward the horizon, a transparent glass cube floating above the foreground, and several thin closed cylinders leaning at different angles like abstract towers. Add one small glowing cyan sphere as the focal point. Use an extremely low camera close to the ground, strong depth and scale, one pale point light high behind the camera, long shadows, reflective accents, and gentle bloom around the cyan sphere.",
+  "camera_adjusted": true,
+  "repairs": {
+    "material_adjustments": 4,
+    "emission_adjustments": 0,
+    "objects_repositioned": 0,
+    "camera_adjusted": true
+  },
+  "initial_summary": "9 finite objects, 0 errors, 9 warnings, 59% frame coverage",
+  "generation_settings": {
+    "model": "gpt-5.4-mini",
+    "reasoning_effort": "medium",
+    "requested_quality": "high",
+    "applied_quality": "high",
+    "width": 800,
+    "height": 400,
+    "multithreaded": true,
+    "auto_frame": true
+  },
+  "final": {
+    "inventory": {
+      "sphere": 4,
+      "cube": 1,
+      "cylinder": 4
+    },
+    "projections": [
+      {
+        "path": "objects/1:sphere",
+        "object_type": "sphere",
+        "ndc_bounds": [
+          0.11313316600758086,
+          0.4391839783687084,
+          -0.6570962878180449,
+          -0.04394884998255762
+        ],
+        "screen_area": 0.04997930505085114,
+        "center_depth": 38.904367194778864,
+        "backdrop": false
+      },
+      {
+        "path": "objects/2:sphere",
+        "object_type": "sphere",
+        "ndc_bounds": [
+          -0.1908015375135034,
+          0.1988420361371653,
+          -0.5618643224071443,
+          0.21586518295577026
+        ],
+        "screen_area": 0.07575932595079324,
+        "center_depth": 47.94494937070383,
+        "backdrop": false
+      },
+      {
+        "path": "objects/3:sphere",
+        "object_type": "sphere",
+        "ndc_bounds": [
+          -0.36277131513192246,
+          0.0981025367023484,
+          -0.4696892546227445,
+          0.44860520732458714
+        ],
+        "screen_area": 0.10580447644893651,
+        "center_depth": 61.0005136684336,
+        "backdrop": false
+      },
+      {
+        "path": "objects/4:cube",
+        "object_type": "cube",
+        "ndc_bounds": [
+          -0.20511339518003377,
+          -0.052340137669389664,
+          -0.49175623356832876,
+          -0.18757809109585125
+        ],
+        "screen_area": 0.0116175714222643,
+        "center_depth": 32.11793283029914,
+        "backdrop": false
+      },
+      {
+        "path": "objects/5:cylinder",
+        "object_type": "cylinder",
+        "ndc_bounds": [
+          0.33187631674707607,
+          0.5737314787638701,
+          -0.648779950266393,
+          0.34913372267747045
+        ],
+        "screen_area": 0.060337643262153025,
+        "center_depth": 34.960858052361345,
+        "backdrop": false
+      },
+      {
+        "path": "objects/6:cylinder",
+        "object_type": "cylinder",
+        "ndc_bounds": [
+          0.11604913201073867,
+          0.24903494633655726,
+          -0.5330814037853008,
+          0.5093780346496771
+        ],
+        "screen_area": 0.034658079330477765,
+        "center_depth": 44.99831335687335,
+        "backdrop": false
+      },
+      {
+        "path": "objects/7:cylinder",
+        "object_type": "cylinder",
+        "ndc_bounds": [
+          -0.25172298476868055,
+          -0.028578970978948823,
+          -0.5323629132772599,
+          0.33824994125208285
+        ],
+        "screen_area": 0.04856801170415334,
+        "center_depth": 42.9715795707513,
+        "backdrop": false
+      },
+      {
+        "path": "objects/8:cylinder",
+        "object_type": "cylinder",
+        "ndc_bounds": [
+          -0.4083935086270085,
+          -0.2741895707854048,
+          -0.6102869181935395,
+          0.16432333644364877
+        ],
+        "screen_area": 0.025988936616199512,
+        "center_depth": 38.93735472372684,
+        "backdrop": false
+      },
+      {
+        "path": "objects/9:sphere",
+        "object_type": "sphere",
+        "ndc_bounds": [
+          -0.012801724946089686,
+          0.02232971220135588,
+          -0.6471838022049821,
+          -0.5676882938366624
+        ],
+        "screen_area": 0.0006981978639364637,
+        "center_depth": 36.83227555635334,
+        "backdrop": false
+      }
+    ],
+    "issues": [
+      {
+        "code": "too_small",
+        "severity": "warning",
+        "message": "Object occupies too little of the frame to read reliably.",
+        "object_path": "objects/9:sphere"
+      }
+    ],
+    "scene_fill": 0.28640589481134876
+  }
+}

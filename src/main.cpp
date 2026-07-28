@@ -59,6 +59,9 @@ int main(int argc, char** argv) {
       cnv.bloomIntensity = settings.bloomIntensity;
       cnv.bloomThreshold = settings.bloomThreshold;
       cnv.bloomRadius = settings.bloomRadius;
+      cnv.toneMappingEnabled = settings.toneMapping;
+      cnv.exposure = settings.exposure;
+      cnv.gamma = settings.gamma;
       writeCanvasToFile(cnv, settings.imageFile);
       std::cout << "Rendered scene to " << settings.imageFile << std::endl;
       return 0;

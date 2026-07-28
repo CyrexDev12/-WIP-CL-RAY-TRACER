@@ -17,6 +17,11 @@ struct Canvas {
     double bloomThreshold;
     int bloomRadius;
 
+    // HDR output settings
+    bool toneMappingEnabled;
+    double exposure;
+    double gamma;
+
     // Normal constructor: bloom off
     Canvas(int w, int h)
         : width(w),
@@ -25,7 +30,10 @@ struct Canvas {
           bloomEnabled(false),
           bloomIntensity(0.0),
           bloomThreshold(1.0),
-          bloomRadius(6)
+          bloomRadius(6),
+          toneMappingEnabled(true),
+          exposure(1.0),
+          gamma(2.2)
     {}
 
     // Bloom constructor
@@ -35,7 +43,10 @@ struct Canvas {
         bool bloom,
         double intensity,
         double threshold = 1.0,
-        int radius = 6
+        int radius = 6,
+        bool toneMapping = true,
+        double outputExposure = 1.0,
+        double outputGamma = 2.2
     )
         : width(w),
           height(h),
@@ -43,7 +54,10 @@ struct Canvas {
           bloomEnabled(bloom),
           bloomIntensity(intensity),
           bloomThreshold(threshold),
-          bloomRadius(radius)
+          bloomRadius(radius),
+          toneMappingEnabled(toneMapping),
+          exposure(outputExposure),
+          gamma(outputGamma)
     {}
 
     Color& at(int x, int y) {
