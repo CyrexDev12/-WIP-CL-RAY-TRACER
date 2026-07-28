@@ -1,0 +1,185 @@
+{
+  "software_version": "1.1-dev",
+  "generated_at_utc": "2026-07-27T23:12:12.257879+00:00",
+  "scene": "C:\\Users\\Luke\\Desktop\\Programming\\-WIP-CL-RAY-TRACER\\scenes\\generated\\render-20260727-161019-37d23c.json",
+  "prompt": "Create a symmetrical science-fiction temple built from grouped geometric shapes. Use two rows of tall closed cylinders as columns, stacked and rotated cubes for the central doorway, and large triangles forming a glowing emblem above it. Place everything on a slightly reflective dark plane. Use dark stone materials with subtle gold accents and a cyan emissive emblem with bloom. Frame the temple from a low, centered camera position looking slightly upward. Use one warm point light near the entrance and dramatic contrast while keeping the architecture readable.",
+  "camera_adjusted": true,
+  "repairs": {
+    "material_adjustments": 0,
+    "emission_adjustments": 0,
+    "objects_repositioned": 0,
+    "camera_adjusted": true
+  },
+  "initial_summary": "11 finite objects, 0 errors, 5 warnings, 56% frame coverage",
+  "generation_settings": {
+    "model": "gpt-5.4-mini",
+    "reasoning_effort": "medium",
+    "requested_quality": "high",
+    "applied_quality": "high",
+    "width": 800,
+    "height": 400,
+    "multithreaded": true,
+    "auto_frame": true
+  },
+  "final": {
+    "inventory": {
+      "cylinder": 4,
+      "cube": 4,
+      "triangle": 3
+    },
+    "projections": [
+      {
+        "path": "objects/1:group/0:group/0:cylinder",
+        "object_type": "cylinder",
+        "ndc_bounds": [
+          0.35364373460722276,
+          0.5037551105857312,
+          -0.8301873489665319,
+          0.2614641585673857
+        ],
+        "screen_area": 0.04096732747123236,
+        "center_depth": 17.1042186854743,
+        "backdrop": false
+      },
+      {
+        "path": "objects/1:group/0:group/1:cylinder",
+        "object_type": "cylinder",
+        "ndc_bounds": [
+          0.30012132935577085,
+          0.4214799985830248,
+          -0.7436313699690417,
+          0.17179027919644319
+        ],
+        "screen_area": 0.02777358828113535,
+        "center_depth": 20.292268186858195,
+        "backdrop": false
+      },
+      {
+        "path": "objects/1:group/1:group/0:cylinder",
+        "object_type": "cylinder",
+        "ndc_bounds": [
+          -0.5037551105857312,
+          -0.35364373460722276,
+          -0.8301873489665319,
+          0.2614641585673857
+        ],
+        "screen_area": 0.04096732747123236,
+        "center_depth": 17.1042186854743,
+        "backdrop": false
+      },
+      {
+        "path": "objects/1:group/1:group/1:cylinder",
+        "object_type": "cylinder",
+        "ndc_bounds": [
+          -0.4214799985830248,
+          -0.30012132935577085,
+          -0.7436313699690417,
+          0.17179027919644319
+        ],
+        "screen_area": 0.02777358828113535,
+        "center_depth": 20.292268186858195,
+        "backdrop": false
+      },
+      {
+        "path": "objects/1:group/2:group/0:cube",
+        "object_type": "cube",
+        "ndc_bounds": [
+          0.05259002104740538,
+          0.22600115301440984,
+          -0.7912478906876431,
+          0.20222323311769025
+        ],
+        "screen_area": 0.043069738038903724,
+        "center_depth": 18.69392628579979,
+        "backdrop": false
+      },
+      {
+        "path": "objects/1:group/2:group/1:cube",
+        "object_type": "cube",
+        "ndc_bounds": [
+          -0.22600115301440984,
+          -0.05259002104740538,
+          -0.7912478906876431,
+          0.20222323311769025
+        ],
+        "screen_area": 0.043069738038903724,
+        "center_depth": 18.69392628579979,
+        "backdrop": false
+      },
+      {
+        "path": "objects/1:group/2:group/2:cube",
+        "object_type": "cube",
+        "ndc_bounds": [
+          -0.3381242791793552,
+          0.3381242791793552,
+          0.07881377243201529,
+          0.3098321146735475
+        ],
+        "screen_area": 0.03905645522381383,
+        "center_depth": 18.918418104855572,
+        "backdrop": false
+      },
+      {
+        "path": "objects/1:group/2:group/3:cube",
+        "object_type": "cube",
+        "ndc_bounds": [
+          -0.1278849388894881,
+          0.1278849388894881,
+          0.09435724376562615,
+          0.6486540133253773
+        ],
+        "screen_area": 0.035443104250894725,
+        "center_depth": 18.996126811451802,
+        "backdrop": false
+      },
+      {
+        "path": "objects/1:group/3:group/0:triangle",
+        "object_type": "triangle",
+        "ndc_bounds": [
+          -0.12569723111700348,
+          0.12569723111700348,
+          0.28687453113415073,
+          0.7375701508587974
+        ],
+        "screen_area": 0.028325595737975013,
+        "center_depth": 19.124943936617097,
+        "backdrop": false
+      },
+      {
+        "path": "objects/1:group/3:group/1:triangle",
+        "object_type": "triangle",
+        "ndc_bounds": [
+          -0.06806667263765694,
+          0.2282504544090403,
+          0.08557720516271607,
+          0.6693853549033547
+        ],
+        "screen_area": 0.04324808841939851,
+        "center_depth": 19.060272878604067,
+        "backdrop": false
+      },
+      {
+        "path": "objects/1:group/3:group/2:triangle",
+        "object_type": "triangle",
+        "ndc_bounds": [
+          -0.2282504544090403,
+          0.06806667263765694,
+          0.08557720516271607,
+          0.6693853549033547
+        ],
+        "screen_area": 0.04324808841939851,
+        "center_depth": 19.060272878604067,
+        "backdrop": false
+      }
+    ],
+    "issues": [
+      {
+        "code": "possible_occlusion",
+        "severity": "warning",
+        "message": "Object may be substantially hidden behind objects/1:group/2:group/3:cube.",
+        "object_path": "objects/1:group/3:group/0:triangle"
+      }
+    ],
+    "scene_fill": 0.39488292634805916
+  }
+}

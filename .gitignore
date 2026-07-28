@@ -14,3 +14,8 @@ __pycache__/
 
 # Desktop app generated scene definitions
 scenes/generated/
+
+# Local desktop runs and generated delivery artifacts
+Renders/render-*.png
+outputs/
+~$*.xlsx

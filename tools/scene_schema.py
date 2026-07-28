@@ -27,6 +27,9 @@ class ImageSettings(StrictModel):
     bloomIntensity: float = Field(default=0.35, ge=0.0, le=2.0)
     bloomThreshold: float = Field(default=1.0, ge=0.0, le=10.0)
     bloomRadius: int = Field(default=6, ge=1, le=32)
+    toneMapping: bool = True
+    exposure: float = Field(default=1.0, ge=0.1, le=5.0)
+    gamma: float = Field(default=2.2, ge=1.0, le=3.0)
 
 
 class CameraSettings(StrictModel):
@@ -67,6 +70,7 @@ class Transform(StrictModel):
 class TwoColorPattern(StrictModel):
     colorA: Color3
     colorB: Color3
+    mapping: Literal["object", "spherical"] = "object"
     transform: Transform = Field(default_factory=Transform)
 
 
@@ -91,6 +95,7 @@ class PerturbedPattern(StrictModel):
     base: "Pattern"
     distortionScale: float = Field(default=0.2, ge=0.0, le=2.0)
     noiseFrequency: float = Field(default=2.0, gt=0.0, le=100.0)
+    mapping: Literal["object", "spherical"] = "object"
     transform: Transform = Field(default_factory=Transform)
 
 

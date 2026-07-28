@@ -12,6 +12,9 @@ struct SceneRenderSettings {
     double bloomIntensity = 0.35;
     double bloomThreshold = 1.0;
     int bloomRadius = 6;
+    bool toneMapping = true;
+    double exposure = 1.0;
+    double gamma = 2.2;
 };
 
 // Loads a scene from a JSON file into provided Camera and World instances.

@@ -5,6 +5,7 @@
 #include "math/Operations.h"
 #include <cmath>
 #include <memory>
+#include <string>
 #include <vector>
 
 // Forward declaration of Shape class to avoid circular dependencies
@@ -17,6 +18,11 @@ class Pattern {
 public:
     Matrix transform; 
 
+    enum class Mapping {
+        Object,
+        Spherical,
+    };
+
     Pattern() = default; 
     virtual ~Pattern() = default;
 
@@ -25,9 +31,14 @@ public:
     
     // Handles Object-Space to Pattern-Space transformation (Enables safe nesting!)
     Color PatternAtPoint(const std::vector<double>& object_point); 
+
+    void setMapping(const std::string& mapping);
     
     // Pure mathematical formula evaluated locally by derived classes
     virtual Color LocalPatternAt(const std::vector<double>& pattern_point) = 0;
+
+private:
+    Mapping mapping = Mapping::Object;
 };
 
 // =========================================================================

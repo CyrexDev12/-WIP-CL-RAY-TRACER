@@ -97,6 +97,8 @@ static std::shared_ptr<Pattern> jsonToPattern(const json& patternJson) {
         throw std::invalid_argument("Unsupported pattern type: " + type);
     }
 
+    pattern->setMapping(patternJson.value("mapping", "object"));
+
     if (patternJson.contains("transform")) {
         pattern->transform = jsonToTransform(patternJson["transform"]);
     }
@@ -185,6 +187,9 @@ bool LoadSceneFromJson(
         if (img.contains("bloomIntensity")) outSettings.bloomIntensity = img["bloomIntensity"].get<double>();
         if (img.contains("bloomThreshold")) outSettings.bloomThreshold = img["bloomThreshold"].get<double>();
         if (img.contains("bloomRadius")) outSettings.bloomRadius = img["bloomRadius"].get<int>();
+        if (img.contains("toneMapping")) outSettings.toneMapping = img["toneMapping"].get<bool>();
+        if (img.contains("exposure")) outSettings.exposure = img["exposure"].get<double>();
+        if (img.contains("gamma")) outSettings.gamma = img["gamma"].get<double>();
     }
 
     // Camera

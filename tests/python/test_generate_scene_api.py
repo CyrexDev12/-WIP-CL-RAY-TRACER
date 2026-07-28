@@ -8,7 +8,11 @@ from types import SimpleNamespace
 import unittest
 from unittest.mock import patch
 
-from tools.generate_scene import DEFAULT_API_TIMEOUT, generate_scene_file
+from tools.generate_scene import (
+    DEFAULT_API_TIMEOUT,
+    generate_scene_file,
+    normalize_generated_scene_data,
+)
 
 
 SCENE = {
@@ -52,6 +56,28 @@ class FakeOpenAI:
 
 
 class GenerateSceneApiTests(unittest.TestCase):
+    def test_normalizes_direct_pattern_transforms_and_legacy_type(self) -> None:
+        normalized = normalize_generated_scene_data(
+            {
+                "type": "pertubed",
+                "scale": [2, 2, 2],
+                "rotate": [0, 1, 0],
+                "base": {
+                    "type": "checkers",
+                    "translate": [1, 0, 0],
+                    "colorA": [0, 0, 0],
+                    "colorB": [1, 1, 1],
+                },
+            }
+        )
+
+        self.assertEqual(normalized["type"], "perturbed")
+        self.assertEqual(normalized["transform"]["scale"], [2, 2, 2])
+        self.assertEqual(normalized["transform"]["rotate"], [0, 1, 0])
+        self.assertEqual(
+            normalized["base"]["transform"]["translate"], [1, 0, 0]
+        )
+
     def test_generates_scene_with_deterministic_ui_overrides(self) -> None:
         messages: list[str] = []
         fake_module = SimpleNamespace(OpenAI=FakeOpenAI)
@@ -74,6 +100,15 @@ class GenerateSceneApiTests(unittest.TestCase):
             self.assertEqual(result.scene.image.height, 400)
             self.assertFalse(result.scene.image.multithreaded)
             self.assertEqual(result.scene.image.file, "scene.ppm")
+            self.assertTrue(result.audit_path.is_file())
+            audit_data = json.loads(result.audit_path.read_text(encoding="utf-8"))
+            self.assertIn("final", audit_data)
+            self.assertIn("inventory", audit_data["final"])
+            self.assertEqual(audit_data["prompt"], "A red sphere")
+            self.assertEqual(audit_data["software_version"], "1.1-dev")
+            self.assertEqual(
+                audit_data["generation_settings"]["reasoning_effort"], "low"
+            )
             assert FakeOpenAI.last_options is not None
             self.assertEqual(FakeOpenAI.last_options["api_key"], "sk-test")
             self.assertEqual(FakeOpenAI.last_options["timeout"], DEFAULT_API_TIMEOUT)

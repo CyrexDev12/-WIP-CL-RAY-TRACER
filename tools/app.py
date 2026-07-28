@@ -473,9 +473,10 @@ class RayTracerApp:
         self.progress.configure(mode="determinate", value=100)
         self.percent_var.set("100%")
         self.stage_var.set("Render complete")
-        self.generation_status_var.set(
-            "The PNG has been saved automatically and is ready to view."
-        )
+        completion_message = "The PNG has been saved automatically and is ready to view."
+        if payload.audit_path is not None:
+            completion_message += " A quality audit was saved beside the scene JSON."
+        self.generation_status_var.set(completion_message)
         self.generation_status.configure(style="Success.TLabel")
         self.time_var.set(f"Completed in {format_elapsed(payload.elapsed_seconds)}")
         self.saved_png = payload.png_path
